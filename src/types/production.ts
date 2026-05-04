@@ -1,3 +1,5 @@
+export type CareType = "OUTPATIENT" | "INPATIENT";
+
 export type ProductionPlan = {
     id: number;
     year: number;
