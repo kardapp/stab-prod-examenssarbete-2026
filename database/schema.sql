@@ -25,3 +25,34 @@ CREATE TABLE production_rows (
   average_minutes_per_visit INTEGER NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+DROP TABLE IF EXISTS outpatient_production_rows;
+
+CREATE TABLE outpatient_production_rows (
+  id SERIAL PRIMARY KEY,
+
+  row_label TEXT NOT NULL,
+
+  kombika_pf_id TEXT,
+  kombika_pf TEXT,
+  section TEXT,
+  cost_center TEXT,
+  site TEXT,
+  assignment TEXT,
+
+  acute_percentage NUMERIC(5,2),
+  elective_percentage NUMERIC(5,2),
+
+  sll_percentage NUMERIC(5,2),
+  uulp_percentage NUMERIC(5,2),
+
+  doctor_percentage NUMERIC(5,2),
+  nurse_percentage NUMERIC(5,2),
+  health_professional_percentage NUMERIC(5,2),
+  other_staff_percentage NUMERIC(5,2),
+
+  periodization_key_id TEXT,
+  periodization_key_description TEXT,
+
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

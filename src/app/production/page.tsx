@@ -1,22 +1,14 @@
-import { Box, Container, Stack, Typography } from "@mui/material";
-import { ProductionPlanningSection } from "./components/section/ProductionPlanningSection";
+import { Box, Container, Stack } from "@mui/material";
+import { ProductionHeader } from "./components/productionHeader";
+import { OutpatientProductionGrid } from "./components/tables/outpatientProductionGrid";
 
 export default function ProductionPage() {
     return (
-        <Box component="main" sx={{ minHeight: "100vh", py: 6 }}>
-            <Container maxWidth="lg">
-                <Stack spacing={3}>
-                    <Box>
-                        <Typography variant="h4" component="h1" sx={{ fontWeight: 700 }}>
-                            Produktionsplanering
-                        </Typography>
-
-                        <Typography sx={{ mt: 2 }} color="text.secondary">
-                            Här kan du registrera och granska planerad vårdproduktion.
-                        </Typography>
-                    </Box>
-
-                    <ProductionPlanningSection />
+        <Box component="main" sx={{ minHeight: "100vh", bgcolor: "#ffffff", p: 2 }}>
+            <Container maxWidth={false}>
+                <Stack spacing={2}>
+                    <ProductionHeader />
+                    <OutpatientProductionGrid />
                 </Stack>
             </Container>
         </Box>

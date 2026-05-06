@@ -1,18 +1,77 @@
-INSERT INTO organization_units (name, unit_type)
-VALUES
-('Exempelverksamhet Öppenvård', 'ME'),
-('Exempelverksamhet Slutenvård', 'ME');
-
-INSERT INTO production_plans (organization_unit_id, year, care_type)
-VALUES
-(1, 2026, 'OUTPATIENT');
-
-INSERT INTO production_rows (
-production_plan_id,
-role_category,
-visits_per_week,
-average_minutes_per_visit
+INSERT INTO outpatient_production_rows (
+  row_label,
+  kombika_pf_id,
+  kombika_pf,
+  section,
+  cost_center,
+  site,
+  assignment,
+  acute_percentage,
+  elective_percentage,
+  sll_percentage,
+  uulp_percentage,
+  doctor_percentage,
+  nurse_percentage,
+  health_professional_percentage,
+  other_staff_percentage,
+  periodization_key_id,
+  periodization_key_description
 )
 VALUES
-(1, 'Läkare', 100, 45),
-(1, 'Sjuksköterska', 80, 30);
+  (
+    'Rad 01',
+    'PF-001',
+    'ÖPV Mottagning A',
+    'Sektion A',
+    'KS-1001',
+    'Solna',
+    'Basuppdrag',
+    20,
+    80,
+    90,
+    10,
+    60,
+    25,
+    10,
+    5,
+    'P01',
+    'Jämn fördelning över året'
+  ),
+  (
+    'Rad 02',
+    'PF-002',
+    'ÖPV Mottagning B',
+    'Sektion B',
+    'KS-1002',
+    'Huddinge',
+    'Tilläggsuppdrag',
+    10,
+    90,
+    85,
+    15,
+    50,
+    30,
+    15,
+    5,
+    'P02',
+    'Lägre produktion sommar'
+  ),
+  (
+    'Rad 03',
+    'PF-003',
+    'ÖPV Dagvård',
+    'Sektion C',
+    'KS-1003',
+    'Solna',
+    'Dagvårdsuppdrag',
+    5,
+    95,
+    80,
+    20,
+    40,
+    35,
+    20,
+    5,
+    'P03',
+    'Högre produktion vår och höst'
+  );
