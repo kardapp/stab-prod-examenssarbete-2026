@@ -1,5 +1,5 @@
 import { Box, Container, Stack, Typography } from "@mui/material";
-import { ProductionRowsTable } from "./components/tables/productionRowsTable";
+import { ProductionPlanningSection } from "./components/section/ProductionPlanningSection";
 
 export default function ProductionPage() {
     return (
@@ -12,11 +12,11 @@ export default function ProductionPage() {
                         </Typography>
 
                         <Typography sx={{ mt: 2 }} color="text.secondary">
-                            Här visas produktionsrader för den valda produktionsplanen.
+                            Här kan du registrera och granska planerad vårdproduktion.
                         </Typography>
                     </Box>
 
-                    <ProductionRowsTable />
+                    <ProductionPlanningSection />
                 </Stack>
             </Container>
         </Box>
