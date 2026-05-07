@@ -1,8 +1,3 @@
-export type SummaryItem = {
-  label: string;
-  value: number;
-};
-
 export type OutpatientProductionFormState = {
   kombika_pf_id: string;
   kombika_pf: string;

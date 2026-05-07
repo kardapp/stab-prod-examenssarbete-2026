@@ -6,17 +6,17 @@ import {
   type ChangeEvent,
   type FormEvent,
 } from "react";
-import { Alert, Box, CircularProgress, Paper, Stack } from "@mui/material";
+import { Alert, CircularProgress, Paper, Stack } from "@mui/material";
 import type { OutpatientProductionRow } from "@/types/production";
-import { OutpatientProductionForm } from "./OutpatientProductionForm";
-import { OutpatientProductionNextActions } from "./OutpatientProductionNextActions";
-import { OutpatientProductionTable } from "./OutpatientProductionTable";
-import { OutpatientProductionSummary } from "./OutpatientProductionSummary";
+import { ComparisonValuesBlock } from "./ComparisonValuesBlock";
 import {
   initialFormState,
   kombikaOptions,
 } from "./outpatientProductionOptions";
 import type { OutpatientProductionFormState } from "./outpatientProductionTypes";
+import { ProductionInputForm } from "./ProductionInputForm";
+import { ProductionInputTable } from "./ProductionInputTable";
+import { ProductionNavigationActions } from "./ProductionNavigationActions";
 
 export function OutpatientProductionGrid() {
   const [rows, setRows] = useState<OutpatientProductionRow[]>([]);
@@ -157,7 +157,7 @@ export function OutpatientProductionGrid() {
     <Stack spacing={2}>
       {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
 
-      <OutpatientProductionForm
+      <ProductionInputForm
         formState={formState}
         editingRowId={editingRowId}
         isSubmitting={isSubmitting}
@@ -167,12 +167,11 @@ export function OutpatientProductionGrid() {
         onReset={resetForm}
       />
 
-      <OutpatientProductionTable rows={rows} onEditRow={handleEditRow} />
+      <ProductionInputTable rows={rows} onEditRow={handleEditRow} />
 
-      <Box sx={summaryLayoutSx}>
-        <OutpatientProductionSummary rows={rows} />
-        <OutpatientProductionNextActions rows={rows} />
-      </Box>
+      <ComparisonValuesBlock rows={rows} />
+
+      <ProductionNavigationActions />
     </Stack>
   );
 }
@@ -182,10 +181,4 @@ const panelSx = {
   border: "1px solid #d0d7de",
   borderRadius: 1,
   boxShadow: "none",
-};
-
-const summaryLayoutSx = {
-  display: "grid",
-  gridTemplateColumns: { xs: "1fr", lg: "2fr 1fr" },
-  gap: 2,
 };
