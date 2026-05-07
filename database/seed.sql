@@ -1,4 +1,11 @@
+INSERT INTO organization_units (name, unit_type)
+VALUES ('Karolinska Universitetssjukhuset', 'Sjukhus');
+
+INSERT INTO production_plans (organization_unit_id, year, care_type)
+VALUES (1, 2027, 'Öppenvård');
+
 INSERT INTO outpatient_production_rows (
+  production_plan_id,
   row_label,
   kombika_pf_id,
   kombika_pf,
@@ -6,19 +13,34 @@ INSERT INTO outpatient_production_rows (
   cost_center,
   site,
   assignment,
+  period_type,
+  period_value,
+  care_type,
+  visits,
+  primary_role_category,
+  secondary_role_category,
+  sll_uulp,
+  acute_elective,
+  average_minutes_per_visit,
+  drg_average,
+  annual_volume,
   acute_percentage,
   elective_percentage,
   sll_percentage,
   uulp_percentage,
+  drg_average_sll,
+  drg_average_uulp,
   doctor_percentage,
   nurse_percentage,
   health_professional_percentage,
   other_staff_percentage,
   periodization_key_id,
-  periodization_key_description
+  periodization_key_description,
+  oo_distribution_status
 )
 VALUES
   (
+    1,
     'Rad 01',
     'PF-001',
     'ÖPV Mottagning A',
@@ -26,18 +48,33 @@ VALUES
     'KS-1001',
     'Solna',
     'Basuppdrag',
+    'week',
+    '12',
+    'open_care',
+    100,
+    'Läkare',
+    'Sjuksköterska',
+    'SLL',
+    'Elektivt',
+    45,
+    1.20,
+    5200,
     20,
     80,
     90,
     10,
+    1.20,
+    1.50,
     60,
     25,
     10,
     5,
     'P01',
-    'Jämn fördelning över året'
+    'Jämn fördelning över året',
+    'Ej fördelad'
   ),
   (
+    1,
     'Rad 02',
     'PF-002',
     'ÖPV Mottagning B',
@@ -45,18 +82,33 @@ VALUES
     'KS-1002',
     'Huddinge',
     'Tilläggsuppdrag',
+    'week',
+    '12',
+    'open_care',
+    75,
+    'Sjuksköterska',
+    'Undersköterska',
+    'SLL',
+    'Akut',
+    35,
+    1.10,
+    3900,
     10,
     90,
     85,
     15,
+    1.10,
+    1.40,
     50,
     30,
     15,
     5,
     'P02',
-    'Lägre produktion sommar'
+    'Lägre produktion sommar',
+    'Ej fördelad'
   ),
   (
+    1,
     'Rad 03',
     'PF-003',
     'ÖPV Dagvård',
@@ -64,14 +116,44 @@ VALUES
     'KS-1003',
     'Solna',
     'Dagvårdsuppdrag',
+    'week',
+    '13',
+    'open_care',
+    50,
+    'Hälsoprofession',
+    NULL,
+    'UULP',
+    'Elektivt',
+    60,
+    1.35,
+    2600,
     5,
     95,
     80,
     20,
+    1.35,
+    1.60,
     40,
     35,
     20,
     5,
     'P03',
-    'Högre produktion vår och höst'
+    'Högre produktion vår och höst',
+    'Ej fördelad'
   );
+
+INSERT INTO outpatient_comparison_values (
+  production_plan_id,
+  kombika_pf_id,
+  period_type,
+  period_value,
+  previous_year_plan,
+  r12_outcome,
+  previous_year_outcome,
+  previous_dimensioning_presence,
+  source
+)
+VALUES
+  (1, 'PF-001', 'week', '12', 92, 88, 95, 1.70, 'Mockdata'),
+  (1, 'PF-002', 'week', '12', 70, 68, 72, 1.05, 'Mockdata'),
+  (1, 'PF-003', 'week', '13', 45, 47, 44, 1.10, 'Mockdata');
