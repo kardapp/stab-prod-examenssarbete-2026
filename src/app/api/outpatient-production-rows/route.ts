@@ -3,6 +3,7 @@ import { calculateAnnualVolumeFromVisits } from "@/lib/calculations/outpatientPr
 import { db } from "@/lib/db/db";
 
 type CreateOutpatientProductionRowPayload = {
+  id?: number;
   production_plan_id?: number;
   kombika_pf_id?: string;
   kombika_pf?: string;
@@ -13,6 +14,7 @@ type CreateOutpatientProductionRowPayload = {
   period_type?: string;
   period_value?: string;
   care_type?: string;
+  visit_type?: string;
   visits?: number;
   primary_role_category?: string;
   secondary_role_category?: string;
@@ -38,6 +40,7 @@ export async function GET() {
         rows.period_type,
         rows.period_value,
         rows.care_type,
+        rows.visit_type,
         rows.visits,
         rows.primary_role_category,
         rows.secondary_role_category,
@@ -89,8 +92,9 @@ export async function POST(request: Request) {
     const body = (await request.json()) as CreateOutpatientProductionRowPayload;
 
     const productionPlanId = body.production_plan_id ?? 1;
-    const periodType = body.period_type ?? "week";
+    const periodType = body.period_type ?? "day";
     const careType = body.care_type ?? "open_care";
+    const visitType = body.visit_type ?? "Nybesök";
     const visits = Number(body.visits ?? 0);
     const averageMinutesPerVisit = Number(
       body.average_minutes_per_visit ?? 0
@@ -145,6 +149,7 @@ export async function POST(request: Request) {
           period_type,
           period_value,
           care_type,
+          visit_type,
           visits,
           primary_role_category,
           secondary_role_category,
@@ -167,7 +172,7 @@ export async function POST(request: Request) {
           $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
           $11, $12, $13, $14, $15, $16, $17, $18,
           $19, $20, $21, $22, $23, $24, $25, $26,
-          $27, $28
+          $27, $28, $29
         )
         RETURNING
           id,
@@ -178,6 +183,7 @@ export async function POST(request: Request) {
           period_type,
           period_value,
           care_type,
+          visit_type,
           visits,
           primary_role_category,
           secondary_role_category,
@@ -199,6 +205,7 @@ export async function POST(request: Request) {
         periodType,
         body.period_value,
         careType,
+        visitType,
         visits,
         body.primary_role_category,
         body.secondary_role_category || null,
@@ -225,6 +232,127 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       { message: "Failed to create outpatient production row." },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const body = (await request.json()) as CreateOutpatientProductionRowPayload;
+
+    if (!body.id) {
+      return NextResponse.json(
+        { message: "Missing outpatient production row id." },
+        { status: 400 }
+      );
+    }
+
+    const periodType = body.period_type ?? "day";
+    const careType = body.care_type ?? "open_care";
+    const visitType = body.visit_type ?? "Nybesök";
+    const visits = Number(body.visits ?? 0);
+    const averageMinutesPerVisit = Number(
+      body.average_minutes_per_visit ?? 0
+    );
+    const drgAverage = Number(body.drg_average ?? 0);
+
+    if (
+      !body.kombika_pf_id ||
+      !body.kombika_pf ||
+      !body.period_value ||
+      !body.primary_role_category ||
+      !body.sll_uulp ||
+      !body.acute_elective ||
+      visits <= 0 ||
+      averageMinutesPerVisit <= 0
+    ) {
+      return NextResponse.json(
+        { message: "Missing required outpatient production row fields." },
+        { status: 400 }
+      );
+    }
+
+    const annualVolume = calculateAnnualVolumeFromVisits(visits, periodType);
+    const acutePercentage = body.acute_elective === "Akut" ? 100 : 0;
+    const electivePercentage = body.acute_elective === "Elektivt" ? 100 : 0;
+    const sllPercentage = body.sll_uulp === "SLL" ? 100 : 0;
+    const uulpPercentage = body.sll_uulp === "UULP" ? 100 : 0;
+
+    const result = await db.query(
+      `
+        UPDATE outpatient_production_rows
+        SET
+          kombika_pf_id = $1,
+          kombika_pf = $2,
+          section = $3,
+          cost_center = $4,
+          site = $5,
+          assignment = $6,
+          period_type = $7,
+          period_value = $8,
+          care_type = $9,
+          visit_type = $10,
+          visits = $11,
+          primary_role_category = $12,
+          secondary_role_category = $13,
+          sll_uulp = $14,
+          acute_elective = $15,
+          average_minutes_per_visit = $16,
+          drg_average = $17,
+          annual_volume = $18,
+          acute_percentage = $19,
+          elective_percentage = $20,
+          sll_percentage = $21,
+          uulp_percentage = $22,
+          drg_average_sll = $23,
+          drg_average_uulp = $24,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = $25
+        RETURNING id
+      `,
+      [
+        body.kombika_pf_id,
+        body.kombika_pf,
+        body.section ?? null,
+        body.cost_center ?? null,
+        body.site ?? null,
+        body.assignment ?? null,
+        periodType,
+        body.period_value,
+        careType,
+        visitType,
+        visits,
+        body.primary_role_category,
+        body.secondary_role_category || null,
+        body.sll_uulp,
+        body.acute_elective,
+        averageMinutesPerVisit,
+        drgAverage,
+        annualVolume,
+        acutePercentage,
+        electivePercentage,
+        sllPercentage,
+        uulpPercentage,
+        drgAverage,
+        drgAverage,
+        body.id,
+      ]
+    );
+
+    if (result.rowCount === 0) {
+      return NextResponse.json(
+        { message: "Outpatient production row not found." },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(result.rows[0]);
+  } catch (error) {
+    console.error("Failed to update outpatient production row:", error);
+
+    return NextResponse.json(
+      { message: "Failed to update outpatient production row." },
       { status: 500 }
     );
   }

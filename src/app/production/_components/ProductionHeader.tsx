@@ -1,4 +1,4 @@
-import { Box, Button, Stack, Typography } from "@mui/material";
+import { Box, Stack, Typography } from "@mui/material";
 
 export function ProductionHeader() {
   return (
@@ -12,63 +12,18 @@ export function ProductionHeader() {
       }}
     >
       <Stack
-        direction="row"
+        direction={{ xs: "column", md: "row" }}
         spacing={2}
-        sx={{ alignItems: "center", justifyContent: "space-between" }}
+        sx={{ alignItems: { xs: "flex-start", md: "center" }, justifyContent: "space-between" }}
       >
-        <Stack spacing={0.5}>
-          <Button
-            variant="outlined"
-            size="small"
-            sx={{ color: "white", borderColor: "white" }}
-          >
-            1. Välj Tema
-          </Button>
-
-          <Button
-            variant="outlined"
-            size="small"
-            sx={{ color: "white", borderColor: "white" }}
-          >
-            2. Välj Verksamhet
-          </Button>
-        </Stack>
-
-        <Box sx={{ textAlign: "center" }}>
-          <Typography variant="h5" component="h1" sx={{ fontWeight: 700 }}>
-            Vårdhändelser
+        <Box>
+          <Typography variant="caption" sx={{ opacity: 0.85 }}>
+            Produktionsplanering öppenvård
           </Typography>
-
-          <Typography variant="h5" component="p">
-            Öppenvård
+          <Typography variant="h5" component="h1" sx={{ fontWeight: 700 }}>
+            Inmatning produktion per ekonomisk kombika
           </Typography>
         </Box>
-
-        <Stack direction="row" spacing={1}>
-          <Button
-            variant="outlined"
-            size="small"
-            sx={{ color: "white", borderColor: "white" }}
-          >
-            Vårdhändelser - Slutenvård
-          </Button>
-
-          <Button
-            variant="outlined"
-            size="small"
-            sx={{ color: "white", borderColor: "white" }}
-          >
-            Periodiseringsnycklar
-          </Button>
-
-          <Button
-            variant="outlined"
-            size="small"
-            sx={{ color: "white", borderColor: "white" }}
-          >
-            Flerårs-prognos
-          </Button>
-        </Stack>
 
         <Box
           sx={{

@@ -33,9 +33,10 @@ CREATE TABLE outpatient_production_rows (
   site TEXT,
   assignment TEXT,
 
-  period_type TEXT DEFAULT 'week',
+  period_type TEXT DEFAULT 'day',
   period_value TEXT,
   care_type TEXT DEFAULT 'open_care',
+  visit_type TEXT,
   visits INTEGER,
   primary_role_category TEXT,
   secondary_role_category TEXT,

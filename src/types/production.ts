@@ -14,6 +14,7 @@ export type OutpatientProductionRow = {
   period_type: string | null;
   period_value: string | null;
   care_type: string | null;
+  visit_type: string | null;
   visits: number | null;
   primary_role_category: string | null;
   secondary_role_category: string | null;
