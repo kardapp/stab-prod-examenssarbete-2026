@@ -24,22 +24,6 @@ export function ProductionHeader() {
             Inmatning produktion per ekonomisk kombika
           </Typography>
         </Box>
-
-        <Box
-          sx={{
-            bgcolor: "white",
-            color: "text.primary",
-            px: 2,
-            py: 1,
-            borderRadius: 1,
-            minWidth: 190,
-          }}
-        >
-          <Typography variant="caption">VersionPDP</Typography>
-          <Typography sx={{ fontWeight: 700 }}>
-            Produktionsplanering 2027
-          </Typography>
-        </Box>
       </Stack>
     </Box>
   );

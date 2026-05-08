@@ -6,6 +6,8 @@ import {
     Container,
     Stack,
     Typography,
+    TextField,
+    MenuItem
 } from "@mui/material";
 
 export default function HomePage() {
@@ -37,7 +39,20 @@ export default function HomePage() {
                             öppenvård och slutenvård.
                         </Typography>
                     </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                        <Typography variant="h5">Sektion</Typography>
 
+                        <TextField
+                            select
+                            label="Välj sektion"
+                            defaultValue=""
+                            sx={{ minWidth: 180 }}
+                        >
+                            <MenuItem value="sektion-1">Sektion 1</MenuItem>
+                            <MenuItem value="sektion-2">Sektion 2</MenuItem>
+                            <MenuItem value="sektion-3">Sektion 3</MenuItem>
+                        </TextField>
+                    </Box>
                     <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
                         <Card sx={{ flex: 1 }}>
                             <CardContent>
