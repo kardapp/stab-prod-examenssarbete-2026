@@ -71,7 +71,11 @@ export default function HomePage() {
                                     Planera vårdhändelser.
                                 </Typography>
 
-                                <Button href="/production" variant="contained" sx={{ mt: 3 }}>
+                                <Button
+                                    href="/outpatient/production/production-planning"
+                                    variant="contained"
+                                    sx={{ mt: 3 }}
+                                >
                                     Gå till produktionsplanering
                                 </Button>
                             </CardContent>
@@ -94,7 +98,11 @@ export default function HomePage() {
                                     Beräkna resursbehov.
                                 </Typography>
 
-                                <Button href="/dimensioning" variant="outlined" sx={{ mt: 3 }}>
+                                <Button
+                                    href="/outpatient/dimensioning"
+                                    variant="outlined"
+                                    sx={{ mt: 3 }}
+                                >
                                     Gå till dimensionering
                                 </Button>
                             </CardContent>

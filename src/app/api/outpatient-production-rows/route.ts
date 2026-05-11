@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { calculateAnnualVolumeFromVisits } from "@/lib/calculations/outpatientProductionCalculations";
+import { calculateAnnualVolumeFromVisits } from "@/features/outpatient-production/utils/outpatient-production-calculations";
 import { db } from "@/lib/db/db";
 
 type CreateOutpatientProductionRowPayload = {
