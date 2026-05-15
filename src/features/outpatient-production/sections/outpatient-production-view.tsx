@@ -1,16 +1,22 @@
 "use client";
 
-import { Alert, Box, CircularProgress, Container, Stack } from "@mui/material";
+import { Box, Container, Stack } from "@mui/material";
 import { PageHeader } from "@/shared/components/page-header";
-import { SectionCard } from "@/shared/components/section-card";
-import { OutpatientComparisonValues } from "../components/outpatient-comparison-values";
-import { OutpatientProductionActions } from "../components/outpatient-production-actions";
-import { OutpatientProductionForm } from "../components/outpatient-production-form";
-import { OutpatientProductionTable } from "../components/outpatient-production-table";
-import { useOutpatientProduction } from "../hooks/use-outpatient-production";
+import { CalculatedPreviewSection } from "./calculated-preview-section";
+import { ComparisonValuesSection } from "./comparison-values-section";
+import { DistributionSection } from "./distribution-section";
+import { DrgAverageSection } from "./drg-average-section";
+import { KombikaSelectorSection } from "./kombika-selector-section";
+import { ProductionActionsSection } from "./production-actions-section";
+import { ProductionVolumeSection } from "./production-volume-section";
+import { VisitTimeSection } from "./visit-time-section";
+import { useOutpatientProductionForm } from "../hooks/use-outpatient-production-form";
 
 export function OutpatientProductionView() {
-  const production = useOutpatientProduction();
+  const production = useOutpatientProductionForm();
+  const getValidationMessage = (
+    key: keyof typeof production.validationErrors
+  ) => (production.showValidation ? production.validationErrors[key] : undefined);
 
   return (
     <Box component="main" sx={{ minHeight: "100vh", bgcolor: "#ffffff", p: 2 }}>
@@ -21,36 +27,65 @@ export function OutpatientProductionView() {
             title="Inmatning produktion per ekonomisk kombika"
           />
 
-          {production.isLoading ? (
-            <SectionCard>
-              <CircularProgress />
-            </SectionCard>
-          ) : (
+          <KombikaSelectorSection
+            selectedKombikaId={production.formState.selectedKombikaId}
+            selectedKombika={production.selectedKombika}
+            validationMessage={getValidationMessage("kombika")}
+            onKombikaChange={production.handleKombikaChange}
+          />
+
+          {production.selectedKombika ? (
             <Stack spacing={2}>
-              {production.errorMessage ? (
-                <Alert severity="error">{production.errorMessage}</Alert>
-              ) : null}
+              <ProductionVolumeSection
+                date={production.formState.date}
+                careEvents={production.formState.careEvents}
+                validationMessage={getValidationMessage("volume")}
+                onDateChange={production.handleDateChange}
+                onCareEventsChange={production.handleCareEventsChange}
+              />
 
-              <OutpatientProductionForm
+              <DistributionSection
                 formState={production.formState}
-                editingRowId={production.editingRowId}
-                isSubmitting={production.isSubmitting}
-                onFieldChange={production.handleFieldChange}
-                onKombikaChange={production.handleKombikaChange}
-                onSubmit={production.handleSubmit}
-                onReset={production.resetForm}
+                calculatedValues={production.calculatedValues}
+                validationErrors={production.validationErrors}
+                showValidation={production.showValidation}
+                onPercentageChange={
+                  production.handleDistributionPercentageChange
+                }
+                onRoleDistributionChange={
+                  production.handleRoleDistributionChange
+                }
+                onAddRoleDistribution={production.addRoleDistribution}
+                onRemoveRoleDistribution={production.removeRoleDistribution}
               />
 
-              <OutpatientProductionTable
-                rows={production.rows}
-                onEditRow={production.handleEditRow}
+              <VisitTimeSection
+                visitTime={production.formState.visitTime}
+                validationMessage={getValidationMessage("visitTime")}
+                onVisitTimeChange={production.handleVisitTimeChange}
               />
 
-              <OutpatientComparisonValues rows={production.rows} />
+              <DrgAverageSection
+                drgAverage={production.formState.drgAverage}
+                validationMessage={getValidationMessage("drgAverage")}
+                onDrgAverageChange={production.handleDrgAverageChange}
+              />
 
-              <OutpatientProductionActions />
+              <ComparisonValuesSection
+                selectedKombika={production.selectedKombika}
+                comparisonValues={production.comparisonValues}
+              />
+
+              <CalculatedPreviewSection
+                calculatedValues={production.calculatedValues}
+              />
+
+              <ProductionActionsSection
+                saveMessage={production.saveMessage}
+                onSave={production.saveProductionPlan}
+              />
             </Stack>
-          )}
+          ) : null}
         </Stack>
       </Container>
     </Box>

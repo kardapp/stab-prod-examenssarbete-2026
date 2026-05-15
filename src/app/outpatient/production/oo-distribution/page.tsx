@@ -18,7 +18,7 @@ export default function OoDistributionPage() {
               controller och OVC.
             </Typography>
             <Box>
-              <Button variant="outlined" href="/outpatient/production/production-planning">
+              <Button variant="outlined" href="/production-planning/outpatient">
                 Tillbaka till steg 1
               </Button>
             </Box>

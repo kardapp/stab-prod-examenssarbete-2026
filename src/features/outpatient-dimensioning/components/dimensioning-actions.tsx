@@ -9,7 +9,7 @@ export function DimensioningActions() {
       <Button
         variant="contained"
         size="large"
-        href="/outpatient/production/production-planning"
+        href="/production-planning/outpatient"
       >
         Gå till produktionsplan: ÖPV VH
       </Button>

@@ -2,6 +2,10 @@ import type {
   DimensioningInputSummary,
   OutpatientProductionRow,
 } from "@/types/production";
+import type {
+  OutpatientProductionCalculatedValues,
+  OutpatientProductionFormState,
+} from "../types/outpatient-production.types";
 
 export const WEEKLY_WORKING_MINUTES = 40 * 60;
 
@@ -108,6 +112,69 @@ export function calculateTotalDrgPoints(params: {
     calculateDrgPoints(sllVolume, params.drgAverageSll) +
     calculateDrgPoints(uulpVolume, params.drgAverageUulp)
   );
+}
+
+export function calculateOutpatientProductionValues(
+  formState: OutpatientProductionFormState
+): OutpatientProductionCalculatedValues {
+  const totalCareEvents = toNumber(formState.careEvents);
+  const sllCareEvents = calculatePercentageValue(
+    totalCareEvents,
+    toNumber(formState.sllPercentage)
+  );
+  const uulpCareEvents = calculatePercentageValue(
+    totalCareEvents,
+    toNumber(formState.uulpPercentage)
+  );
+  const acuteCareEvents = calculatePercentageValue(
+    totalCareEvents,
+    toNumber(formState.acutePercentage)
+  );
+  const electiveCareEvents = calculatePercentageValue(
+    totalCareEvents,
+    toNumber(formState.electivePercentage)
+  );
+  const drgSll = calculateDrgPoints(
+    sllCareEvents,
+    toNumber(formState.drgAverage.sll)
+  );
+  const drgUulp = calculateDrgPoints(
+    uulpCareEvents,
+    toNumber(formState.drgAverage.uulp)
+  );
+
+  return {
+    sllCareEvents,
+    uulpCareEvents,
+    acuteCareEvents,
+    electiveCareEvents,
+    roleDistributionResults: formState.roleDistributions.map((role) => ({
+      id: role.id,
+      label: formatRoleDistributionLabel(
+        role.primaryRole,
+        role.secondaryRole
+      ),
+      percentage: toNumber(role.percentage),
+      careEvents: calculatePercentageValue(
+        totalCareEvents,
+        toNumber(role.percentage)
+      ),
+    })),
+    totalVisitMinutes: calculateTotalVisitMinutes(
+      totalCareEvents,
+      toNumber(formState.visitTime.averageMinutes)
+    ),
+    drgSll,
+    drgUulp,
+    totalDrg: drgSll + drgUulp,
+  };
+}
+
+export function formatRoleDistributionLabel(
+  primaryRole: string,
+  secondaryRole?: string
+): string {
+  return secondaryRole ? `${primaryRole} + ${secondaryRole}` : primaryRole;
 }
 
 export function calculateProductionRowMetrics(row: OutpatientProductionRow) {

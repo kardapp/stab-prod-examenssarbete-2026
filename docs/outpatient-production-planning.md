@@ -1,64 +1,44 @@
 # Produktionsplanering öppenvård
 
-Första versionen fokuserar på inmatning av produktion per ekonomisk kombika i öppenvård.
+Första produktionsplaneringssidan utgår från en vald ekonomisk kombika.
+Användaren skapar en produktionsplan för kombikan och systemet bryter ner en
+huvudvolym med procentuella fördelningar.
 
-## Innehåll i vyn
+## Flöde
 
-- Inmatningsformulär för produktionsrader
-- Redigerbar lista över inmatade produktionsrader
-- Antal vårdtillfällen
-- Snitt-tid per besök
-- DRG-snitt
-- Jämförelsevärden
-- Knappar för att gå vidare:
-  - Fördela till OO
-  - Gå till Dimensionering
+1. Välj ekonomisk kombika.
+2. Ange dag/datum och antal vårdtillfällen.
+3. Fördela vårdtillfällen procentuellt på SLL/UULP, akut/elektivt och yrkeskategorier.
+4. Ange snitt-tid per besök.
+5. Ange DRG-snitt för SLL och UULP.
+6. Visa jämförelsevärden som stöddata.
+7. Visa beräknade värden och spara planen.
+8. Gå vidare till OO-fördelning eller dimensionering.
 
-## Innehållslogik
+## Huvudregel
 
-- Sektionschef/controller kan lägga till och redigera produktionsrader.
-- Varje produktionsrad kopplas till ekonomisk kombika, dag/datum, yrkeskategori, sekundär yrkeskategori, SLL/UULP, akut/elektivt, typ av besök, snitt-tid och DRG-snitt.
-- Antal vårdtillfällen visas per yrkeskategori, inklusive sekundär yrkeskategori, per dag, per SLL/UULP och per akut/elektivt.
-- Snitt-tid per besök visas kopplat till typ av besök, exempelvis nybesök och återbesök.
-- DRG-snitt visas per SLL/UULP.
-- Jämförelsevärden visas som stöddata: föregående års plan, utfall R12 och utfall föregående år.
-- Sammanfattningskorten är inte manuella inputfält utan räknas från produktionsraderna.
+Antal vårdtillfällen är huvudvolymen. SLL/UULP, akut/elektivt och
+yrkeskategorier är procentuella nedbrytningar av samma volym. Snitt-tid per
+besök och DRG-snitt är egna planeringsvärden.
 
-## Underlag till dimensionering
-
-Första sidan är inte en dimensioneringssida, men fälten är strukturerade så att dimensionering senare kan använda dem.
-
-Viktiga fält är:
-
-- antal vårdtillfällen
-- yrkeskategori
-- snitt-tid per besök
-- typ av besök
-- period/dag
-- kombika
-
-Vyn kan visa ett beräknat stödvärde för senare dimensionering:
+## Beräkningar
 
 ```text
-totalVisitMinutes = visits * averageMinutesPerVisit
-drgPoints = visits * drgAverage
-presenceNeed = totalVisitMinutes / weeklyWorkingMinutes
-weeklyWorkingMinutes = 40 * 60
+antalSll = careEvents * sllPercentage / 100
+antalUulp = careEvents * uulpPercentage / 100
+antalAkut = careEvents * acutePercentage / 100
+antalElektiv = careEvents * electivePercentage / 100
+antalPerYrkeskategori = careEvents * rolePercentage / 100
+besokstid = careEvents * averageMinutesPerVisit
+drgSll = antalSll * drgAverageSll
+drgUulp = antalUulp * drgAverageUulp
+totalDrg = drgSll + drgUulp
 ```
 
-Närvarobehov är alltså beräknat stöddata och ska inte fyllas i manuellt i första öppenvårdsvyn.
+## Kodstruktur
 
-Slutenvårdens nyckeltal, till exempel `12 vårdplatser / 4 sjuksköterskor = 3 VPL/SSK`, hör till slutenvård/dimensionering och ska inte blandas in i denna sida.
-
-## Nästa val
-
-Användaren kan antingen fördela vårdtillfällen till OO eller gå direkt vidare till dimensionering.
-
-## Ingår inte i denna vy
-
-- Full OO-fördelning
-- Resultatberäkningar för hela produktionsplanen
-- Slutenvård
-- Ingrepp
-- Radiologi
-- Flerårsprognos
+Sidan renderas av `OutpatientProductionView`. Formulärstate ligger i
+`use-outpatient-production-form.ts`, rena beräkningar i
+`outpatient-production-calculations.ts`, validering i
+`outpatient-production-validation.ts` och dropdown-/mockdata i
+`outpatient-production-options.ts`.

@@ -72,7 +72,7 @@ export default function HomePage() {
                                 </Typography>
 
                                 <Button
-                                    href="/outpatient/production/production-planning"
+                                    href="/production-planning/outpatient"
                                     variant="contained"
                                     sx={{ mt: 3 }}
                                 >
