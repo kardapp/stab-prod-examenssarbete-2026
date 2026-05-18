@@ -82,6 +82,7 @@ export function OutpatientProductionView() {
 
               <ProductionActionsSection
                 saveMessage={production.saveMessage}
+                dimensioningHref={production.dimensioningHref}
                 onSave={production.saveProductionPlan}
               />
             </Stack>

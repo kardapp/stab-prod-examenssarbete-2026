@@ -1,32 +1,93 @@
-export type DayCareMethod = "calculate_as_outpatient" | "manual_presence";
+export type CareType = "mottagning" | "dagvard";
 
-export type AssumptionState = {
-  weeklyWorkingHours: string;
-  dayCareMethod: DayCareMethod;
-  manualDayCarePresence: string;
-};
+export type DayCareMethod =
+  | "calculate_as_outpatient"
+  | "key_ratio"
+  | "manual_presence";
+
+export type PeriodizationType = "day" | "week" | "month";
 
 export type CompetenceLevel = "ÖL" | "BÖL" | "SPEC" | "ST/LEG" | "UL";
 
-export type CompetenceState = {
-  level: CompetenceLevel;
-  percentage: string;
+export type DimensioningSelection = {
+  productionPlanId: string;
+  kombikaId: string;
+  year: string;
+  careType: CareType;
 };
 
-export type DimensioningValues = {
+export type DimensioningRowState = {
+  id?: number;
+  productionRowId?: number | null;
+  competenceLevel: CompetenceLevel;
+  careType: CareType;
+  productionSharePercentage: string;
+  weeklyWorkHours: string;
+  dayCareCalculationMethod: DayCareMethod;
+  keyRatio: string;
+  manualPresence: string;
+  nonContributingStPresence: string;
+  salaryCostPerPresence: string;
+  comment: string;
+  periodizationType: PeriodizationType;
+};
+
+export type DimensioningRowField = keyof Pick<
+  DimensioningRowState,
+  | "productionSharePercentage"
+  | "weeklyWorkHours"
+  | "dayCareCalculationMethod"
+  | "keyRatio"
+  | "manualPresence"
+  | "nonContributingStPresence"
+  | "salaryCostPerPresence"
+  | "comment"
+  | "periodizationType"
+>;
+
+export type ProductionBasisSummary = {
+  productionPlanId: number | null;
+  year: number | null;
+  organizationName: string;
+  kombikaIds: string[];
+  kombikaNames: string[];
+  sections: string[];
+  costCenters: string[];
+  careType: CareType;
+  visitTypes: string[];
+  roleCategories: string[];
+  totalVisits: number;
   totalVisitMinutes: number;
-  currentYearPlan: number;
-  productionPresence: number;
+  averageMinutesPerVisit: number;
   r12Outcome: number;
+  r12PresenceFouu: number;
+  r12PresenceProduction: number;
+  r12SalaryCostPerPresence: number;
+  previousYearPlan: number;
   previousYearOutcome: number;
   previousDimensioningPresence: number;
-  competencePercentageSum: number;
-  hasInvalidCompetenceSplit: boolean;
 };
 
-export type CompetenceLevelCalculation = {
-  level: CompetenceLevel;
-  percentage: string;
-  visitMinutes: number;
-  presence: number;
+export type DimensioningRowCalculation = {
+  row: DimensioningRowState;
+  visitsFromProductionPlan: number;
+  averageMinutesPerVisit: number;
+  totalVisitMinutes: number;
+  calculatedPresence: number;
+  totalPresence: number;
+  staffingCost: number;
+};
+
+export type DimensioneringSummary = {
+  calculatedPresence: number;
+  nonContributingStPresence: number;
+  totalPresence: number;
+  staffingCost: number;
+};
+
+export type DimensioningSavePayload = {
+  productionPlanId: number;
+  kombikaId: string;
+  careType: CareType;
+  rows: DimensioningRowState[];
 };

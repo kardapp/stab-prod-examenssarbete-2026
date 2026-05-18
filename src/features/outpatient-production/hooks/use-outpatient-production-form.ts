@@ -57,6 +57,22 @@ export function useOutpatientProductionForm() {
   const comparisonValues = selectedKombika
     ? comparisonValuesByKombikaId[selectedKombika.id]
     : null;
+  const dimensioningHref = useMemo(() => {
+    if (!selectedKombika) {
+      return "/outpatient/dimensioning";
+    }
+
+    const careType = selectedKombika.name.toLowerCase().includes("dagv")
+      ? "dagvard"
+      : "mottagning";
+    const params = new URLSearchParams({
+      productionPlanId: "1",
+      kombikaId: selectedKombika.id,
+      careType,
+    });
+
+    return `/outpatient/dimensioning?${params.toString()}`;
+  }, [selectedKombika]);
 
   function updateFormState(
     updater: (
@@ -222,6 +238,7 @@ export function useOutpatientProductionForm() {
     showValidation: submitAttempted || hasValidationErrors(validationErrors),
     savedPlan,
     saveMessage,
+    dimensioningHref,
     handleKombikaChange,
     handleDateChange,
     handleCareEventsChange,

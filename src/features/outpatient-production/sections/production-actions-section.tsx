@@ -5,6 +5,7 @@ import { SectionCard } from "@/shared/components/section-card";
 
 type ProductionActionsSectionProps = {
   saveMessage: string;
+  dimensioningHref: string;
   onSave: () => void | Promise<void>;
 };
 
@@ -26,7 +27,7 @@ export function ProductionActionsSection(props: ProductionActionsSectionProps) {
           >
             Fördela till OO
           </Button>
-          <Button variant="outlined" href="/outpatient/dimensioning">
+          <Button variant="outlined" href={props.dimensioningHref}>
             Gå till dimensionering
           </Button>
         </Box>

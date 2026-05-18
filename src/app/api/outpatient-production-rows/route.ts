@@ -24,12 +24,58 @@ type CreateOutpatientProductionRowPayload = {
   drg_average?: number;
 };
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const result = await db.query(`
+    await ensureOutpatientComparisonColumns();
+
+    const { searchParams } = new URL(request.url);
+    const conditions: string[] = [];
+    const params: Array<number | string> = [];
+    const productionPlanId = searchParams.get("productionPlanId");
+    const kombikaId = searchParams.get("kombikaId");
+    const year = searchParams.get("year");
+    const careType = searchParams.get("careType");
+    const dayCareCondition = `
+      (
+        LOWER(COALESCE(rows.care_type, '')) IN ('day_care', 'dagvard', 'dagvård')
+        OR LOWER(COALESCE(rows.kombika_pf, '')) LIKE '%dagv%'
+        OR LOWER(COALESCE(rows.kombika_pf_id, '')) ~ '(^|[-_])0?3($|[-_])'
+      )
+    `;
+
+    if (productionPlanId) {
+      params.push(Number(productionPlanId));
+      conditions.push(`rows.production_plan_id = $${params.length}`);
+    }
+
+    if (kombikaId) {
+      params.push(kombikaId);
+      conditions.push(`rows.kombika_pf_id = $${params.length}`);
+    }
+
+    if (year) {
+      params.push(Number(year));
+      conditions.push(`plans.year = $${params.length}`);
+    }
+
+    if (careType === "dagvard") {
+      conditions.push(dayCareCondition);
+    } else if (careType === "mottagning") {
+      conditions.push(`NOT ${dayCareCondition}`);
+    }
+
+    const whereClause = conditions.length
+      ? `WHERE ${conditions.join(" AND ")}`
+      : "";
+
+    const result = await db.query(
+      `
       SELECT
         rows.id,
         rows.production_plan_id,
+        plans.year AS production_plan_year,
+        plans.care_type AS production_plan_care_type,
+        organization_units.name AS organization_name,
         rows.row_label,
         rows.kombika_pf_id,
         rows.kombika_pf,
@@ -64,17 +110,27 @@ export async function GET() {
         rows.oo_distribution_status,
         comparison.previous_year_plan,
         comparison.r12_outcome,
+        comparison.r12_presence_fouu,
+        comparison.r12_presence_production,
+        comparison.r12_salary_cost_per_presence,
         comparison.previous_year_outcome,
         comparison.previous_dimensioning_presence,
         comparison.source AS comparison_source
       FROM outpatient_production_rows AS rows
+      LEFT JOIN production_plans AS plans
+        ON rows.production_plan_id = plans.id
+      LEFT JOIN organization_units
+        ON plans.organization_unit_id = organization_units.id
       LEFT JOIN outpatient_comparison_values AS comparison
         ON rows.production_plan_id = comparison.production_plan_id
         AND rows.kombika_pf_id = comparison.kombika_pf_id
         AND rows.period_type = comparison.period_type
         AND rows.period_value = comparison.period_value
+      ${whereClause}
       ORDER BY rows.id ASC
-    `);
+    `,
+      params
+    );
 
     return NextResponse.json(result.rows);
   } catch (error) {
@@ -85,6 +141,15 @@ export async function GET() {
       { status: 500 }
     );
   }
+}
+
+async function ensureOutpatientComparisonColumns() {
+  await db.query(`
+    ALTER TABLE outpatient_comparison_values
+      ADD COLUMN IF NOT EXISTS r12_presence_fouu NUMERIC(8,2),
+      ADD COLUMN IF NOT EXISTS r12_presence_production NUMERIC(8,2),
+      ADD COLUMN IF NOT EXISTS r12_salary_cost_per_presence NUMERIC(12,2)
+  `);
 }
 
 export async function POST(request: Request) {

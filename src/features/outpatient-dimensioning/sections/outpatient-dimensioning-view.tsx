@@ -4,19 +4,20 @@ import { Alert, Box, CircularProgress, Container, Stack } from "@mui/material";
 import { PageHeader } from "@/shared/components/page-header";
 import { SectionCard } from "@/shared/components/section-card";
 import { DimensioningActions } from "../components/dimensioning-actions";
-import { DimensioningComparisonValues } from "../components/dimensioning-comparison-values";
+import { DimensioningBasisSelection } from "../components/dimensioning-basis-selection";
 import { DimensioningCompetenceLevels } from "../components/dimensioning-competence-levels";
+import { DimensioningProductionBasis } from "../components/dimensioning-production-basis";
+import { DimensioningSummaryCard } from "../components/dimensioning-summary-card";
 import { useOutpatientDimensioning } from "../hooks/use-outpatient-dimensioning";
 
 export function OutpatientDimensioningView() {
   const dimensioning = useOutpatientDimensioning();
-  const values = dimensioning.dimensioningValues;
 
   return (
     <Box component="main" sx={{ minHeight: "100vh", bgcolor: "#ffffff", p: 2 }}>
       <Container maxWidth={false}>
         <Stack spacing={2}>
-          <PageHeader title="Dimensionering ME ÖPV" />
+          <PageHeader title="Dimensionering ME öppenvård" />
 
           {dimensioning.isLoading ? (
             <SectionCard>
@@ -26,30 +27,32 @@ export function OutpatientDimensioningView() {
             <Alert severity="error">{dimensioning.errorMessage}</Alert>
           ) : (
             <Stack spacing={2}>
-              <Box sx={mainGridSx}>
-                <DimensioningCompetenceLevels
-                  assumptions={dimensioning.assumptions}
-                  competenceLevels={dimensioning.competenceLevels}
-                  totalVisits={values.currentYearPlan}
-                  totalVisitMinutes={values.totalVisitMinutes}
-                  productionPresence={values.productionPresence}
-                  percentageSum={values.competencePercentageSum}
-                  hasInvalidSplit={values.hasInvalidCompetenceSplit}
-                  onAssumptionChange={dimensioning.handleAssumptionChange}
-                  onCompetenceChange={dimensioning.handleCompetenceChange}
-                />
+              <DimensioningBasisSelection
+                selection={dimensioning.selection}
+                options={dimensioning.basisOptions}
+                onSelectionChange={dimensioning.handleSelectionChange}
+              />
 
-                <DimensioningComparisonValues
-                  currentYearPlan={values.currentYearPlan}
-                  r12Outcome={values.r12Outcome}
-                  previousYearOutcome={values.previousYearOutcome}
-                  previousDimensioningPresence={
-                    values.previousDimensioningPresence
-                  }
-                />
-              </Box>
+              <DimensioningProductionBasis
+                rows={dimensioning.filteredProductionRows}
+                productionBasis={dimensioning.productionBasis}
+              />
 
-              <DimensioningActions />
+              <DimensioningCompetenceLevels
+                calculations={dimensioning.dimensioningCalculations}
+                careType={dimensioning.selection.careType}
+                productionShareSum={dimensioning.productionShareSum}
+                isLoading={dimensioning.isDimensioningLoading}
+                onRowChange={dimensioning.handleDimensioningRowChange}
+              />
+
+              <DimensioningSummaryCard summary={dimensioning.summary} />
+
+              <DimensioningActions
+                saveMessage={dimensioning.saveMessage}
+                isSaving={dimensioning.isSaving}
+                onSave={dimensioning.saveDimensioningRows}
+              />
             </Stack>
           )}
         </Stack>
@@ -57,10 +60,3 @@ export function OutpatientDimensioningView() {
     </Box>
   );
 }
-
-const mainGridSx = {
-  display: "grid",
-  gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 2fr) minmax(280px, 1fr)" },
-  gap: 2,
-  alignItems: "start",
-};

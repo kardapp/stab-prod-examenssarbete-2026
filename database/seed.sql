@@ -153,11 +153,14 @@ INSERT INTO outpatient_comparison_values (
   period_value,
   previous_year_plan,
   r12_outcome,
+  r12_presence_fouu,
+  r12_presence_production,
+  r12_salary_cost_per_presence,
   previous_year_outcome,
   previous_dimensioning_presence,
   source
 )
 VALUES
-  (1, 'PF-001', 'day', '2027-03-22', 92, 88, 95, 1.70, 'Mockdata'),
-  (1, 'PF-002', 'day', '2027-03-22', 70, 68, 72, 1.05, 'Mockdata'),
-  (1, 'PF-003', 'day', '2027-03-23', 45, 47, 44, 1.10, 'Mockdata');
+  (1, 'PF-001', 'day', '2027-03-22', 92, 88, 0.20, 1.50, 980000, 95, 1.70, 'Mockdata'),
+  (1, 'PF-002', 'day', '2027-03-22', 70, 68, 0.10, 0.95, 920000, 72, 1.05, 'Mockdata'),
+  (1, 'PF-003', 'day', '2027-03-23', 45, 47, 0.15, 0.90, 960000, 44, 1.10, 'Mockdata');

@@ -1,6 +1,9 @@
 export type OutpatientProductionRow = {
   id: number;
   production_plan_id: number | null;
+  production_plan_year: number | null;
+  production_plan_care_type: string | null;
+  organization_name: string | null;
 
   row_label: string;
 
@@ -46,6 +49,9 @@ export type OutpatientProductionRow = {
 
   previous_year_plan: number | null;
   r12_outcome: number | null;
+  r12_presence_fouu: number | null;
+  r12_presence_production: number | null;
+  r12_salary_cost_per_presence: number | null;
   previous_year_outcome: number | null;
   previous_dimensioning_presence: string | null;
   comparison_source: string | null;
