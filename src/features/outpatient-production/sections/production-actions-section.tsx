@@ -5,7 +5,7 @@ import { SectionCard } from "@/shared/components/section-card";
 
 type ProductionActionsSectionProps = {
   saveMessage: string;
-  onSave: () => void;
+  onSave: () => void | Promise<void>;
 };
 
 export function ProductionActionsSection(props: ProductionActionsSectionProps) {

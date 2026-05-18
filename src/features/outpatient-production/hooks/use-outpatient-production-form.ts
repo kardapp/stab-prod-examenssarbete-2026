@@ -140,12 +140,12 @@ export function useOutpatientProductionForm() {
     }));
   }
 
-  function saveProductionPlan() {
+  async function saveProductionPlan(): Promise<void> {
     setSubmitAttempted(true);
 
     if (hasValidationErrors(validationErrors) || !selectedKombika) {
       setSaveMessage("");
-      return false;
+      return;
     }
 
     const nextSavedPlan: OutpatientProductionSavedPlan = {
@@ -165,11 +165,52 @@ export function useOutpatientProductionForm() {
     } catch {
       // The saved plan still remains in React state if browser storage is blocked.
     }
+
+    // Save to database via API
+    try {
+      // Create one row per role distribution
+      const savePromises = formState.roleDistributions.map((role) =>
+        fetch("/api/outpatient-production-rows", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            kombika_pf_id: selectedKombika.id,
+            kombika_pf: selectedKombika.name,
+            section: selectedKombika.section,
+            cost_center: selectedKombika.costCenter,
+            site: selectedKombika.site,
+            assignment: selectedKombika.assignment,
+            period_type: "day",
+            period_value: formState.date,
+            care_type: "open_care",
+            visit_type: formState.visitTime.visitType,
+            visits: Math.round(
+              (formState.careEvents * role.percentage) / 100
+            ),
+            primary_role_category: role.primaryRole,
+            secondary_role_category: role.secondaryRole || undefined,
+            sll_uulp:
+              formState.sllPercentage > 50 ? "SLL" : "UULP",
+            acute_elective:
+              formState.acutePercentage > 50 ? "Akut" : "Elektivt",
+            average_minutes_per_visit:
+              formState.visitTime.averageMinutes,
+            drg_average:
+              formState.sllPercentage > 50
+                ? formState.drgAverage.sll
+                : formState.drgAverage.uulp,
+          }),
+        })
+      );
+
+      await Promise.all(savePromises);
+    } catch (error) {
+      console.error("Failed to save production plan to database:", error);
+    }
+
     setSaveMessage(
       `Produktionsplan sparad för ${selectedKombika.code} – ${selectedKombika.name}.`
     );
-
-    return true;
   }
 
   return {
