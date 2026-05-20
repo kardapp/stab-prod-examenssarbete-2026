@@ -11,6 +11,7 @@ export function SectionCard({ sx, ...props }: SectionCardProps) {
       sx={[
         {
           p: 2,
+          bgcolor: "var(--section-background)",
           border: "1px solid #d0d7de",
           borderRadius: 1,
           boxShadow: "none",

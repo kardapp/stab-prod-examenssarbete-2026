@@ -2,9 +2,19 @@ import { Box, Button, Container, Paper, Stack, Typography } from "@mui/material"
 
 export default function ResultsProductionPlanningPage() {
   return (
-    <Box component="main" sx={{ minHeight: "100vh", bgcolor: "#ffffff", p: 2 }}>
+    <Box
+      component="main"
+      sx={{ minHeight: "100vh", bgcolor: "var(--page-background)", p: 2 }}
+    >
       <Container maxWidth="md">
-        <Paper sx={{ p: 3, border: "1px solid #d0d7de", boxShadow: "none" }}>
+        <Paper
+          sx={{
+            p: 3,
+            bgcolor: "var(--section-background)",
+            border: "1px solid #d0d7de",
+            boxShadow: "none",
+          }}
+        >
           <Stack spacing={2}>
             <Typography variant="caption" sx={{ color: "#005883", fontWeight: 700 }}>
               Steg 3

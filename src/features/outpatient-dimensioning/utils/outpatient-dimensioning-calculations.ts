@@ -67,8 +67,16 @@ export function calculateDayCarePresenceNeed(params: {
   return calculatePresenceNeed(params.totalVisitMinutes, params.weeklyWorkHours);
 }
 
-export function calculateTotalPresence(calculatedPresence: number): number {
-  return calculatedPresence;
+export function calculateTotalPresence(params: {
+  productionPresence: number;
+  adminOtherPresence: number;
+  nonContributingPresence: number;
+}): number {
+  return (
+    params.productionPresence +
+    params.adminOtherPresence +
+    params.nonContributingPresence
+  );
 }
 
 export function calculateStaffingCost(
@@ -85,16 +93,22 @@ export function calculateDimensioneringSummary(
     (summary, calculation) => ({
       calculatedPresence:
         summary.calculatedPresence + calculation.calculatedPresence,
+      productionPresence:
+        summary.productionPresence + calculation.productionPresence,
+      adminOtherPresence:
+        summary.adminOtherPresence + calculation.adminOtherPresence,
       // ST som inte bidrar sparas och summeras separat tills verksamheten har
       // bekräftat om värdet ska påverka total närvaro eller hanteras som egen post.
       nonContributingStPresence:
         summary.nonContributingStPresence +
-        toNumber(calculation.row.nonContributingStPresence),
+        calculation.nonContributingPresence,
       totalPresence: summary.totalPresence + calculation.totalPresence,
       staffingCost: summary.staffingCost + calculation.staffingCost,
     }),
     {
       calculatedPresence: 0,
+      productionPresence: 0,
+      adminOtherPresence: 0,
       nonContributingStPresence: 0,
       totalPresence: 0,
       staffingCost: 0,
@@ -194,7 +208,18 @@ export function calculateDimensioningRows(params: {
             manualPresence: toNumber(row.manualPresence),
           })
         : calculatePresenceNeed(totalVisitMinutes, weeklyWorkHours);
-    const totalPresence = calculateTotalPresence(calculatedPresence);
+    const manualPresence = toNumber(row.manualPresence);
+    const productionPresence =
+      params.productionBasis.careType === "mottagning" && manualPresence > 0
+        ? manualPresence
+        : calculatedPresence;
+    const adminOtherPresence = toNumber(row.adminOtherPresence);
+    const nonContributingPresence = toNumber(row.nonContributingStPresence);
+    const totalPresence = calculateTotalPresence({
+      productionPresence,
+      adminOtherPresence,
+      nonContributingPresence,
+    });
     const staffingCost = calculateStaffingCost(
       totalPresence,
       toNumber(row.salaryCostPerPresence)
@@ -206,6 +231,9 @@ export function calculateDimensioningRows(params: {
       averageMinutesPerVisit: params.productionBasis.averageMinutesPerVisit,
       totalVisitMinutes,
       calculatedPresence,
+      productionPresence,
+      adminOtherPresence,
+      nonContributingPresence,
       totalPresence,
       staffingCost,
     };

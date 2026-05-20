@@ -70,6 +70,7 @@ function createInitialDimensioningRow(
     keyRatio: "",
     manualPresence: "",
     nonContributingStPresence: competenceLevel === "ST/LEG" ? "0" : "",
+    adminOtherPresence: "0",
     salaryCostPerPresence: "",
     comment: "",
     periodizationType: "day",

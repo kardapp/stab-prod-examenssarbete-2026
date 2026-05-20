@@ -12,6 +12,7 @@ type DimensioningRowPayload = {
   keyRatio?: string | number;
   manualPresence?: string | number;
   nonContributingStPresence?: string | number;
+  adminOtherPresence?: string | number;
   salaryCostPerPresence?: string | number;
   comment?: string;
   periodizationType?: string;
@@ -69,6 +70,7 @@ export async function GET(request: Request) {
           key_ratio,
           manual_presence,
           non_contributing_st_presence,
+          admin_other_presence,
           salary_cost_per_presence,
           comment,
           periodization_type
@@ -133,13 +135,14 @@ export async function PUT(request: Request) {
               key_ratio,
               manual_presence,
               non_contributing_st_presence,
+              admin_other_presence,
               salary_cost_per_presence,
               comment,
               periodization_type
             )
             VALUES (
               $1, $2, $3, $4, $5, $6, $7, $8,
-              $9, $10, $11, $12, $13, $14
+              $9, $10, $11, $12, $13, $14, $15
             )
             ON CONFLICT (
               production_plan_id,
@@ -155,6 +158,7 @@ export async function PUT(request: Request) {
               key_ratio = EXCLUDED.key_ratio,
               manual_presence = EXCLUDED.manual_presence,
               non_contributing_st_presence = EXCLUDED.non_contributing_st_presence,
+              admin_other_presence = EXCLUDED.admin_other_presence,
               salary_cost_per_presence = EXCLUDED.salary_cost_per_presence,
               comment = EXCLUDED.comment,
               periodization_type = EXCLUDED.periodization_type,
@@ -172,6 +176,7 @@ export async function PUT(request: Request) {
             toNullableNumber(row.keyRatio),
             toNullableNumber(row.manualPresence),
             toNullableNumber(row.nonContributingStPresence),
+            toNullableNumber(row.adminOtherPresence),
             toNullableNumber(row.salaryCostPerPresence),
             row.comment ?? "",
             row.periodizationType ?? "day",
@@ -200,6 +205,7 @@ export async function PUT(request: Request) {
           key_ratio,
           manual_presence,
           non_contributing_st_presence,
+          admin_other_presence,
           salary_cost_per_presence,
           comment,
           periodization_type
@@ -246,6 +252,7 @@ async function ensureDimensioningTable() {
       key_ratio NUMERIC(10,2),
       manual_presence NUMERIC(10,2),
       non_contributing_st_presence NUMERIC(10,2) DEFAULT 0,
+      admin_other_presence NUMERIC(10,2) DEFAULT 0,
       salary_cost_per_presence NUMERIC(12,2) DEFAULT 0,
       comment TEXT,
       periodization_type TEXT DEFAULT 'day',
@@ -253,6 +260,11 @@ async function ensureDimensioningTable() {
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       UNIQUE (production_plan_id, kombika_pf_id, care_type, competence_level)
     )
+  `);
+
+  await db.query(`
+    ALTER TABLE dimensionering_me_opv_rows
+      ADD COLUMN IF NOT EXISTS admin_other_presence NUMERIC(10,2) DEFAULT 0
   `);
 }
 

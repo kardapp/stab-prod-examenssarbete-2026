@@ -27,6 +27,7 @@ export type DimensioningRowState = {
   keyRatio: string;
   manualPresence: string;
   nonContributingStPresence: string;
+  adminOtherPresence: string;
   salaryCostPerPresence: string;
   comment: string;
   periodizationType: PeriodizationType;
@@ -40,6 +41,7 @@ export type DimensioningRowField = keyof Pick<
   | "keyRatio"
   | "manualPresence"
   | "nonContributingStPresence"
+  | "adminOtherPresence"
   | "salaryCostPerPresence"
   | "comment"
   | "periodizationType"
@@ -74,12 +76,17 @@ export type DimensioningRowCalculation = {
   averageMinutesPerVisit: number;
   totalVisitMinutes: number;
   calculatedPresence: number;
+  productionPresence: number;
+  adminOtherPresence: number;
+  nonContributingPresence: number;
   totalPresence: number;
   staffingCost: number;
 };
 
 export type DimensioneringSummary = {
   calculatedPresence: number;
+  productionPresence: number;
+  adminOtherPresence: number;
   nonContributingStPresence: number;
   totalPresence: number;
   staffingCost: number;

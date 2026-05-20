@@ -14,7 +14,10 @@ export function OutpatientDimensioningView() {
   const dimensioning = useOutpatientDimensioning();
 
   return (
-    <Box component="main" sx={{ minHeight: "100vh", bgcolor: "#ffffff", p: 2 }}>
+    <Box
+      component="main"
+      sx={{ minHeight: "100vh", bgcolor: "var(--page-background)", p: 2 }}
+    >
       <Container maxWidth={false}>
         <Stack spacing={2}>
           <PageHeader title="Dimensionering ME öppenvård" />

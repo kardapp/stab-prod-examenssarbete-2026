@@ -3,7 +3,6 @@
 import {
   Alert,
   Box,
-  Chip,
   Stack,
   Table,
   TableBody,
@@ -179,7 +178,7 @@ const supportGridSx = {
   display: "grid",
   gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
   gap: 1.5,
-  bgcolor: "#f8fbfd",
+  bgcolor: "var(--section-background)",
   border: "1px solid #d0d7de",
   borderRadius: 1,
   p: 1.5,

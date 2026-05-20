@@ -28,6 +28,14 @@ export function DimensioningSummaryCard(props: DimensioningSummaryCardProps) {
           value={formatTwoDecimals(props.summary.calculatedPresence)}
         />
         <SummaryValue
+          label="Total produktionsnärvaro"
+          value={formatTwoDecimals(props.summary.productionPresence)}
+        />
+        <SummaryValue
+          label="Total admin/övrigt"
+          value={formatTwoDecimals(props.summary.adminOtherPresence)}
+        />
+        <SummaryValue
           label="Total ST som inte bidrar"
           value={formatTwoDecimals(props.summary.nonContributingStPresence)}
         />
@@ -59,7 +67,7 @@ function SummaryValue(props: { label: string; value: string }) {
 
 const summaryGridSx = {
   display: "grid",
-  gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)" },
+  gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)", xl: "repeat(6, 1fr)" },
   gap: 1.5,
 };
 
@@ -67,5 +75,5 @@ const summaryValueSx = {
   border: "1px solid #d0d7de",
   borderRadius: 1,
   p: 1.5,
-  bgcolor: "#f8fbfd",
+  bgcolor: "var(--section-background)",
 };

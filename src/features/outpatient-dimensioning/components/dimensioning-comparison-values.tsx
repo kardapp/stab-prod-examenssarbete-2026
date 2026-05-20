@@ -65,5 +65,5 @@ const metricCardSx = {
   border: "1px solid #d0d7de",
   borderRadius: 1,
   p: 1.5,
-  bgcolor: "#f8fbfd",
+  bgcolor: "var(--section-background)",
 };

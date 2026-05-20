@@ -72,5 +72,5 @@ const selectedKombikaSx = {
   border: "1px solid #d0d7de",
   borderRadius: 1,
   p: 1.5,
-  bgcolor: "#f6f8fa",
+  bgcolor: "var(--section-background)",
 };

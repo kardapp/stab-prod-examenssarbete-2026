@@ -84,6 +84,7 @@ CREATE TABLE dimensionering_me_opv_rows (
   key_ratio NUMERIC(10,2),
   manual_presence NUMERIC(10,2),
   non_contributing_st_presence NUMERIC(10,2) DEFAULT 0,
+  admin_other_presence NUMERIC(10,2) DEFAULT 0,
   salary_cost_per_presence NUMERIC(12,2) DEFAULT 0,
   comment TEXT,
   periodization_type TEXT DEFAULT 'day',

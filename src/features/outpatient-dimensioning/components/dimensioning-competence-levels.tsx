@@ -91,6 +91,8 @@ export function DimensioningCompetenceLevels(
             <HeaderCell align="right">Snitt-tid</HeaderCell>
             <HeaderCell align="right">Veckoarbetstid</HeaderCell>
             <HeaderCell align="right">Beräknad närvaro</HeaderCell>
+            <HeaderCell align="right">Manuell närvaro</HeaderCell>
+            <HeaderCell align="right">Produktionsnärvaro</HeaderCell>
           </Box>
 
           {props.calculations.map((calculation) => {
@@ -151,6 +153,24 @@ export function DimensioningCompetenceLevels(
                   align="right"
                   calculated
                 />
+                <InputValue label="Manuell närvaro" align="right">
+                  <NumberField
+                    value={row.manualPresence}
+                    onChange={(value) =>
+                      props.onRowChange(
+                        row.competenceLevel,
+                        "manualPresence",
+                        value
+                      )
+                    }
+                  />
+                </InputValue>
+                <ReadOnlyValue
+                  label="Produktionsnärvaro"
+                  value={formatTwoDecimals(calculation.productionPresence)}
+                  align="right"
+                  calculated
+                />
               </Box>
             );
           })}
@@ -166,13 +186,10 @@ export function DimensioningCompetenceLevels(
                 <HeaderCell>Kompetensnivå</HeaderCell>
                 <HeaderCell>Dagvårdsmetod</HeaderCell>
                 <HeaderCell align="right">Nyckeltal</HeaderCell>
-                <HeaderCell align="right">Manuell bemanning</HeaderCell>
               </Box>
 
               {props.calculations.map((calculation) => {
                 const row = calculation.row;
-                const isManual =
-                  row.dayCareCalculationMethod === "manual_presence";
                 const isKeyRatio =
                   row.dayCareCalculationMethod === "key_ratio";
 
@@ -217,19 +234,6 @@ export function DimensioningCompetenceLevels(
                         }
                       />
                     </InputValue>
-                    <InputValue label="Manuell bemanning" align="right">
-                      <NumberField
-                        value={row.manualPresence}
-                        disabled={!isManual}
-                        onChange={(value) =>
-                          props.onRowChange(
-                            row.competenceLevel,
-                            "manualPresence",
-                            value
-                          )
-                        }
-                      />
-                    </InputValue>
                   </Box>
                 );
               })}
@@ -242,12 +246,13 @@ export function DimensioningCompetenceLevels(
         <FormSection
           overline="Fylls i i dimensioneringen"
           title="Justeringar och kostnader"
-          description="ST som inte bidrar och lönekostnad sparas separat från produktionsunderlaget."
+          description="Admin/övrigt, ST som inte bidrar och lönekostnad sparas separat från produktionsunderlaget."
         />
 
         <Box sx={costTableSx}>
           <Box sx={costHeaderRowSx}>
             <HeaderCell>Kompetensnivå</HeaderCell>
+            <HeaderCell align="right">Admin/övrigt</HeaderCell>
             <HeaderCell align="right">ST ej bidrar</HeaderCell>
             <HeaderCell align="right">Total närvaro</HeaderCell>
             <HeaderCell align="right">Lönekostnad/närvaro</HeaderCell>
@@ -266,6 +271,18 @@ export function DimensioningCompetenceLevels(
                   value={row.competenceLevel}
                   strong
                 />
+                <InputValue label="Admin/övrigt" align="right">
+                  <NumberField
+                    value={row.adminOtherPresence}
+                    onChange={(value) =>
+                      props.onRowChange(
+                        row.competenceLevel,
+                        "adminOtherPresence",
+                        value
+                      )
+                    }
+                  />
+                </InputValue>
                 <InputValue label="ST ej bidrar" align="right">
                   <NumberField
                     value={row.nonContributingStPresence}
@@ -343,8 +360,8 @@ export function DimensioningCompetenceLevels(
         </Box>
 
         <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
-          Beräknad närvaro och bemanningskostnad är beräknade värden. ST som
-          inte bidrar sparas separat och visas i sammanfattningen.
+          Produktionsnärvaro är beräknad närvaro eller manuell närvaro. Total
+          närvaro inkluderar även admin/övrigt och ST som inte bidrar.
         </Typography>
       </SectionCard>
     </Stack>
@@ -447,7 +464,7 @@ function shareSumSx(hasError: boolean) {
     py: 1,
     minWidth: 170,
     alignSelf: { xs: "flex-start", md: "center" },
-    bgcolor: "#f8fbfd",
+    bgcolor: "var(--section-background)",
   };
 }
 
@@ -455,7 +472,7 @@ function valueCellSx(align: "left" | "right" = "left", muted = false) {
   return {
     minWidth: 0,
     textAlign: { xs: "left", lg: align },
-    bgcolor: muted ? "#f8fbfd" : "transparent",
+    bgcolor: muted ? "var(--section-background)" : "transparent",
     borderRadius: 1,
     px: muted ? 1 : 0,
     py: muted ? 0.75 : 0,
@@ -471,7 +488,7 @@ const needRowSx = {
   display: "grid",
   gridTemplateColumns: {
     xs: "1fr",
-    lg: "minmax(78px, 0.8fr) minmax(92px, 0.9fr) minmax(78px, 0.8fr) minmax(104px, 1fr) minmax(92px, 0.9fr) minmax(104px, 1fr) minmax(112px, 1fr)",
+    lg: "minmax(78px, 0.8fr) minmax(92px, 0.9fr) minmax(72px, 0.75fr) minmax(96px, 0.95fr) minmax(86px, 0.85fr) minmax(96px, 0.95fr) minmax(96px, 0.95fr) minmax(96px, 0.95fr) minmax(106px, 1fr)",
   },
   gap: 1,
   alignItems: "center",
@@ -495,7 +512,7 @@ const dayCareRowSx = {
   display: "grid",
   gridTemplateColumns: {
     xs: "1fr",
-    lg: "minmax(78px, 0.8fr) minmax(160px, 1.4fr) minmax(100px, 1fr) minmax(120px, 1fr)",
+    lg: "minmax(78px, 0.8fr) minmax(160px, 1.4fr) minmax(100px, 1fr)",
   },
   gap: 1,
   alignItems: "center",
@@ -519,7 +536,7 @@ const costRowSx = {
   display: "grid",
   gridTemplateColumns: {
     xs: "1fr",
-    lg: "minmax(78px, 0.8fr) minmax(96px, 1fr) minmax(96px, 1fr) minmax(116px, 1.1fr) minmax(118px, 1.1fr) minmax(112px, 1fr) minmax(130px, 1.2fr)",
+    lg: "minmax(78px, 0.8fr) minmax(90px, 0.9fr) minmax(90px, 0.9fr) minmax(96px, 0.95fr) minmax(116px, 1.1fr) minmax(118px, 1.1fr) minmax(112px, 1fr) minmax(130px, 1.2fr)",
   },
   gap: 1,
   alignItems: "center",

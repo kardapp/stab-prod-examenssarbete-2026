@@ -35,6 +35,7 @@ type SavedDimensioningRow = {
   key_ratio: string | number | null;
   manual_presence: string | number | null;
   non_contributing_st_presence: string | number | null;
+  admin_other_presence: string | number | null;
   salary_cost_per_presence: string | number | null;
   comment: string | null;
   periodization_type: DimensioningRowState["periodizationType"];
@@ -531,6 +532,10 @@ function mergeSavedDimensioningRows(
       nonContributingStPresence: toInputValue(
         savedRow.non_contributing_st_presence,
         defaultRow.nonContributingStPresence
+      ),
+      adminOtherPresence: toInputValue(
+        savedRow.admin_other_presence,
+        defaultRow.adminOtherPresence
       ),
       salaryCostPerPresence: toInputValue(
         savedRow.salary_cost_per_presence,

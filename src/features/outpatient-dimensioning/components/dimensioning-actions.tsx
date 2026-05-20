@@ -34,6 +34,12 @@ export function DimensioningActions(props: DimensioningActionsProps) {
           >
             Gå till produktionsplanering
           </Button>
+          <Button
+            variant="outlined"
+            href="/outpatient/dimensioning/results-dimensioning"
+          >
+            Gå till resultat
+          </Button>
         </Box>
       </Stack>
     </SectionCard>

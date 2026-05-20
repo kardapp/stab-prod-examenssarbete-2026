@@ -16,7 +16,7 @@ export default function HomePage() {
             component="main"
             sx={{
                 minHeight: "100vh",
-                bgcolor: "background.default",
+                bgcolor: "var(--page-background)",
                 py: 6,
             }}
         >
@@ -54,7 +54,12 @@ export default function HomePage() {
                         </TextField>
                     </Box>
                     <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
-                        <Card sx={{ flex: 1 }}>
+                        <Card
+                            sx={{
+                                flex: 1,
+                                bgcolor: "var(--section-background)",
+                            }}
+                        >
                             <CardContent>
                                 <Box
                                     component="h2"
@@ -81,7 +86,12 @@ export default function HomePage() {
                             </CardContent>
                         </Card>
 
-                        <Card sx={{ flex: 1 }}>
+                        <Card
+                            sx={{
+                                flex: 1,
+                                bgcolor: "var(--section-background)",
+                            }}
+                        >
                             <CardContent>
                                 <Box
                                     component="h2"

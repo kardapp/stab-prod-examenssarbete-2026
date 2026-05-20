@@ -27,7 +27,7 @@ export function SummaryValueCard(props: SummaryValueCardProps) {
 }
 
 const summaryValueSx = {
-  bgcolor: "#f6f8fa",
+  bgcolor: "var(--section-background)",
   border: "1px solid #e5e7eb",
   borderRadius: 1,
   p: 1.5,
