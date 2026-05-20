@@ -1,0 +1,608 @@
+"use client";
+
+import type { ReactNode } from "react";
+import {
+  Alert,
+  Box,
+  Button,
+  Chip,
+  CircularProgress,
+  Container,
+  MenuItem,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
+import type { OutpatientProductionRow } from "@/types/production";
+import { FormSection } from "@/shared/components/form-section";
+import { PageHeader } from "@/shared/components/page-header";
+import { SectionCard } from "@/shared/components/section-card";
+import {
+  formatOneDecimal,
+  formatWholeNumber,
+} from "@/shared/utils/format-number";
+import { useOutpatientOoDistribution } from "../hooks/use-outpatient-oo-distribution";
+import type { OoDistributionDraftRow } from "../types/outpatient-oo-distribution.types";
+import { calculateDistributedVisits } from "../utils/outpatient-oo-distribution-calculations";
+
+export function OutpatientOoDistributionView() {
+  const ooDistribution = useOutpatientOoDistribution();
+
+  return (
+    <Box
+      component="main"
+      sx={{ minHeight: "100vh", bgcolor: "var(--page-background)", p: 2 }}
+    >
+      <Container maxWidth={false}>
+        <Stack spacing={2}>
+          <PageHeader
+            overline="Produktionsplanering öppenvård"
+            title="Fördelning av vårdtillfällen till OO"
+          />
+
+          {ooDistribution.isLoading ? (
+            <SectionCard>
+              <CircularProgress />
+            </SectionCard>
+          ) : ooDistribution.errorMessage ? (
+            <Alert severity="error">{ooDistribution.errorMessage}</Alert>
+          ) : ooDistribution.productionRows.length === 0 ? (
+            <Alert severity="info">
+              Det finns inga sparade produktionsrader att fördela ännu.
+            </Alert>
+          ) : (
+            <Stack spacing={2}>
+              <OoIntroSection />
+
+              <ProductionRowSection
+                productionRows={ooDistribution.productionRows}
+                selectedProductionRow={ooDistribution.selectedProductionRow}
+                selectedProductionRowId={
+                  ooDistribution.selectedProductionRowId
+                }
+                onProductionRowChange={
+                  ooDistribution.handleProductionRowChange
+                }
+              />
+
+              <DistributionEditorSection
+                rows={ooDistribution.selectedDraftRows}
+                selectedProductionRow={ooDistribution.selectedProductionRow}
+                summary={ooDistribution.summary}
+                showValidation={ooDistribution.showValidation}
+                validationMessage={ooDistribution.validationMessage}
+                onAddRow={ooDistribution.addDistributionRow}
+                onRemoveRow={ooDistribution.removeDistributionRow}
+                onRowChange={ooDistribution.handleDistributionRowChange}
+              />
+
+              <OoActionsSection
+                isSaving={ooDistribution.isSaving}
+                saveMessage={ooDistribution.saveMessage}
+                selectedProductionRow={ooDistribution.selectedProductionRow}
+                onSave={ooDistribution.saveDistribution}
+              />
+            </Stack>
+          )}
+        </Stack>
+      </Container>
+    </Box>
+  );
+}
+
+function OoIntroSection() {
+  return (
+    <SectionCard>
+      <FormSection
+        overline="Steg 2"
+        title="Vårdtillfällen fördelas till vårdande enhet"
+        description="Efter överenskommelse matas fördelningen in i verktyget per produktionsrad."
+      />
+      <Box sx={introGridSx}>
+        <MetricValue label="Underlag" value="Sparade produktionsrader" />
+        <MetricValue label="Fördelning" value="OO och vårdande enhet" />
+        <MetricValue label="Krav" value="100% per produktionsrad" />
+      </Box>
+    </SectionCard>
+  );
+}
+
+function ProductionRowSection(props: {
+  productionRows: OutpatientProductionRow[];
+  selectedProductionRow: OutpatientProductionRow | null;
+  selectedProductionRowId: string;
+  onProductionRowChange: (productionRowId: string) => void;
+}) {
+  const selectedRow = props.selectedProductionRow;
+
+  return (
+    <SectionCard>
+      <FormSection
+        overline="Produktionsrad"
+        title="Välj vårdtillfällen att fördela"
+        description="Fördelningen sparas på den valda raden och kan justeras efter ny överenskommelse."
+      />
+
+      <Box sx={selectionGridSx}>
+        <TextField
+          select
+          label="Produktionsrad"
+          size="small"
+          value={props.selectedProductionRowId}
+          onChange={(event) =>
+            props.onProductionRowChange(event.target.value)
+          }
+          sx={{ minWidth: 0 }}
+        >
+          {props.productionRows.map((row) => (
+            <MenuItem key={row.id} value={String(row.id)}>
+              {formatProductionRowOption(row)}
+            </MenuItem>
+          ))}
+        </TextField>
+
+        {selectedRow ? (
+          <Box sx={selectedRowSx}>
+            <Stack
+              direction={{ xs: "column", md: "row" }}
+              spacing={1}
+              sx={{
+                alignItems: { xs: "flex-start", md: "center" },
+                justifyContent: "space-between",
+              }}
+            >
+              <Box>
+                <Typography sx={{ fontWeight: 700 }}>
+                  {formatKombika(selectedRow)}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {formatProductionRowDetails(selectedRow)}
+                </Typography>
+              </Box>
+              <StatusChip status={selectedRow.oo_distribution_status} />
+            </Stack>
+          </Box>
+        ) : null}
+      </Box>
+    </SectionCard>
+  );
+}
+
+function DistributionEditorSection(props: {
+  rows: OoDistributionDraftRow[];
+  selectedProductionRow: OutpatientProductionRow | null;
+  summary: {
+    totalVisits: number;
+    totalPercentage: number;
+    distributedVisits: number;
+    remainingPercentage: number;
+    remainingVisits: number;
+  };
+  showValidation: boolean;
+  validationMessage: string;
+  onAddRow: () => void;
+  onRemoveRow: (draftRowId: string) => void;
+  onRowChange: (
+    draftRowId: string,
+    field: keyof Omit<OoDistributionDraftRow, "id" | "savedId">,
+    value: string
+  ) => void;
+}) {
+  return (
+    <SectionCard>
+      <FormSection
+        overline="OO-fördelning"
+        title="Fördelning till vårdande enhet"
+        description="Vårdtillfällen fördelas procentuellt till en eller flera vårdande enheter."
+      />
+
+      <Box sx={summaryGridSx}>
+        <MetricValue
+          label="Vårdtillfällen"
+          value={formatWholeNumber(props.summary.totalVisits)}
+        />
+        <MetricValue
+          label="Fördelad andel"
+          value={`${formatOneDecimal(props.summary.totalPercentage)}%`}
+        />
+        <MetricValue
+          label="Fördelade vårdtillfällen"
+          value={formatOneDecimal(props.summary.distributedVisits)}
+        />
+        <MetricValue
+          label="Kvar att fördela"
+          value={`${formatOneDecimal(props.summary.remainingVisits)} (${formatOneDecimal(
+            props.summary.remainingPercentage
+          )}%)`}
+        />
+      </Box>
+
+      {props.showValidation && props.validationMessage ? (
+        <Alert severity="warning" sx={{ mt: 2 }}>
+          {props.validationMessage}
+        </Alert>
+      ) : null}
+
+      <Box sx={{ display: "grid", gap: 0.75, mt: 2 }}>
+        <Box sx={distributionHeaderSx}>
+          <HeaderCell>OO</HeaderCell>
+          <HeaderCell>Vårdande enhet</HeaderCell>
+          <HeaderCell>Kostnadsställe</HeaderCell>
+          <HeaderCell align="right">Andel</HeaderCell>
+          <HeaderCell align="right">Vårdtillfällen</HeaderCell>
+          <HeaderCell>Kommentar</HeaderCell>
+          <HeaderCell>Åtgärd</HeaderCell>
+        </Box>
+
+        {props.rows.map((row) => (
+          <DistributionRow
+            key={row.id}
+            row={row}
+            selectedProductionRow={props.selectedProductionRow}
+            canRemove={props.rows.length > 1}
+            onRemoveRow={props.onRemoveRow}
+            onRowChange={props.onRowChange}
+          />
+        ))}
+      </Box>
+
+      <Box sx={{ mt: 2 }}>
+        <Button type="button" variant="outlined" onClick={props.onAddRow}>
+          Lägg till vårdande enhet
+        </Button>
+      </Box>
+    </SectionCard>
+  );
+}
+
+function DistributionRow(props: {
+  row: OoDistributionDraftRow;
+  selectedProductionRow: OutpatientProductionRow | null;
+  canRemove: boolean;
+  onRemoveRow: (draftRowId: string) => void;
+  onRowChange: (
+    draftRowId: string,
+    field: keyof Omit<OoDistributionDraftRow, "id" | "savedId">,
+    value: string
+  ) => void;
+}) {
+  const visits = calculateDistributedVisits(
+    props.selectedProductionRow?.visits,
+    props.row.percentage
+  );
+
+  return (
+    <Box sx={distributionRowSx}>
+      <InputValue label="OO">
+        <TextField
+          size="small"
+          value={props.row.ooName}
+          onChange={(event) =>
+            props.onRowChange(props.row.id, "ooName", event.target.value)
+          }
+          fullWidth
+        />
+      </InputValue>
+      <InputValue label="Vårdande enhet">
+        <TextField
+          size="small"
+          value={props.row.careUnit}
+          onChange={(event) =>
+            props.onRowChange(props.row.id, "careUnit", event.target.value)
+          }
+          fullWidth
+        />
+      </InputValue>
+      <InputValue label="Kostnadsställe">
+        <TextField
+          size="small"
+          value={props.row.careUnitCostCenter}
+          onChange={(event) =>
+            props.onRowChange(
+              props.row.id,
+              "careUnitCostCenter",
+              event.target.value
+            )
+          }
+          fullWidth
+        />
+      </InputValue>
+      <InputValue label="Andel" align="right">
+        <TextField
+          type="number"
+          size="small"
+          value={props.row.percentage}
+          onChange={(event) =>
+            props.onRowChange(props.row.id, "percentage", event.target.value)
+          }
+          slotProps={{ htmlInput: { min: 0, max: 100, step: 0.1 } }}
+          fullWidth
+        />
+      </InputValue>
+      <ReadOnlyValue
+        label="Vårdtillfällen"
+        value={formatOneDecimal(visits)}
+        align="right"
+      />
+      <InputValue label="Kommentar">
+        <TextField
+          size="small"
+          value={props.row.comment}
+          onChange={(event) =>
+            props.onRowChange(props.row.id, "comment", event.target.value)
+          }
+          fullWidth
+        />
+      </InputValue>
+      <Box>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ display: { xs: "block", lg: "none" }, mb: 0.25 }}
+        >
+          Åtgärd
+        </Typography>
+        <Button
+          type="button"
+          variant="outlined"
+          color="error"
+          disabled={!props.canRemove}
+          onClick={() => props.onRemoveRow(props.row.id)}
+          fullWidth
+        >
+          Ta bort
+        </Button>
+      </Box>
+    </Box>
+  );
+}
+
+function OoActionsSection(props: {
+  isSaving: boolean;
+  saveMessage: string;
+  selectedProductionRow: OutpatientProductionRow | null;
+  onSave: () => void | Promise<void>;
+}) {
+  return (
+    <SectionCard>
+      <Stack spacing={2}>
+        {props.saveMessage ? (
+          <Alert severity="success">{props.saveMessage}</Alert>
+        ) : null}
+
+        <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
+          <Button
+            type="button"
+            variant="contained"
+            disabled={props.isSaving}
+            onClick={props.onSave}
+          >
+            {props.isSaving ? "Sparar..." : "Spara OO-fördelning"}
+          </Button>
+          <Button
+            type="button"
+            variant="outlined"
+            href="/outpatient/production/production-planning"
+          >
+            Tillbaka till produktionsplanering
+          </Button>
+          <Button
+            type="button"
+            variant="outlined"
+            href={getDimensioningHref(props.selectedProductionRow)}
+          >
+            Gå till dimensionering
+          </Button>
+          <Button
+            type="button"
+            variant="outlined"
+            href="/outpatient/production/results-production-planning"
+          >
+            Gå till resultat
+          </Button>
+        </Box>
+      </Stack>
+    </SectionCard>
+  );
+}
+
+function MetricValue(props: { label: string; value: string }) {
+  return (
+    <Stack spacing={0.25} sx={metricSx}>
+      <Typography variant="caption" color="text.secondary">
+        {props.label}
+      </Typography>
+      <Typography sx={{ color: "#005883", fontWeight: 700 }}>
+        {props.value}
+      </Typography>
+    </Stack>
+  );
+}
+
+function HeaderCell(props: {
+  children: string;
+  align?: "left" | "right";
+}) {
+  return (
+    <Typography
+      variant="caption"
+      sx={{
+        color: "#005883",
+        display: { xs: "none", lg: "block" },
+        fontWeight: 700,
+        minWidth: 0,
+        textAlign: props.align ?? "left",
+      }}
+    >
+      {props.children}
+    </Typography>
+  );
+}
+
+function InputValue(props: {
+  children: ReactNode;
+  label: string;
+  align?: "left" | "right";
+}) {
+  return (
+    <Box sx={{ minWidth: 0, textAlign: { xs: "left", lg: props.align } }}>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{ display: { xs: "block", lg: "none" }, mb: 0.25 }}
+      >
+        {props.label}
+      </Typography>
+      {props.children}
+    </Box>
+  );
+}
+
+function ReadOnlyValue(props: {
+  label: string;
+  value: string;
+  align?: "left" | "right";
+}) {
+  return (
+    <Box sx={{ minWidth: 0, textAlign: { xs: "left", lg: props.align } }}>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{ display: { xs: "block", lg: "none" }, mb: 0.25 }}
+      >
+        {props.label}
+      </Typography>
+      <Typography sx={readOnlySx}>{props.value}</Typography>
+    </Box>
+  );
+}
+
+function StatusChip(props: { status: string | null }) {
+  const status = props.status || "Ej fördelad";
+  const color = status === "Fördelad" ? "success" : "default";
+
+  return <Chip label={status} color={color} size="small" />;
+}
+
+function formatProductionRowOption(row: OutpatientProductionRow): string {
+  return [
+    row.period_value || "Saknar datum",
+    row.kombika_pf_id,
+    row.kombika_pf || row.row_label,
+    `${formatWholeNumber(Number(row.visits ?? 0))} vårdtillfällen`,
+  ]
+    .filter(Boolean)
+    .join(" - ");
+}
+
+function formatKombika(row: OutpatientProductionRow): string {
+  return [row.kombika_pf_id, row.kombika_pf].filter(Boolean).join(" - ");
+}
+
+function formatProductionRowDetails(row: OutpatientProductionRow): string {
+  return [
+    row.section,
+    row.site,
+    row.primary_role_category,
+    row.period_value,
+    `${formatWholeNumber(Number(row.visits ?? 0))} vårdtillfällen`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+function getDimensioningHref(row: OutpatientProductionRow | null): string {
+  if (!row) {
+    return "/outpatient/dimensioning";
+  }
+
+  const params = new URLSearchParams({
+    productionPlanId: String(row.production_plan_id ?? 1),
+    kombikaId: row.kombika_pf_id ?? "",
+    careType: isDayCareRow(row) ? "dagvard" : "mottagning",
+  });
+
+  return `/outpatient/dimensioning?${params.toString()}`;
+}
+
+function isDayCareRow(row: OutpatientProductionRow): boolean {
+  const values = [row.care_type, row.kombika_pf, row.kombika_pf_id]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  return (
+    values.includes("dagv") ||
+    values.includes("day_care") ||
+    values.includes("dagvard")
+  );
+}
+
+const introGridSx = {
+  display: "grid",
+  gridTemplateColumns: {
+    xs: "1fr",
+    md: "repeat(3, minmax(0, 1fr))",
+  },
+  gap: 1.5,
+};
+
+const selectionGridSx = {
+  display: "grid",
+  gridTemplateColumns: {
+    xs: "1fr",
+    lg: "minmax(280px, 0.9fr) minmax(320px, 1.1fr)",
+  },
+  gap: 1.5,
+  alignItems: "start",
+};
+
+const selectedRowSx = {
+  border: "1px solid #d0d7de",
+  borderRadius: 1,
+  p: 1.5,
+  bgcolor: "var(--page-background)",
+};
+
+const summaryGridSx = {
+  display: "grid",
+  gridTemplateColumns: {
+    xs: "1fr",
+    md: "repeat(2, minmax(0, 1fr))",
+    xl: "repeat(4, minmax(0, 1fr))",
+  },
+  gap: 1.5,
+};
+
+const metricSx = {
+  border: "1px solid #d0d7de",
+  borderRadius: 1,
+  p: 1.5,
+  bgcolor: "var(--page-background)",
+};
+
+const distributionHeaderSx = {
+  display: "grid",
+  gridTemplateColumns: {
+    xs: "1fr",
+    lg: "minmax(110px, 0.9fr) minmax(170px, 1.3fr) minmax(120px, 0.9fr) minmax(88px, 0.7fr) minmax(110px, 0.8fr) minmax(160px, 1.2fr) minmax(96px, 0.7fr)",
+  },
+  gap: 1,
+  alignItems: "center",
+};
+
+const distributionRowSx = {
+  ...distributionHeaderSx,
+  borderTop: "1px solid #d0d7de",
+  pt: 1,
+};
+
+const readOnlySx = {
+  border: "1px solid #d0d7de",
+  borderRadius: 1,
+  minHeight: 40,
+  px: 1.5,
+  py: 1,
+  bgcolor: "var(--page-background)",
+  fontWeight: 700,
+};
