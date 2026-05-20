@@ -22,7 +22,10 @@ import {
   formatWholeNumber,
 } from "@/shared/utils/format-number";
 import { useOutpatientOoDistribution } from "../hooks/use-outpatient-oo-distribution";
-import type { OoDistributionDraftRow } from "../types/outpatient-oo-distribution.types";
+import type {
+  CareUnitOption,
+  OoDistributionDraftRow,
+} from "../types/outpatient-oo-distribution.types";
 import { calculateDistributedVisits } from "../utils/outpatient-oo-distribution-calculations";
 
 export function OutpatientOoDistributionView() {
@@ -66,12 +69,14 @@ export function OutpatientOoDistributionView() {
               />
 
               <DistributionEditorSection
+                careUnitOptions={ooDistribution.careUnitOptions}
                 rows={ooDistribution.selectedDraftRows}
                 selectedProductionRow={ooDistribution.selectedProductionRow}
                 summary={ooDistribution.summary}
                 showValidation={ooDistribution.showValidation}
                 validationMessage={ooDistribution.validationMessage}
                 onAddRow={ooDistribution.addDistributionRow}
+                onCareUnitChange={ooDistribution.handleCareUnitChange}
                 onRemoveRow={ooDistribution.removeDistributionRow}
                 onRowChange={ooDistribution.handleDistributionRowChange}
               />
@@ -100,7 +105,7 @@ function OoIntroSection() {
       />
       <Box sx={introGridSx}>
         <MetricValue label="Underlag" value="Sparade produktionsrader" />
-        <MetricValue label="Fördelning" value="OO och vårdande enhet" />
+        <MetricValue label="Fördelning" value="Vårdande enhet" />
         <MetricValue label="Krav" value="100% per produktionsrad" />
       </Box>
     </SectionCard>
@@ -169,6 +174,7 @@ function ProductionRowSection(props: {
 }
 
 function DistributionEditorSection(props: {
+  careUnitOptions: CareUnitOption[];
   rows: OoDistributionDraftRow[];
   selectedProductionRow: OutpatientProductionRow | null;
   summary: {
@@ -181,11 +187,11 @@ function DistributionEditorSection(props: {
   showValidation: boolean;
   validationMessage: string;
   onAddRow: () => void;
+  onCareUnitChange: (draftRowId: string, option: CareUnitOption) => void;
   onRemoveRow: (draftRowId: string) => void;
   onRowChange: (
     draftRowId: string,
-    field: keyof Omit<OoDistributionDraftRow, "id" | "savedId">,
-    value: string
+    changes: Partial<Omit<OoDistributionDraftRow, "id" | "savedId">>
   ) => void;
 }) {
   return (
@@ -225,12 +231,9 @@ function DistributionEditorSection(props: {
 
       <Box sx={{ display: "grid", gap: 0.75, mt: 2 }}>
         <Box sx={distributionHeaderSx}>
-          <HeaderCell>OO</HeaderCell>
           <HeaderCell>Vårdande enhet</HeaderCell>
-          <HeaderCell>Kostnadsställe</HeaderCell>
           <HeaderCell align="right">Andel</HeaderCell>
           <HeaderCell align="right">Vårdtillfällen</HeaderCell>
-          <HeaderCell>Kommentar</HeaderCell>
           <HeaderCell>Åtgärd</HeaderCell>
         </Box>
 
@@ -238,8 +241,10 @@ function DistributionEditorSection(props: {
           <DistributionRow
             key={row.id}
             row={row}
+            careUnitOptions={props.careUnitOptions}
             selectedProductionRow={props.selectedProductionRow}
             canRemove={props.rows.length > 1}
+            onCareUnitChange={props.onCareUnitChange}
             onRemoveRow={props.onRemoveRow}
             onRowChange={props.onRowChange}
           />
@@ -257,13 +262,14 @@ function DistributionEditorSection(props: {
 
 function DistributionRow(props: {
   row: OoDistributionDraftRow;
+  careUnitOptions: CareUnitOption[];
   selectedProductionRow: OutpatientProductionRow | null;
   canRemove: boolean;
+  onCareUnitChange: (draftRowId: string, option: CareUnitOption) => void;
   onRemoveRow: (draftRowId: string) => void;
   onRowChange: (
     draftRowId: string,
-    field: keyof Omit<OoDistributionDraftRow, "id" | "savedId">,
-    value: string
+    changes: Partial<Omit<OoDistributionDraftRow, "id" | "savedId">>
   ) => void;
 }) {
   const visits = calculateDistributedVisits(
@@ -273,39 +279,28 @@ function DistributionRow(props: {
 
   return (
     <Box sx={distributionRowSx}>
-      <InputValue label="OO">
-        <TextField
-          size="small"
-          value={props.row.ooName}
-          onChange={(event) =>
-            props.onRowChange(props.row.id, "ooName", event.target.value)
-          }
-          fullWidth
-        />
-      </InputValue>
       <InputValue label="Vårdande enhet">
         <TextField
+          select
           size="small"
-          value={props.row.careUnit}
-          onChange={(event) =>
-            props.onRowChange(props.row.id, "careUnit", event.target.value)
-          }
+          value={props.row.careUnitId}
+          onChange={(event) => {
+            const selectedOption = props.careUnitOptions.find(
+              (option) => option.id === event.target.value
+            );
+
+            if (selectedOption) {
+              props.onCareUnitChange(props.row.id, selectedOption);
+            }
+          }}
           fullWidth
-        />
-      </InputValue>
-      <InputValue label="Kostnadsställe">
-        <TextField
-          size="small"
-          value={props.row.careUnitCostCenter}
-          onChange={(event) =>
-            props.onRowChange(
-              props.row.id,
-              "careUnitCostCenter",
-              event.target.value
-            )
-          }
-          fullWidth
-        />
+        >
+          {props.careUnitOptions.map((option) => (
+            <MenuItem key={option.id} value={option.id}>
+              {option.label}
+            </MenuItem>
+          ))}
+        </TextField>
       </InputValue>
       <InputValue label="Andel" align="right">
         <TextField
@@ -313,7 +308,9 @@ function DistributionRow(props: {
           size="small"
           value={props.row.percentage}
           onChange={(event) =>
-            props.onRowChange(props.row.id, "percentage", event.target.value)
+            props.onRowChange(props.row.id, {
+              percentage: event.target.value,
+            })
           }
           slotProps={{ htmlInput: { min: 0, max: 100, step: 0.1 } }}
           fullWidth
@@ -324,16 +321,6 @@ function DistributionRow(props: {
         value={formatOneDecimal(visits)}
         align="right"
       />
-      <InputValue label="Kommentar">
-        <TextField
-          size="small"
-          value={props.row.comment}
-          onChange={(event) =>
-            props.onRowChange(props.row.id, "comment", event.target.value)
-          }
-          fullWidth
-        />
-      </InputValue>
       <Box>
         <Typography
           variant="caption"
@@ -585,7 +572,7 @@ const distributionHeaderSx = {
   display: "grid",
   gridTemplateColumns: {
     xs: "1fr",
-    lg: "minmax(110px, 0.9fr) minmax(170px, 1.3fr) minmax(120px, 0.9fr) minmax(88px, 0.7fr) minmax(110px, 0.8fr) minmax(160px, 1.2fr) minmax(96px, 0.7fr)",
+    lg: "minmax(260px, 1.4fr) minmax(96px, 0.6fr) minmax(120px, 0.7fr) minmax(96px, 0.6fr)",
   },
   gap: 1,
   alignItems: "center",

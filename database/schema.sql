@@ -75,12 +75,10 @@ CREATE TABLE outpatient_oo_distributions (
   id SERIAL PRIMARY KEY,
   production_row_id INTEGER NOT NULL REFERENCES outpatient_production_rows(id) ON DELETE CASCADE,
   distribution_order INTEGER NOT NULL DEFAULT 0,
-  oo_name TEXT,
+  care_unit_id TEXT,
   care_unit TEXT NOT NULL,
-  care_unit_cost_center TEXT,
   distribution_percentage NUMERIC(5,2) DEFAULT 0,
   visits NUMERIC(12,2) DEFAULT 0,
-  comment TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

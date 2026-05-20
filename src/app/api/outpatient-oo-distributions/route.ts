@@ -5,21 +5,17 @@ import { db } from "@/lib/db/db";
 type SaveOoDistributionPayload = {
   productionRowId?: number;
   distributions?: Array<{
-    ooName?: string;
+    careUnitId?: string;
     careUnit?: string;
-    careUnitCostCenter?: string;
     percentage?: string | number;
-    comment?: string;
   }>;
 };
 
 type SanitizedDistributionRow = {
-  ooName: string;
+  careUnitId: string;
   careUnit: string;
-  careUnitCostCenter: string;
   percentage: number;
   visits: number;
-  comment: string;
 };
 
 export async function GET(request: Request) {
@@ -52,12 +48,10 @@ export async function GET(request: Request) {
           distributions.id,
           distributions.production_row_id,
           distributions.distribution_order,
-          distributions.oo_name,
+          distributions.care_unit_id,
           distributions.care_unit,
-          distributions.care_unit_cost_center,
           distributions.distribution_percentage,
-          distributions.visits,
-          distributions.comment
+          distributions.visits
         FROM outpatient_oo_distributions AS distributions
         INNER JOIN outpatient_production_rows AS rows
           ON distributions.production_row_id = rows.id
@@ -151,34 +145,28 @@ export async function PUT(request: Request) {
           INSERT INTO outpatient_oo_distributions (
             production_row_id,
             distribution_order,
-            oo_name,
+            care_unit_id,
             care_unit,
-            care_unit_cost_center,
             distribution_percentage,
-            visits,
-            comment
+            visits
           )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          VALUES ($1, $2, $3, $4, $5, $6)
           RETURNING
             id,
             production_row_id,
             distribution_order,
-            oo_name,
+            care_unit_id,
             care_unit,
-            care_unit_cost_center,
             distribution_percentage,
-            visits,
-            comment
+            visits
         `,
         [
           productionRowId,
           index,
-          distribution.ooName || null,
+          distribution.careUnitId || null,
           distribution.careUnit,
-          distribution.careUnitCostCenter || null,
           distribution.percentage,
           distribution.visits,
-          distribution.comment || null,
         ]
       );
 
@@ -224,15 +212,18 @@ async function ensureOoDistributionTable() {
       id SERIAL PRIMARY KEY,
       production_row_id INTEGER NOT NULL REFERENCES outpatient_production_rows(id) ON DELETE CASCADE,
       distribution_order INTEGER NOT NULL DEFAULT 0,
-      oo_name TEXT,
+      care_unit_id TEXT,
       care_unit TEXT NOT NULL,
-      care_unit_cost_center TEXT,
       distribution_percentage NUMERIC(5,2) DEFAULT 0,
       visits NUMERIC(12,2) DEFAULT 0,
-      comment TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
+  `);
+
+  await db.query(`
+    ALTER TABLE outpatient_oo_distributions
+      ADD COLUMN IF NOT EXISTS care_unit_id TEXT
   `);
 }
 
@@ -243,17 +234,21 @@ function sanitizeDistributions(
   return (distributions ?? [])
     .map((distribution) => {
       const percentage = toNumber(distribution.percentage);
+      const careUnitId = distribution.careUnitId?.trim() ?? "";
 
       return {
-        ooName: distribution.ooName?.trim() ?? "",
+        careUnitId,
         careUnit: distribution.careUnit?.trim() ?? "",
-        careUnitCostCenter: distribution.careUnitCostCenter?.trim() ?? "",
         percentage,
         visits: (productionVisits * percentage) / 100,
-        comment: distribution.comment?.trim() ?? "",
       };
     })
-    .filter((distribution) => distribution.careUnit && distribution.percentage > 0);
+    .filter(
+      (distribution) =>
+        distribution.careUnitId &&
+        distribution.careUnit &&
+        distribution.percentage > 0
+    );
 }
 
 function toNumber(value: string | number | null | undefined): number {

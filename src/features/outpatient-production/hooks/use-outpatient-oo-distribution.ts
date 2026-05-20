@@ -3,11 +3,13 @@
 import { useEffect, useMemo, useState } from "react";
 import type { OutpatientProductionRow } from "@/types/production";
 import type {
+  CareUnitOption,
   OoDistributionDraftRow,
   OoDistributionSaveResponse,
   SavedOoDistributionRow,
 } from "../types/outpatient-oo-distribution.types";
 import {
+  careUnitOptions,
   calculateDistributionSummary,
   createEmptyDistributionRow,
   mapSavedDistributionToDraft,
@@ -108,8 +110,7 @@ export function useOutpatientOoDistribution() {
 
   function handleDistributionRowChange(
     draftRowId: string,
-    field: keyof Omit<OoDistributionDraftRow, "id" | "savedId">,
-    value: string
+    changes: Partial<Omit<OoDistributionDraftRow, "id" | "savedId">>
   ) {
     if (!selectedProductionRow) {
       return;
@@ -119,9 +120,16 @@ export function useOutpatientOoDistribution() {
     setDraftRowsByProductionRowId((current) => ({
       ...current,
       [selectedProductionRow.id]: selectedDraftRows.map((row) =>
-        row.id === draftRowId ? { ...row, [field]: value } : row
+        row.id === draftRowId ? { ...row, ...changes } : row
       ),
     }));
+  }
+
+  function handleCareUnitChange(draftRowId: string, option: CareUnitOption) {
+    handleDistributionRowChange(draftRowId, {
+      careUnitId: option.id,
+      careUnit: option.name,
+    });
   }
 
   function addDistributionRow() {
@@ -173,11 +181,9 @@ export function useOutpatientOoDistribution() {
         body: JSON.stringify({
           productionRowId: selectedProductionRow.id,
           distributions: selectedDraftRows.map((row) => ({
-            ooName: row.ooName,
+            careUnitId: row.careUnitId,
             careUnit: row.careUnit,
-            careUnitCostCenter: row.careUnitCostCenter,
             percentage: row.percentage,
-            comment: row.comment,
           })),
         }),
       });
@@ -213,7 +219,9 @@ export function useOutpatientOoDistribution() {
 
   return {
     addDistributionRow,
+    careUnitOptions,
     errorMessage,
+    handleCareUnitChange,
     handleDistributionRowChange,
     handleProductionRowChange,
     isLoading,

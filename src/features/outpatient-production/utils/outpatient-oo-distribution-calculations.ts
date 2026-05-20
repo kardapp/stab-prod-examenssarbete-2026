@@ -1,8 +1,37 @@
 import type { OutpatientProductionRow } from "@/types/production";
 import type {
+  CareUnitOption,
   OoDistributionDraftRow,
   SavedOoDistributionRow,
 } from "../types/outpatient-oo-distribution.types";
+
+export const careUnitOptions: CareUnitOption[] = [
+  {
+    id: "care-unit-akutmottagning-solna",
+    name: "Akutmottagning Solna",
+    label: "Akutmottagning Solna",
+  },
+  {
+    id: "care-unit-medicinsk-enhet-huddinge",
+    name: "Medicinsk vårdenhet Huddinge",
+    label: "Medicinsk vårdenhet Huddinge",
+  },
+  {
+    id: "care-unit-kirurgisk-enhet-solna",
+    name: "Kirurgisk vårdenhet Solna",
+    label: "Kirurgisk vårdenhet Solna",
+  },
+  {
+    id: "care-unit-barn-ungdom",
+    name: "Barn- och ungdomsmedicinsk enhet",
+    label: "Barn- och ungdomsmedicinsk enhet",
+  },
+  {
+    id: "care-unit-rehabilitering",
+    name: "Rehabiliteringsenhet",
+    label: "Rehabiliteringsenhet",
+  },
+];
 
 export function toNumber(value: string | number | null | undefined): number {
   const numericValue = Number(value ?? 0);
@@ -45,11 +74,9 @@ export function createEmptyDistributionRow(
 ): OoDistributionDraftRow {
   return {
     id: `draft-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-    ooName: "",
+    careUnitId: "",
     careUnit: "",
-    careUnitCostCenter: "",
     percentage,
-    comment: "",
   };
 }
 
@@ -59,15 +86,13 @@ export function mapSavedDistributionToDraft(
   return {
     id: `saved-${row.id}`,
     savedId: row.id,
-    ooName: row.oo_name ?? "",
+    careUnitId: row.care_unit_id ?? getCareUnitOptionId(row.care_unit),
     careUnit: row.care_unit ?? "",
-    careUnitCostCenter: row.care_unit_cost_center ?? "",
     percentage:
       row.distribution_percentage === null ||
       row.distribution_percentage === undefined
         ? "0"
         : String(row.distribution_percentage),
-    comment: row.comment ?? "",
   };
 }
 
@@ -87,7 +112,13 @@ export function validateOoDistribution(
     return "Andel kan inte vara negativ.";
   }
 
-  if (rows.some((row) => toNumber(row.percentage) > 0 && !row.careUnit.trim())) {
+  if (
+    rows.some(
+      (row) =>
+        toNumber(row.percentage) > 0 &&
+        (!row.careUnitId.trim() || !row.careUnit.trim())
+    )
+  ) {
     return "Ange vårdande enhet för alla rader med andel.";
   }
 
@@ -101,4 +132,10 @@ export function validateOoDistribution(
   }
 
   return "";
+}
+
+function getCareUnitOptionId(careUnit: string | null): string {
+  return (
+    careUnitOptions.find((option) => option.name === careUnit)?.id ?? ""
+  );
 }
