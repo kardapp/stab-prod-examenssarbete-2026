@@ -217,22 +217,28 @@ function VisitsSection(props: { rows: ProductionPlanningResultRow[] }) {
     <ResultSection
       overline="1. Antal vårdtillfällen"
       title="Antal vårdtillfällen"
+      dimensions={[
+        "Ekonomisk kombika",
+        "Vårdande enhet",
+        "Dag",
+        "Yrkeskategori",
+      ]}
       emptyText="Inga vårdtillfällen matchar valt filter."
       headerSx={visitGridSx}
       rowSx={visitGridSx}
       headers={[
-        "Dag",
         "Ekonomisk kombika",
         "Vårdande enhet",
+        "Dag",
         "Yrkeskategori",
         "Vårdtillfällen",
       ]}
       rows={props.rows.map((row) => ({
         id: `visits-${row.id}`,
         values: [
-          { value: row.day },
           { value: formatEconomicUnit(row) },
           { value: formatCareUnit(row) },
+          { value: row.day },
           { value: row.roleCategory },
           { value: formatOneDecimal(row.visits), strong: true },
         ],
@@ -246,13 +252,19 @@ function VisitTimeSection(props: { rows: ProductionPlanningResultRow[] }) {
     <ResultSection
       overline="2. Besökstid"
       title="Besökstid"
+      dimensions={[
+        "Ekonomisk kombika",
+        "Vårdande enhet",
+        "Dag",
+        "Yrkeskategori",
+      ]}
       emptyText="Inga besökstider matchar valt filter."
       headerSx={visitTimeGridSx}
       rowSx={visitTimeGridSx}
       headers={[
-        "Dag",
         "Ekonomisk kombika",
         "Vårdande enhet",
+        "Dag",
         "Yrkeskategori",
         "Snitt-tid",
         "Total tid",
@@ -260,9 +272,9 @@ function VisitTimeSection(props: { rows: ProductionPlanningResultRow[] }) {
       rows={props.rows.map((row) => ({
         id: `visit-time-${row.id}`,
         values: [
-          { value: row.day },
           { value: formatEconomicUnit(row) },
           { value: formatCareUnit(row) },
+          { value: row.day },
           { value: row.roleCategory },
           { value: `${formatOneDecimal(row.averageMinutesPerVisit)} min` },
           {
@@ -280,15 +292,16 @@ function DrgSection(props: { rows: DrgResultRow[] }) {
     <ResultSection
       overline="3. Antal DRG"
       title="Antal DRG"
+      dimensions={["Ekonomisk kombika", "Dag"]}
       emptyText="Inga DRG-rader matchar valt filter."
       headerSx={drgGridSx}
       rowSx={drgGridSx}
-      headers={["Dag", "Ekonomisk kombika", "Vårdtillfällen", "DRG"]}
+      headers={["Ekonomisk kombika", "Dag", "Vårdtillfällen", "Antal DRG"]}
       rows={props.rows.map((row) => ({
         id: `drg-${row.id}`,
         values: [
-          { value: row.day },
           { value: formatDrgEconomicUnit(row) },
+          { value: row.day },
           { value: formatOneDecimal(row.visits) },
           { value: formatTwoDecimals(row.drgPoints), strong: true },
         ],
@@ -300,6 +313,7 @@ function DrgSection(props: { rows: DrgResultRow[] }) {
 function ResultSection(props: {
   overline: string;
   title: string;
+  dimensions: string[];
   emptyText: string;
   headers: string[];
   rows: Array<{ id: string; values: Array<{ value: string; strong?: boolean }> }>;
@@ -309,6 +323,7 @@ function ResultSection(props: {
   return (
     <SectionCard>
       <FormSection overline={props.overline} title={props.title} />
+      <DimensionList dimensions={props.dimensions} />
 
       {props.rows.length === 0 ? (
         <Alert severity="info">{props.emptyText}</Alert>
@@ -334,6 +349,21 @@ function ResultSection(props: {
         </Box>
       )}
     </SectionCard>
+  );
+}
+
+function DimensionList(props: { dimensions: string[] }) {
+  return (
+    <Box sx={dimensionListSx}>
+      <Typography variant="caption" sx={dimensionLabelSx}>
+        Visas per
+      </Typography>
+      {props.dimensions.map((dimension) => (
+        <Typography key={dimension} variant="caption" sx={dimensionItemSx}>
+          {dimension}
+        </Typography>
+      ))}
+    </Box>
   );
 }
 
@@ -435,6 +465,28 @@ const metricSx = {
   bgcolor: "var(--page-background)",
 };
 
+const dimensionListSx = {
+  display: "flex",
+  flexWrap: "wrap",
+  gap: 1,
+  mb: 2,
+};
+
+const dimensionLabelSx = {
+  alignSelf: "center",
+  color: "text.secondary",
+  fontWeight: 700,
+};
+
+const dimensionItemSx = {
+  border: "1px solid #d0d7de",
+  borderRadius: 1,
+  color: "#005883",
+  fontWeight: 700,
+  px: 1,
+  py: 0.5,
+};
+
 const baseResultRowSx = {
   display: "grid",
   gap: 1,
@@ -447,7 +499,7 @@ const visitGridSx = {
   ...baseResultRowSx,
   gridTemplateColumns: {
     xs: "1fr",
-    xl: "minmax(82px, 0.6fr) minmax(170px, 1.2fr) minmax(170px, 1.2fr) minmax(150px, 1fr) minmax(112px, 0.8fr)",
+    xl: "minmax(180px, 1.2fr) minmax(170px, 1.1fr) minmax(82px, 0.6fr) minmax(150px, 1fr) minmax(112px, 0.8fr)",
   },
 };
 
@@ -455,7 +507,7 @@ const visitTimeGridSx = {
   ...baseResultRowSx,
   gridTemplateColumns: {
     xs: "1fr",
-    xl: "minmax(82px, 0.6fr) minmax(170px, 1.2fr) minmax(170px, 1.2fr) minmax(150px, 1fr) minmax(96px, 0.7fr) minmax(106px, 0.8fr)",
+    xl: "minmax(180px, 1.2fr) minmax(170px, 1.1fr) minmax(82px, 0.6fr) minmax(150px, 1fr) minmax(96px, 0.7fr) minmax(106px, 0.8fr)",
   },
 };
 
@@ -463,7 +515,7 @@ const drgGridSx = {
   ...baseResultRowSx,
   gridTemplateColumns: {
     xs: "1fr",
-    xl: "minmax(82px, 0.6fr) minmax(190px, 1.4fr) minmax(120px, 0.8fr) minmax(110px, 0.8fr)",
+    xl: "minmax(190px, 1.4fr) minmax(82px, 0.6fr) minmax(120px, 0.8fr) minmax(110px, 0.8fr)",
   },
 };
 
