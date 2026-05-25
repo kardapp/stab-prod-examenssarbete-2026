@@ -2,7 +2,6 @@ import {
   formatOneDecimal,
   formatTwoDecimals,
 } from "@/shared/utils/format-number";
-import type { ProductionPlanningResultRow } from "../../types/outpatient-production-results.types";
 import { WEEKLY_WORKING_MINUTES } from "../../utils/outpatient-production-calculations";
 
 export type WeeklyImpactType = "semester" | "red-day" | "capacity" | "other";
@@ -22,6 +21,15 @@ export type WeeklyImpactDraft = {
   startWeek: string;
   endWeek: string;
   percentage: string;
+};
+
+export type WeeklyCurveSourceRow = {
+  id: string;
+  careUnitName: string;
+  roleCategory: string;
+  visits: number;
+  totalVisitMinutes: number;
+  drgPoints?: number;
 };
 
 export type WeeklyCurvePoint = {
@@ -99,13 +107,13 @@ export const initialImpactDraft: WeeklyImpactDraft = {
 };
 
 export function calculateAnnualCurveSummary(
-  rows: ProductionPlanningResultRow[]
+  rows: WeeklyCurveSourceRow[]
 ): AnnualCurveSummary {
   const summary = rows.reduce(
     (current, row) => ({
       visits: current.visits + row.visits,
       visitMinutes: current.visitMinutes + row.totalVisitMinutes,
-      drgPoints: current.drgPoints + row.drgPoints,
+      drgPoints: current.drgPoints + (row.drgPoints ?? 0),
     }),
     {
       visits: 0,
@@ -121,7 +129,7 @@ export function calculateAnnualCurveSummary(
 }
 
 export function buildWeeklyCurve(
-  rows: ProductionPlanningResultRow[],
+  rows: WeeklyCurveSourceRow[],
   impacts: WeeklyImpact[]
 ): WeeklyCurvePoint[] {
   return Array.from({ length: WEEK_COUNT }, (_, index) => {
@@ -140,7 +148,7 @@ export function buildWeeklyCurve(
     const baseVisitMinutes =
       rows.reduce((sum, row) => sum + row.totalVisitMinutes, 0) / WEEK_COUNT;
     const baseDrgPoints =
-      rows.reduce((sum, row) => sum + row.drgPoints, 0) / WEEK_COUNT;
+      rows.reduce((sum, row) => sum + (row.drgPoints ?? 0), 0) / WEEK_COUNT;
     const adjustedVisits = weeklyRows.reduce((sum, row) => sum + row.visits, 0);
     const adjustedVisitMinutes = weeklyRows.reduce(
       (sum, row) => sum + row.visitMinutes,
@@ -208,14 +216,14 @@ export function formatWeekTitle(point: WeeklyCurvePoint): string {
 }
 
 function buildWeeklyBreakdownRows(
-  rows: ProductionPlanningResultRow[],
+  rows: WeeklyCurveSourceRow[],
   impactFactor: number
 ): WeeklyCurveBreakdownRow[] {
   return rows
     .map((row) => {
       const visits = (row.visits / WEEK_COUNT) * impactFactor;
       const visitMinutes = (row.totalVisitMinutes / WEEK_COUNT) * impactFactor;
-      const drgPoints = (row.drgPoints / WEEK_COUNT) * impactFactor;
+      const drgPoints = ((row.drgPoints ?? 0) / WEEK_COUNT) * impactFactor;
 
       return {
         id: row.id,

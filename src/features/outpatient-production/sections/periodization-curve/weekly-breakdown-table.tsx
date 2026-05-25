@@ -8,25 +8,33 @@ import type { WeeklyCurvePoint } from "./periodization-curve-model";
 
 type WeeklyBreakdownTableProps = {
   selectedPoint: WeeklyCurvePoint;
+  showDrg?: boolean;
 };
 
 export function WeeklyBreakdownTable(props: WeeklyBreakdownTableProps) {
+  const rowSx =
+    props.showDrg === false ? breakdownRowWithoutDrgSx : breakdownRowSx;
+  const headerSx =
+    props.showDrg === false ? breakdownHeaderWithoutDrgSx : breakdownHeaderSx;
+
   return (
     <Box sx={{ mt: 2 }}>
       <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
         Vecka {props.selectedPoint.week} per vårdande enhet
       </Typography>
       <Box sx={breakdownTableSx}>
-        <Box sx={breakdownHeaderSx}>
+        <Box sx={headerSx}>
           <HeaderCell>Vårdande enhet</HeaderCell>
           <HeaderCell>Yrkeskategori</HeaderCell>
           <HeaderCell align="right">Vårdtillfällen</HeaderCell>
           <HeaderCell align="right">Besökstid</HeaderCell>
-          <HeaderCell align="right">DRG</HeaderCell>
+          {props.showDrg !== false ? (
+            <HeaderCell align="right">DRG</HeaderCell>
+          ) : null}
           <HeaderCell align="right">Personalbehov</HeaderCell>
         </Box>
         {props.selectedPoint.rows.map((row) => (
-          <Box key={row.id} sx={breakdownRowSx}>
+          <Box key={row.id} sx={rowSx}>
             <BreakdownCell label="Vårdande enhet" value={row.careUnit} />
             <BreakdownCell label="Yrkeskategori" value={row.roleCategory} />
             <BreakdownCell
@@ -39,11 +47,13 @@ export function WeeklyBreakdownTable(props: WeeklyBreakdownTableProps) {
               label="Besökstid"
               value={`${formatWholeNumber(row.visitMinutes)} min`}
             />
-            <BreakdownCell
-              align="right"
-              label="DRG"
-              value={formatTwoDecimals(row.drgPoints)}
-            />
+            {props.showDrg !== false ? (
+              <BreakdownCell
+                align="right"
+                label="DRG"
+                value={formatTwoDecimals(row.drgPoints)}
+              />
+            ) : null}
             <BreakdownCell
               align="right"
               label="Personalbehov"
@@ -126,6 +136,26 @@ const breakdownHeaderSx = {
 
 const breakdownRowSx = {
   ...breakdownBaseRowSx,
+  alignItems: "start",
+  borderTop: "1px solid #d0d7de",
+  pt: 1,
+};
+
+const breakdownBaseRowWithoutDrgSx = {
+  ...breakdownBaseRowSx,
+  gridTemplateColumns: {
+    xs: "1fr",
+    xl: "minmax(180px, 1.2fr) minmax(150px, 1fr) repeat(3, minmax(110px, 0.8fr))",
+  },
+};
+
+const breakdownHeaderWithoutDrgSx = {
+  ...breakdownBaseRowWithoutDrgSx,
+  alignItems: "center",
+};
+
+const breakdownRowWithoutDrgSx = {
+  ...breakdownBaseRowWithoutDrgSx,
   alignItems: "start",
   borderTop: "1px solid #d0d7de",
   pt: 1,

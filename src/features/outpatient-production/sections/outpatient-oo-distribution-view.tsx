@@ -5,7 +5,6 @@ import {
   Alert,
   Box,
   Button,
-  Chip,
   CircularProgress,
   Container,
   MenuItem,
@@ -27,7 +26,6 @@ import type {
   OoDistributionDraftRow,
 } from "../types/outpatient-oo-distribution.types";
 import { calculateDistributedVisits } from "../utils/outpatient-oo-distribution-calculations";
-import { getAnnualVisits } from "../utils/outpatient-production-calculations";
 
 export function OutpatientOoDistributionView() {
   const ooDistribution = useOutpatientOoDistribution();
@@ -58,21 +56,14 @@ export function OutpatientOoDistributionView() {
             <Stack spacing={2}>
               <OoIntroSection />
 
-              <ProductionRowSection
+              <ProductionBasisSection
                 productionRows={ooDistribution.productionRows}
-                selectedProductionRow={ooDistribution.selectedProductionRow}
-                selectedProductionRowId={
-                  ooDistribution.selectedProductionRowId
-                }
-                onProductionRowChange={
-                  ooDistribution.handleProductionRowChange
-                }
+                totalVisits={ooDistribution.summary.totalVisits}
               />
 
               <DistributionEditorSection
                 careUnitOptions={ooDistribution.careUnitOptions}
                 rows={ooDistribution.selectedDraftRows}
-                selectedProductionRow={ooDistribution.selectedProductionRow}
                 summary={ooDistribution.summary}
                 showValidation={ooDistribution.showValidation}
                 validationMessage={ooDistribution.validationMessage}
@@ -102,73 +93,46 @@ function OoIntroSection() {
       <FormSection
         overline="Steg 2"
         title="Årets vårdtillfällen fördelas till vårdande enhet"
-        description="Efter överenskommelse matas årets fördelning in i verktyget per produktionsrad."
+        description="Efter överenskommelse matas årets OO-fördelning in för hela volymen från produktionsplaneringen."
       />
       <Box sx={introGridSx}>
-        <MetricValue label="Underlag" value="Sparade produktionsrader" />
+        <MetricValue label="Underlag" value="Senast sparad årsvolym" />
         <MetricValue label="Fördelning" value="Vårdande enhet" />
-        <MetricValue label="Krav" value="100% per produktionsrad" />
+        <MetricValue label="Krav" value="100% totalt" />
       </Box>
     </SectionCard>
   );
 }
 
-function ProductionRowSection(props: {
+function ProductionBasisSection(props: {
   productionRows: OutpatientProductionRow[];
-  selectedProductionRow: OutpatientProductionRow | null;
-  selectedProductionRowId: string;
-  onProductionRowChange: (productionRowId: string) => void;
+  totalVisits: number;
 }) {
-  const selectedRow = props.selectedProductionRow;
-
   return (
     <SectionCard>
       <FormSection
-        overline="Produktionsrad"
-        title="Aktuella vårdtillfällen att fördela"
-        description="Endast raderna från den senast sparade inmatningen visas här."
+        overline="Produktionsunderlag"
+        title="Vårdtillfällen från produktionsplaneringen"
+        description="Det här är totalen du skrev in i produktionsplaneringen, summerad över yrkeskategorierna."
       />
 
-      <Box sx={selectionGridSx}>
-        <TextField
-          select
-          label="Aktuell produktionsrad"
-          size="small"
-          value={props.selectedProductionRowId}
-          onChange={(event) =>
-            props.onProductionRowChange(event.target.value)
-          }
-          sx={{ minWidth: 0 }}
-        >
-          {props.productionRows.map((row) => (
-            <MenuItem key={row.id} value={String(row.id)}>
-              {formatProductionRowOption(row)}
-            </MenuItem>
-          ))}
-        </TextField>
-
-        {selectedRow ? (
-          <Box sx={selectedRowSx}>
-            <Stack
-              direction={{ xs: "column", md: "row" }}
-              spacing={1}
-              sx={{
-                alignItems: { xs: "flex-start", md: "center" },
-                justifyContent: "space-between",
-              }}
-            >
-              <Box>
-                <Typography sx={{ fontWeight: 700 }}>
-                  {formatKombika(selectedRow)}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {formatProductionRowDetails(selectedRow)}
-                </Typography>
-              </Box>
-              <StatusChip status={selectedRow.oo_distribution_status} />
-            </Stack>
-          </Box>
-        ) : null}
+      <Box sx={basisGridSx}>
+        <MetricValue
+          label="Vårdtillfällen att fördela"
+          value={formatWholeNumber(props.totalVisits)}
+        />
+        <MetricValue
+          label="Antal yrkeskategorirader"
+          value={formatWholeNumber(props.productionRows.length)}
+        />
+        <MetricValue
+          label="Ekonomisk kombika"
+          value={formatKombikaSummary(props.productionRows)}
+        />
+        <MetricValue
+          label="År"
+          value={formatProductionYear(props.productionRows[0])}
+        />
       </Box>
     </SectionCard>
   );
@@ -177,7 +141,6 @@ function ProductionRowSection(props: {
 function DistributionEditorSection(props: {
   careUnitOptions: CareUnitOption[];
   rows: OoDistributionDraftRow[];
-  selectedProductionRow: OutpatientProductionRow | null;
   summary: {
     totalVisits: number;
     totalPercentage: number;
@@ -243,7 +206,7 @@ function DistributionEditorSection(props: {
             key={row.id}
             row={row}
             careUnitOptions={props.careUnitOptions}
-            selectedProductionRow={props.selectedProductionRow}
+            totalVisits={props.summary.totalVisits}
             canRemove={props.rows.length > 1}
             onCareUnitChange={props.onCareUnitChange}
             onRemoveRow={props.onRemoveRow}
@@ -264,7 +227,7 @@ function DistributionEditorSection(props: {
 function DistributionRow(props: {
   row: OoDistributionDraftRow;
   careUnitOptions: CareUnitOption[];
-  selectedProductionRow: OutpatientProductionRow | null;
+  totalVisits: number;
   canRemove: boolean;
   onCareUnitChange: (draftRowId: string, option: CareUnitOption) => void;
   onRemoveRow: (draftRowId: string) => void;
@@ -274,7 +237,7 @@ function DistributionRow(props: {
   ) => void;
 }) {
   const visits = calculateDistributedVisits(
-    props.selectedProductionRow ? getAnnualVisits(props.selectedProductionRow) : 0,
+    props.totalVisits,
     props.row.percentage
   );
 
@@ -465,40 +428,6 @@ function ReadOnlyValue(props: {
   );
 }
 
-function StatusChip(props: { status: string | null }) {
-  const status = props.status || "Ej fördelad";
-  const color = status === "Fördelad" ? "success" : "default";
-
-  return <Chip label={status} color={color} size="small" />;
-}
-
-function formatProductionRowOption(row: OutpatientProductionRow): string {
-  return [
-    formatProductionYear(row),
-    row.kombika_pf_id,
-    row.kombika_pf || row.row_label,
-    `${formatWholeNumber(getAnnualVisits(row))} vårdtillfällen`,
-  ]
-    .filter(Boolean)
-    .join(" - ");
-}
-
-function formatKombika(row: OutpatientProductionRow): string {
-  return [row.kombika_pf_id, row.kombika_pf].filter(Boolean).join(" - ");
-}
-
-function formatProductionRowDetails(row: OutpatientProductionRow): string {
-  return [
-    row.section,
-    row.site,
-    row.primary_role_category,
-    formatProductionYear(row),
-    `${formatWholeNumber(getAnnualVisits(row))} vårdtillfällen`,
-  ]
-    .filter(Boolean)
-    .join(" · ");
-}
-
 function getDimensioningHref(row: OutpatientProductionRow | null): string {
   if (!row) {
     return "/outpatient/dimensioning/oo-opv";
@@ -511,6 +440,18 @@ function getDimensioningHref(row: OutpatientProductionRow | null): string {
   });
 
   return `/outpatient/dimensioning/oo-opv?${params.toString()}`;
+}
+
+function formatKombikaSummary(rows: OutpatientProductionRow[]): string {
+  const kombikaValues = Array.from(
+    new Set(
+      rows
+        .map((row) => [row.kombika_pf_id, row.kombika_pf].filter(Boolean).join(" - "))
+        .filter(Boolean)
+    )
+  );
+
+  return kombikaValues.join(", ") || "Saknas";
 }
 
 function isDayCareRow(row: OutpatientProductionRow): boolean {
@@ -526,7 +467,11 @@ function isDayCareRow(row: OutpatientProductionRow): boolean {
   );
 }
 
-function formatProductionYear(row: OutpatientProductionRow): string {
+function formatProductionYear(row: OutpatientProductionRow | undefined): string {
+  if (!row) {
+    return "Saknar år";
+  }
+
   if (row.production_plan_year) {
     return String(row.production_plan_year);
   }
@@ -543,21 +488,13 @@ const introGridSx = {
   gap: 1.5,
 };
 
-const selectionGridSx = {
-  display: "grid",
+const basisGridSx = {
+  ...introGridSx,
   gridTemplateColumns: {
     xs: "1fr",
-    lg: "minmax(280px, 0.9fr) minmax(320px, 1.1fr)",
+    md: "repeat(2, minmax(0, 1fr))",
+    xl: "repeat(4, minmax(0, 1fr))",
   },
-  gap: 1.5,
-  alignItems: "start",
-};
-
-const selectedRowSx = {
-  border: "1px solid #d0d7de",
-  borderRadius: 1,
-  p: 1.5,
-  bgcolor: "var(--page-background)",
 };
 
 const summaryGridSx = {

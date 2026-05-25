@@ -28,6 +28,8 @@ const metricSx = {
   border: "1px solid #d0d7de",
   borderRadius: 1,
   bgcolor: "var(--page-background)",
+  justifyContent: "center",
+  minHeight: 72,
   minWidth: 0,
   p: 1.5,
 };

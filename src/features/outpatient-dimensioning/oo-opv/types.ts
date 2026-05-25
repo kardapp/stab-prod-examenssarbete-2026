@@ -1,5 +1,3 @@
-export type OoDimensioningPeriodView = "day" | "week" | "month";
-
 export type WeekdayField =
   | "mondayVisits"
   | "tuesdayVisits"

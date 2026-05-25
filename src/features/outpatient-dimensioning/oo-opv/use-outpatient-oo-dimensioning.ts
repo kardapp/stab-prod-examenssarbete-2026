@@ -11,6 +11,7 @@ import {
 } from "@/features/outpatient-production/utils/current-outpatient-production-session";
 import {
   buildOoProductionRows,
+  buildOoPeriodizationRows,
   calculateOoDimensioningBasis,
   calculateOoDimensioningSummary,
   calculateSalaryCostPerPresence,
@@ -19,7 +20,6 @@ import {
 import type {
   OoAdminOtherTimeState,
   OoCareSupportRow,
-  OoDimensioningPeriodView,
   OoDimensioningProductionRow,
   OoDimensioningSettings,
   WeekdayField,
@@ -56,8 +56,6 @@ export function useOutpatientOoDimensioning() {
     weeklyWorkingHours: DEFAULT_WEEKLY_WORKING_HOURS,
     salaryCostPerPresence: 0,
   });
-  const [periodView, setPeriodView] =
-    useState<OoDimensioningPeriodView>("week");
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [saveMessage, setSaveMessage] = useState("");
@@ -148,6 +146,15 @@ export function useOutpatientOoDimensioning() {
       }),
     [adminOtherTime, careSupportRows, productionRows, settings]
   );
+  const periodizationRows = useMemo(
+    () =>
+      buildOoPeriodizationRows({
+        productionRows,
+        careSupportRows,
+        adminOtherTime,
+      }),
+    [adminOtherTime, careSupportRows, productionRows]
+  );
 
   function updateProductionRow(
     rowId: string,
@@ -225,13 +232,12 @@ export function useOutpatientOoDimensioning() {
     careSupportRows,
     errorMessage,
     isLoading,
-    periodView,
+    periodizationRows,
     productionRows,
     rawProductionRows,
     removeCareSupportRow,
     saveDimensioning,
     saveMessage,
-    setPeriodView,
     settings,
     summary,
     updateAdminOtherTime,

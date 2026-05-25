@@ -10,6 +10,7 @@ import { WEEK_COUNT } from "./periodization-curve-model";
 
 type PeriodizationSummaryCardsProps = {
   summary: AnnualCurveSummary;
+  showDrg?: boolean;
 };
 
 export function PeriodizationSummaryCards(
@@ -25,10 +26,12 @@ export function PeriodizationSummaryCards(
         label="Årets besökstid"
         value={`${formatWholeNumber(props.summary.visitMinutes)} min`}
       />
-      <PeriodizationMetricValue
-        label="Årets DRG"
-        value={formatTwoDecimals(props.summary.drgPoints)}
-      />
+      {props.showDrg !== false ? (
+        <PeriodizationMetricValue
+          label="Årets DRG"
+          value={formatTwoDecimals(props.summary.drgPoints)}
+        />
+      ) : null}
       <PeriodizationMetricValue
         label="Bas per vecka"
         value={`${formatTwoDecimals(

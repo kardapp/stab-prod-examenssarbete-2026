@@ -5,11 +5,11 @@ import {
   toNumber,
 } from "@/features/outpatient-production/utils/outpatient-production-calculations";
 import type { SavedOoDistributionRow } from "@/features/outpatient-production/types/outpatient-oo-distribution.types";
+import type { WeeklyCurveSourceRow } from "@/features/outpatient-production/sections/periodization-curve/periodization-curve-model";
 import type {
   OoAdminOtherTimeState,
   OoCareSupportRow,
   OoDimensioningBasis,
-  OoDimensioningPeriodView,
   OoDimensioningProductionRow,
   OoDimensioningSettings,
   OoDimensioningSummary,
@@ -32,21 +32,6 @@ export const weekdayFields: Array<{
   { field: "fridayVisits", label: "Fredag", shortLabel: "Fre" },
   { field: "saturdayVisits", label: "Lördag", shortLabel: "Lör" },
   { field: "sundayVisits", label: "Söndag", shortLabel: "Sön" },
-];
-
-const monthNames = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "Maj",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Okt",
-  "Nov",
-  "Dec",
 ];
 
 export function buildOoProductionRows(
@@ -223,66 +208,6 @@ export function calculateWeeklyVisits(row: OoDimensioningProductionRow) {
   return weekdayFields.reduce((sum, item) => sum + toNumber(row[item.field]), 0);
 }
 
-export function buildPeriodizedRows(params: {
-  view: OoDimensioningPeriodView;
-  summary: OoDimensioningSummary;
-  productionRows: OoDimensioningProductionRow[];
-  weeklyWorkingHours: number;
-}) {
-  if (params.view === "day") {
-    const dailyWorkHours = params.weeklyWorkingHours / 5;
-
-    return weekdayFields.map((weekday) => {
-      const visits = params.productionRows.reduce(
-        (sum, row) => sum + toNumber(row[weekday.field]),
-        0
-      );
-      const hours = params.productionRows.reduce(
-        (sum, row) =>
-          sum +
-          calculateProductionHours(
-            toNumber(row[weekday.field]),
-            toNumber(row.averageMinutesPerVisit)
-          ),
-        0
-      );
-
-      return {
-        id: weekday.field,
-        label: weekday.label,
-        visits,
-        hours,
-        presence: calculateProductionPresence(hours, dailyWorkHours),
-      };
-    });
-  }
-
-  if (params.view === "month") {
-    return monthNames.map((month, index) => {
-      const weeks = WEEKS_PER_YEAR / monthNames.length;
-      const hours = params.summary.totalHours * weeks;
-
-      return {
-        id: month,
-        label: month,
-        visits: params.summary.weeklyVisits * weeks,
-        hours,
-        presence: params.summary.productionPresence,
-        order: index,
-      };
-    });
-  }
-
-  return Array.from({ length: WEEKS_PER_YEAR }, (_, index) => ({
-    id: `week-${index + 1}`,
-    label: `v.${index + 1}`,
-    visits: params.summary.weeklyVisits,
-    hours: params.summary.totalHours,
-    presence: params.summary.productionPresence,
-    order: index,
-  }));
-}
-
 export function calculateSalaryCostPerPresence(
   productionRows: OutpatientProductionRow[]
 ) {
@@ -305,6 +230,85 @@ export function calculateSalaryCostPerPresence(
   return (
     values.reduce((sum, row) => sum + row.value * row.weight, 0) / weightSum
   );
+}
+
+export function buildOoPeriodizationRows(params: {
+  productionRows: OoDimensioningProductionRow[];
+  careSupportRows: OoCareSupportRow[];
+  adminOtherTime: OoAdminOtherTimeState;
+}): WeeklyCurveSourceRow[] {
+  const productionCurveRows = params.productionRows.map((row) => {
+    const weeklyVisits =
+      calculateWeeklyVisits(row) + toNumber(row.supportVisitsForOtherRoles);
+    const weeklyProductionHours = calculateProductionHours(
+      weeklyVisits,
+      toNumber(row.averageMinutesPerVisit)
+    );
+
+    return {
+      id: `oo-production-${row.id}`,
+      careUnitName: row.careUnit,
+      roleCategory: row.roleCategory,
+      visits: weeklyVisits * WEEKS_PER_YEAR,
+      totalVisitMinutes: weeklyProductionHours * 60 * WEEKS_PER_YEAR,
+      drgPoints: 0,
+    };
+  });
+  const supportCurveRows = params.careSupportRows
+    .filter((row) => toNumber(row.careSupportHoursPerWeek) > 0)
+    .map((row) => ({
+      id: `oo-support-${row.id}`,
+      careUnitName: "Vårdnära stöd",
+      roleCategory: row.careSupportRole || "Stödresurs",
+      visits: 0,
+      totalVisitMinutes:
+        toNumber(row.careSupportHoursPerWeek) * 60 * WEEKS_PER_YEAR,
+      drgPoints: 0,
+    }));
+  const adminCurveRows = [
+    {
+      id: "oo-admin",
+      careUnitName: "Admin och övrig tid",
+      roleCategory: "Admin",
+      visits: 0,
+      totalVisitMinutes:
+        toNumber(params.adminOtherTime.adminHoursPerWeek) * 60 * WEEKS_PER_YEAR,
+      drgPoints: 0,
+    },
+    {
+      id: "oo-training",
+      careUnitName: "Admin och övrig tid",
+      roleCategory: "Inskolning",
+      visits: 0,
+      totalVisitMinutes:
+        toNumber(params.adminOtherTime.trainingHoursPerWeek) *
+        60 *
+        WEEKS_PER_YEAR,
+      drgPoints: 0,
+    },
+    {
+      id: "oo-competence",
+      careUnitName: "Admin och övrig tid",
+      roleCategory: "Kompetensutveckling",
+      visits: 0,
+      totalVisitMinutes:
+        toNumber(params.adminOtherTime.competenceDevelopmentHoursPerWeek) *
+        60 *
+        WEEKS_PER_YEAR,
+      drgPoints: 0,
+    },
+    {
+      id: "oo-other",
+      careUnitName: "Admin och övrig tid",
+      roleCategory: "Övrig tid",
+      visits: 0,
+      totalVisitMinutes:
+        toNumber(params.adminOtherTime.otherHoursPerWeek) * 60 * WEEKS_PER_YEAR,
+      drgPoints: 0,
+    },
+  ].filter((row) => row.totalVisitMinutes > 0);
+
+  return [...productionCurveRows, ...supportCurveRows, ...adminCurveRows];
 }
 
 function createOoProductionRow(

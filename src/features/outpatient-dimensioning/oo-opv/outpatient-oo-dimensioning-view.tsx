@@ -10,13 +10,13 @@ import {
 } from "@mui/material";
 import { PageHeader } from "@/shared/components/page-header";
 import { SectionCard } from "@/shared/components/section-card";
+import { PeriodizationCurveSection } from "@/features/outpatient-production/sections/periodization-curve-section";
 import { AdminOtherTimeSection } from "./admin-other-time-section";
 import { CalculatedPresenceSection } from "./calculated-presence-section";
 import { CareSupportSection } from "./care-support-section";
 import { ProductionTimeByRoleSection } from "./production-time-by-role-section";
 import { StaffingCostSection } from "./staffing-cost-section";
 import { useOutpatientOoDimensioning } from "./use-outpatient-oo-dimensioning";
-import { YearPeriodizationSection } from "./year-periodization-section";
 
 export function OutpatientOoDimensioningView() {
   const dimensioning = useOutpatientOoDimensioning();
@@ -77,12 +77,13 @@ export function OutpatientOoDimensioningView() {
                 onSettingsChange={dimensioning.updateSettings}
               />
 
-              <YearPeriodizationSection
-                periodView={dimensioning.periodView}
-                productionRows={dimensioning.productionRows}
-                summary={dimensioning.summary}
-                weeklyWorkingHours={dimensioning.settings.weeklyWorkingHours}
-                onPeriodViewChange={dimensioning.setPeriodView}
+              <PeriodizationCurveSection
+                rows={dimensioning.periodizationRows}
+                overline="6. Periodisering över året"
+                title="Personalbehov per vecka"
+                description="Dimensioneringen periodiseras med samma veckokurva som produktionsresultatet och kan justeras med planerade händelser."
+                emptyText="Periodiseringskurvan visas när det finns OO-dimensionering att räkna på."
+                showDrg={false}
               />
 
               <ActionsSection

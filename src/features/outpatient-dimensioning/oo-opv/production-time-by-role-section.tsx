@@ -1,3 +1,7 @@
+"use client";
+
+import type { ReactNode } from "react";
+import { useState } from "react";
 import {
   Accordion,
   AccordionDetails,
@@ -41,12 +45,14 @@ type ProductionTimeByRoleSectionProps = {
 export function ProductionTimeByRoleSection(
   props: ProductionTimeByRoleSectionProps
 ) {
+  const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
+
   return (
     <SectionCard>
       <FormSection
         overline="1. Inmatning tidsåtgång per yrkeskategori OO"
         title="Produktion och tid per yrkeskategori"
-        description="Underlaget kommer från produktionsplaneringen och OO-fördelningen. Varje yrkeskategori öppnas separat för justering och veckofördelning."
+        description="Underlaget kommer från produktionsplaneringen och OO-fördelningen. Öppna en rad om du behöver justera stöd, snitt-tid eller veckofördelning."
       />
 
       <Typography variant="subtitle2" sx={subheadingSx}>
@@ -74,141 +80,158 @@ export function ProductionTimeByRoleSection(
       <Typography variant="subtitle2" sx={subheadingSx}>
         Yrkeskategorier att dimensionera
       </Typography>
-      <Box sx={{ display: "grid", gap: 1.5 }}>
-        {props.rows.map((row, index) => (
-          <Accordion
-            key={row.id}
-            defaultExpanded={index === 0}
-            disableGutters
-            sx={accordionSx}
-          >
-            <AccordionSummary
-              expandIcon={
-                <Typography aria-hidden sx={expandIconSx}>
-                  +
-                </Typography>
+      <Box sx={{ display: "grid", gap: 1 }}>
+        {props.rows.map((row) => {
+          const isExpanded = Boolean(expandedRows[row.id]);
+
+          return (
+            <Accordion
+              key={row.id}
+              disableGutters
+              expanded={isExpanded}
+              onChange={(_, expanded) =>
+                setExpandedRows((current) => ({
+                  ...current,
+                  [row.id]: expanded,
+                }))
               }
-              sx={accordionSummarySx}
+              sx={accordionSx}
             >
-              <Box sx={rowHeaderGridSx}>
-                <Box sx={{ minWidth: 0 }}>
-                  <Typography sx={{ color: "#005883", fontWeight: 700 }}>
-                    {row.roleCategory}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {row.careUnit} · {row.economicKombika || "Saknar kombika"}
-                  </Typography>
-                </Box>
-                <OoDimensioningMetric
-                  label="Årsbesök"
-                  value={formatWholeNumber(row.visitsFromProductionPlan)}
-                />
-                <OoDimensioningMetric
-                  label="Veckobesök"
-                  value={formatOneDecimal(calculateWeeklyVisits(row))}
-                />
-                <OoDimensioningMetric
-                  label="Produktionstid/vecka"
-                  value={`${formatTwoDecimals(
-                    calculateProductionHours(
-                      calculateWeeklyVisits(row) +
-                        row.supportVisitsForOtherRoles,
-                      row.averageMinutesPerVisit
-                    )
-                  )} h`}
-                />
-              </Box>
-            </AccordionSummary>
-
-            <AccordionDetails sx={accordionDetailsSx}>
-              <Box sx={detailsGridSx}>
-                <Box sx={detailGroupSx}>
-                  <Typography variant="subtitle2" sx={groupTitleSx}>
-                    Hämtat från plan
-                  </Typography>
-                  <Box sx={detailMetricGridSx}>
-                    <OoDimensioningMetric
-                      label="Årsbesök"
-                      value={formatWholeNumber(row.visitsFromProductionPlan)}
-                    />
-                    <OoDimensioningMetric
-                      label="Snitt-tid"
-                      value={`${formatOneDecimal(
-                        row.sourceAverageMinutesPerVisit
-                      )} min`}
-                    />
+              <AccordionSummary sx={accordionSummarySx}>
+                <Box sx={rowHeaderGridSx}>
+                  <Box sx={roleCellSx}>
+                    <Typography sx={roleTitleSx}>{row.roleCategory}</Typography>
+                    <Typography variant="body2" color="text.secondary" sx={roleMetaSx}>
+                      {row.careUnit}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={roleMetaSx}>
+                      {row.economicKombika || "Saknar kombika"}
+                    </Typography>
+                  </Box>
+                  <OoDimensioningMetric
+                    label="Årsbesök"
+                    value={formatWholeNumber(row.visitsFromProductionPlan)}
+                  />
+                  <OoDimensioningMetric
+                    label="Veckobesök"
+                    value={formatOneDecimal(calculateWeeklyVisits(row))}
+                  />
+                  <OoDimensioningMetric
+                    label="Tid/vecka"
+                    value={`${formatTwoDecimals(
+                      calculateProductionHours(
+                        calculateWeeklyVisits(row) +
+                          row.supportVisitsForOtherRoles,
+                        row.averageMinutesPerVisit
+                      )
+                    )} h`}
+                  />
+                  <Box sx={openCellSx}>
+                    {isExpanded ? "Stäng" : "Öppna"}
                   </Box>
                 </Box>
+              </AccordionSummary>
 
-                <Box sx={detailGroupSx}>
-                  <Typography variant="subtitle2" sx={groupTitleSx}>
-                    Fyll i vid behov
-                  </Typography>
-                  <Box sx={inputGridSx}>
-                    <TextField
-                      label="Stödbesök för andra roller/vecka"
-                      type="number"
-                      size="small"
-                      value={row.supportVisitsForOtherRoles}
-                      onChange={(event) =>
-                        props.onRowChange(
-                          row.id,
-                          "supportVisitsForOtherRoles",
-                          Number(event.target.value)
-                        )
-                      }
-                      slotProps={{ htmlInput: { min: 0, step: 0.1 } }}
-                    />
-                    <TextField
-                      label="Snitt-tid, justering"
-                      type="number"
-                      size="small"
-                      helperText={`Från plan: ${formatOneDecimal(
-                        row.sourceAverageMinutesPerVisit
-                      )} min`}
-                      value={row.averageMinutesPerVisit}
-                      onChange={(event) =>
-                        props.onRowChange(
-                          row.id,
-                          "averageMinutesPerVisit",
-                          Number(event.target.value)
-                        )
-                      }
-                      slotProps={{ htmlInput: { min: 0, step: 1 } }}
-                    />
+              <AccordionDetails sx={accordionDetailsSx}>
+                <Box sx={detailsGridSx}>
+                  <Box sx={detailGroupSx}>
+                    <Typography variant="subtitle2" sx={groupTitleSx}>
+                      Hämtat från plan
+                    </Typography>
+                    <Box sx={detailMetricGridSx}>
+                      <OoDimensioningMetric
+                        label="Årsbesök"
+                        value={formatWholeNumber(row.visitsFromProductionPlan)}
+                      />
+                      <OoDimensioningMetric
+                        label="Snitt-tid"
+                        value={`${formatOneDecimal(
+                          row.sourceAverageMinutesPerVisit
+                        )} min`}
+                      />
+                    </Box>
                   </Box>
-                </Box>
-              </Box>
 
-              <Box sx={detailGroupSx}>
-                <Typography variant="subtitle2" sx={groupTitleSx}>
-                  Periodisering över vecka
-                </Typography>
-                <Box sx={weekdayGridSx}>
-                  {weekdayFields.map((weekday) => (
-                    <TextField
-                      key={weekday.field}
-                      label={weekday.shortLabel}
-                      type="number"
-                      size="small"
-                      value={formatInputValue(row[weekday.field])}
-                      onChange={(event) =>
-                        props.onRowChange(
-                          row.id,
-                          weekday.field,
-                          Number(event.target.value)
-                        )
-                      }
-                      slotProps={{ htmlInput: { min: 0, step: 0.1 } }}
-                    />
-                  ))}
+                  <OptionalInputGroup title="Visa fält för justering">
+                    <Box sx={inputGridSx}>
+                      <TextField
+                        label="Stödbesök för andra roller/vecka"
+                        type="number"
+                        size="small"
+                        value={row.supportVisitsForOtherRoles}
+                        onChange={(event) =>
+                          props.onRowChange(
+                            row.id,
+                            "supportVisitsForOtherRoles",
+                            Number(event.target.value)
+                          )
+                        }
+                        slotProps={{ htmlInput: { min: 0, step: 0.1 } }}
+                      />
+                      <TextField
+                        label="Snitt-tid, justering"
+                        type="number"
+                        size="small"
+                        helperText={`Från plan: ${formatOneDecimal(
+                          row.sourceAverageMinutesPerVisit
+                        )} min`}
+                        value={row.averageMinutesPerVisit}
+                        onChange={(event) =>
+                          props.onRowChange(
+                            row.id,
+                            "averageMinutesPerVisit",
+                            Number(event.target.value)
+                          )
+                        }
+                        slotProps={{ htmlInput: { min: 0, step: 1 } }}
+                      />
+                    </Box>
+                  </OptionalInputGroup>
                 </Box>
-              </Box>
-            </AccordionDetails>
-          </Accordion>
-        ))}
+
+                <OptionalInputGroup title="Visa veckofördelning">
+                  <Box sx={weekdayGridSx}>
+                    {weekdayFields.map((weekday) => (
+                      <TextField
+                        key={weekday.field}
+                        label={weekday.shortLabel}
+                        type="number"
+                        size="small"
+                        value={formatInputValue(row[weekday.field])}
+                        onChange={(event) =>
+                          props.onRowChange(
+                            row.id,
+                            weekday.field,
+                            Number(event.target.value)
+                          )
+                        }
+                        slotProps={{ htmlInput: { min: 0, step: 0.1 } }}
+                      />
+                    ))}
+                  </Box>
+                </OptionalInputGroup>
+              </AccordionDetails>
+            </Accordion>
+          );
+        })}
       </Box>
     </SectionCard>
+  );
+}
+
+function OptionalInputGroup(props: { children: ReactNode; title: string }) {
+  return (
+    <Accordion disableGutters sx={optionalAccordionSx}>
+      <AccordionSummary sx={optionalSummarySx}>
+        <Box sx={optionalHeaderSx}>
+          <Typography variant="subtitle2" sx={optionalTitleSx}>
+            {props.title}
+          </Typography>
+          <Box sx={smallOpenCellSx}>Öppna</Box>
+        </Box>
+      </AccordionSummary>
+      <AccordionDetails sx={optionalDetailsSx}>{props.children}</AccordionDetails>
+    </Accordion>
   );
 }
 
@@ -246,17 +269,13 @@ const accordionSx = {
 
 const accordionSummarySx = {
   bgcolor: "var(--page-background)",
+  minHeight: 96,
   px: 1.5,
   py: 1,
   "& .MuiAccordionSummary-content": {
     m: 0,
     minWidth: 0,
   },
-};
-
-const expandIconSx = {
-  color: "#005883",
-  fontWeight: 700,
 };
 
 const accordionDetailsSx = {
@@ -270,10 +289,45 @@ const rowHeaderGridSx = {
   display: "grid",
   gridTemplateColumns: {
     xs: "1fr",
-    md: "minmax(220px, 1.4fr) repeat(3, minmax(0, 1fr))",
+    md: "minmax(220px, 1.35fr) repeat(3, minmax(118px, 0.75fr)) 96px",
   },
   gap: 1,
   alignItems: "stretch",
+  width: "100%",
+};
+
+const roleCellSx = {
+  border: "1px solid #d0d7de",
+  borderRadius: 1,
+  bgcolor: "var(--section-background)",
+  display: "grid",
+  minHeight: 72,
+  minWidth: 0,
+  p: 1.25,
+};
+
+const roleTitleSx = {
+  color: "#005883",
+  fontWeight: 700,
+  overflowWrap: "anywhere",
+};
+
+const roleMetaSx = {
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+};
+
+const openCellSx = {
+  alignItems: "center",
+  bgcolor: "#005883",
+  borderRadius: 1,
+  color: "white",
+  display: "flex",
+  fontWeight: 700,
+  justifyContent: "center",
+  minHeight: 72,
+  px: 1.5,
 };
 
 const detailsGridSx = {
@@ -302,6 +356,52 @@ const detailMetricGridSx = {
   display: "grid",
   gridTemplateColumns: { xs: "1fr", sm: "repeat(2, minmax(0, 1fr))" },
   gap: 1,
+};
+
+const optionalAccordionSx = {
+  ...detailGroupSx,
+  boxShadow: "none",
+  overflow: "hidden",
+  p: 0,
+  "&:before": {
+    display: "none",
+  },
+};
+
+const optionalSummarySx = {
+  minHeight: 52,
+  px: 1.5,
+  "& .MuiAccordionSummary-content": {
+    my: 1,
+    minWidth: 0,
+  },
+};
+
+const optionalHeaderSx = {
+  alignItems: "center",
+  display: "grid",
+  gap: 1,
+  gridTemplateColumns: "minmax(0, 1fr) auto",
+  width: "100%",
+};
+
+const optionalTitleSx = {
+  color: "#005883",
+  fontWeight: 700,
+};
+
+const smallOpenCellSx = {
+  border: "1px solid #005883",
+  borderRadius: 1,
+  color: "#005883",
+  fontWeight: 700,
+  px: 1,
+  py: 0.5,
+};
+
+const optionalDetailsSx = {
+  borderTop: "1px solid #d0d7de",
+  p: 1.5,
 };
 
 const inputGridSx = {

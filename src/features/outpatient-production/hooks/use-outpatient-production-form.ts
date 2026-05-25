@@ -191,8 +191,12 @@ export function useOutpatientProductionForm() {
         }
       });
 
+      const roleVisits = distributeCareEventsByRole(
+        formState.careEvents,
+        formState.roleDistributions
+      );
       const savedRows = await Promise.all(
-        formState.roleDistributions.map(async (role) => {
+        formState.roleDistributions.map(async (role, index) => {
           const response = await fetch("/api/outpatient-production-rows", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -207,9 +211,7 @@ export function useOutpatientProductionForm() {
               period_type: ANNUAL_PERIOD_TYPE,
               care_type: "open_care",
               visit_type: formState.visitTime.visitType,
-              visits: Math.round(
-                (formState.careEvents * role.percentage) / 100
-              ),
+              visits: roleVisits[index],
               primary_role_category: role.primaryRole,
               secondary_role_category: role.secondaryRole || undefined,
               sll_uulp: formState.sllPercentage > 50 ? "SLL" : "UULP",
@@ -267,4 +269,26 @@ export function useOutpatientProductionForm() {
     handleDrgAverageChange,
     saveProductionPlan,
   };
+}
+
+function distributeCareEventsByRole(
+  careEvents: number,
+  roleDistributions: RoleDistribution[]
+): number[] {
+  const totalCareEvents = Math.round(Number(careEvents) || 0);
+  let allocatedCareEvents = 0;
+
+  return roleDistributions.map((role, index) => {
+    if (index === roleDistributions.length - 1) {
+      return Math.max(0, totalCareEvents - allocatedCareEvents);
+    }
+
+    const roleCareEvents = Math.round(
+      (totalCareEvents * Number(role.percentage || 0)) / 100
+    );
+
+    allocatedCareEvents += roleCareEvents;
+
+    return roleCareEvents;
+  });
 }

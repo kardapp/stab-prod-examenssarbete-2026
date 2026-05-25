@@ -10,6 +10,7 @@ import { formatSignedPercentage } from "./periodization-curve-model";
 
 type SelectedWeekPanelProps = {
   selectedPoint: WeeklyCurvePoint;
+  showDrg?: boolean;
 };
 
 export function SelectedWeekPanel(props: SelectedWeekPanelProps) {
@@ -29,10 +30,12 @@ export function SelectedWeekPanel(props: SelectedWeekPanelProps) {
             props.selectedPoint.adjustedVisitMinutes
           )} min`}
         />
-        <PeriodizationMetricValue
-          label="DRG"
-          value={formatTwoDecimals(props.selectedPoint.adjustedDrgPoints)}
-        />
+        {props.showDrg !== false ? (
+          <PeriodizationMetricValue
+            label="DRG"
+            value={formatTwoDecimals(props.selectedPoint.adjustedDrgPoints)}
+          />
+        ) : null}
         <PeriodizationMetricValue
           label="Personalbehov"
           value={`${formatTwoDecimals(

@@ -10,11 +10,12 @@ import type {
 } from "../types/outpatient-oo-distribution.types";
 import {
   careUnitOptions,
-  calculateDistributionSummary,
   createEmptyDistributionRow,
   mapSavedDistributionToDraft,
+  toNumber,
   validateOoDistribution,
 } from "../utils/outpatient-oo-distribution-calculations";
+import { getAnnualVisits } from "../utils/outpatient-production-calculations";
 import {
   CURRENT_OUTPATIENT_PRODUCTION_PLAN_ID,
   filterCurrentOoDistributionRows,
@@ -22,15 +23,11 @@ import {
   readCurrentOutpatientProductionRowIds,
 } from "../utils/current-outpatient-production-session";
 
-type DraftRowsByProductionRowId = Record<number, OoDistributionDraftRow[]>;
-
 export function useOutpatientOoDistribution() {
   const [productionRows, setProductionRows] = useState<OutpatientProductionRow[]>(
     []
   );
-  const [draftRowsByProductionRowId, setDraftRowsByProductionRowId] =
-    useState<DraftRowsByProductionRowId>({});
-  const [selectedProductionRowId, setSelectedProductionRowId] = useState("");
+  const [draftRows, setDraftRows] = useState<OoDistributionDraftRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
@@ -47,8 +44,7 @@ export function useOutpatientOoDistribution() {
         if (currentRowIds.length === 0) {
           setErrorMessage("");
           setProductionRows([]);
-          setDraftRowsByProductionRowId({});
-          setSelectedProductionRowId("");
+          setDraftRows([]);
           return;
         }
 
@@ -75,8 +71,6 @@ export function useOutpatientOoDistribution() {
           productionResponse.json() as Promise<OutpatientProductionRow[]>,
           distributionResponse.json() as Promise<SavedOoDistributionRow[]>,
         ]);
-
-        setErrorMessage("");
         const currentProductionRows = filterCurrentOutpatientProductionRows(
           productionData,
           currentRowIds
@@ -86,14 +80,14 @@ export function useOutpatientOoDistribution() {
           currentRowIds
         );
 
+        setErrorMessage("");
         setProductionRows(currentProductionRows);
-        setDraftRowsByProductionRowId(
-          createDraftRowsByProductionRowId(
+        setDraftRows(
+          createDraftRowsForCurrentProduction(
             currentProductionRows,
             currentDistributionRows
           )
         );
-        setSelectedProductionRowId(String(currentProductionRows[0]?.id ?? ""));
       } catch (error) {
         if (!controller.signal.aborted) {
           console.error(error);
@@ -111,52 +105,30 @@ export function useOutpatientOoDistribution() {
     return () => controller.abort();
   }, []);
 
-  const selectedProductionRow = useMemo(
-    () =>
-      productionRows.find((row) => row.id === Number(selectedProductionRowId)) ??
-      null,
-    [productionRows, selectedProductionRowId]
-  );
-
-  const selectedDraftRows = useMemo(() => {
-    if (!selectedProductionRow) {
-      return [];
-    }
-
-    return draftRowsByProductionRowId[selectedProductionRow.id] ?? [];
-  }, [draftRowsByProductionRowId, selectedProductionRow]);
-
+  const selectedProductionRow = productionRows[0] ?? null;
   const summary = useMemo(
-    () => calculateDistributionSummary(selectedProductionRow, selectedDraftRows),
-    [selectedDraftRows, selectedProductionRow]
+    () => calculateAggregateDistributionSummary(productionRows, draftRows),
+    [draftRows, productionRows]
   );
-
   const validationMessage = useMemo(
-    () => validateOoDistribution(selectedProductionRow, selectedDraftRows),
-    [selectedDraftRows, selectedProductionRow]
+    () => validateOoDistribution(selectedProductionRow, draftRows),
+    [draftRows, selectedProductionRow]
   );
-
-  function handleProductionRowChange(productionRowId: string) {
-    setSelectedProductionRowId(productionRowId);
-    setSubmitAttempted(false);
-    setSaveMessage("");
-  }
 
   function handleDistributionRowChange(
     draftRowId: string,
     changes: Partial<Omit<OoDistributionDraftRow, "id" | "savedId">>
   ) {
-    if (!selectedProductionRow) {
+    if (productionRows.length === 0) {
       return;
     }
 
     setSaveMessage("");
-    setDraftRowsByProductionRowId((current) => ({
-      ...current,
-      [selectedProductionRow.id]: selectedDraftRows.map((row) =>
+    setDraftRows((current) =>
+      current.map((row) =>
         row.id === draftRowId ? { ...row, ...changes } : row
-      ),
-    }));
+      )
+    );
   }
 
   function handleCareUnitChange(draftRowId: string, option: CareUnitOption) {
@@ -167,34 +139,23 @@ export function useOutpatientOoDistribution() {
   }
 
   function addDistributionRow() {
-    if (!selectedProductionRow) {
+    if (productionRows.length === 0) {
       return;
     }
 
     setSaveMessage("");
-    setDraftRowsByProductionRowId((current) => ({
-      ...current,
-      [selectedProductionRow.id]: [
-        ...selectedDraftRows,
-        createEmptyDistributionRow(),
-      ],
-    }));
+    setDraftRows((current) => [...current, createEmptyDistributionRow()]);
   }
 
   function removeDistributionRow(draftRowId: string) {
-    if (!selectedProductionRow) {
+    if (productionRows.length === 0) {
       return;
     }
 
-    const nextRows = selectedDraftRows.filter((row) => row.id !== draftRowId);
+    const nextRows = draftRows.filter((row) => row.id !== draftRowId);
 
     setSaveMessage("");
-    setDraftRowsByProductionRowId((current) => ({
-      ...current,
-      [selectedProductionRow.id]: nextRows.length
-        ? nextRows
-        : [createEmptyDistributionRow("100")],
-    }));
+    setDraftRows(nextRows.length ? nextRows : [createEmptyDistributionRow("100")]);
   }
 
   async function saveDistribution() {
@@ -214,7 +175,7 @@ export function useOutpatientOoDistribution() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           productionRowId: selectedProductionRow.id,
-          distributions: selectedDraftRows.map((row) => ({
+          distributions: draftRows.map((row) => ({
             careUnitId: row.careUnitId,
             careUnit: row.careUnit,
             percentage: row.percentage,
@@ -226,22 +187,21 @@ export function useOutpatientOoDistribution() {
         throw new Error("Could not save OO distribution.");
       }
 
-      const data = (await response.json()) as OoDistributionSaveResponse;
+      const saveResponse = (await response.json()) as OoDistributionSaveResponse;
 
-      setDraftRowsByProductionRowId((current) => ({
-        ...current,
-        [selectedProductionRow.id]: data.distributions.length
-          ? data.distributions.map(mapSavedDistributionToDraft)
-          : [createEmptyDistributionRow("100")],
-      }));
+      setDraftRows(
+        saveResponse.distributions.length
+          ? saveResponse.distributions.map(mapSavedDistributionToDraft)
+          : [createEmptyDistributionRow("100")]
+      );
       setProductionRows((current) =>
         current.map((row) =>
           row.id === selectedProductionRow.id
-            ? { ...row, oo_distribution_status: data.status }
+            ? { ...row, oo_distribution_status: saveResponse.status }
             : row
         )
       );
-      setSaveMessage("OO-fördelningen är sparad.");
+      setSaveMessage("OO-fördelningen är sparad för denna yrkeskategori.");
       setSubmitAttempted(false);
     } catch (error) {
       console.error(error);
@@ -257,26 +217,28 @@ export function useOutpatientOoDistribution() {
     errorMessage,
     handleCareUnitChange,
     handleDistributionRowChange,
-    handleProductionRowChange,
     isLoading,
     isSaving,
     productionRows,
     removeDistributionRow,
     saveDistribution,
     saveMessage,
-    selectedDraftRows,
+    selectedDraftRows: draftRows,
     selectedProductionRow,
-    selectedProductionRowId,
     showValidation: submitAttempted,
     summary,
     validationMessage,
   };
 }
 
-function createDraftRowsByProductionRowId(
+function createDraftRowsForCurrentProduction(
   productionRows: OutpatientProductionRow[],
   savedRows: SavedOoDistributionRow[]
-): DraftRowsByProductionRowId {
+): OoDistributionDraftRow[] {
+  if (productionRows.length === 0) {
+    return [];
+  }
+
   const savedRowsByProductionRowId = savedRows.reduce<
     Record<number, SavedOoDistributionRow[]>
   >((rowsById, row) => {
@@ -287,19 +249,33 @@ function createDraftRowsByProductionRowId(
       [row.production_row_id]: [...currentRows, row],
     };
   }, {});
+  const firstSavedDistributionRows =
+    savedRowsByProductionRowId[productionRows[0].id] ?? [];
 
-  return productionRows.reduce<DraftRowsByProductionRowId>(
-    (rowsById, productionRow) => {
-      const savedDistributionRows =
-        savedRowsByProductionRowId[productionRow.id] ?? [];
+  return firstSavedDistributionRows.length
+    ? firstSavedDistributionRows.map(mapSavedDistributionToDraft)
+    : [createEmptyDistributionRow("100")];
+}
 
-      return {
-        ...rowsById,
-        [productionRow.id]: savedDistributionRows.length
-          ? savedDistributionRows.map(mapSavedDistributionToDraft)
-          : [createEmptyDistributionRow("100")],
-      };
-    },
-    {}
+function calculateAggregateDistributionSummary(
+  productionRows: OutpatientProductionRow[],
+  rows: OoDistributionDraftRow[]
+) {
+  const totalVisits = productionRows.reduce(
+    (sum, row) => sum + getAnnualVisits(row),
+    0
   );
+  const totalPercentage = rows.reduce(
+    (sum, row) => sum + toNumber(row.percentage),
+    0
+  );
+  const distributedVisits = (totalVisits * totalPercentage) / 100;
+
+  return {
+    totalVisits,
+    totalPercentage,
+    distributedVisits,
+    remainingPercentage: 100 - totalPercentage,
+    remainingVisits: totalVisits - distributedVisits,
+  };
 }

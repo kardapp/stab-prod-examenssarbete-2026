@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { Alert, Box } from "@mui/material";
 import { FormSection } from "@/shared/components/form-section";
 import { SectionCard } from "@/shared/components/section-card";
-import type { ProductionPlanningResultRow } from "../types/outpatient-production-results.types";
 import {
   buildWeeklyCurve,
   calculateAnnualCurveSummary,
@@ -13,6 +12,7 @@ import {
   initialImpactDraft,
   parseImpactType,
   type WeeklyImpact,
+  type WeeklyCurveSourceRow,
   type WeeklyImpactDraft,
 } from "./periodization-curve/periodization-curve-model";
 import { PeriodizationSummaryCards } from "./periodization-curve/periodization-summary-cards";
@@ -22,7 +22,12 @@ import { WeeklyCurveChart } from "./periodization-curve/weekly-curve-chart";
 import { WeeklyImpactControls } from "./periodization-curve/weekly-impact-controls";
 
 export function PeriodizationCurveSection(props: {
-  rows: ProductionPlanningResultRow[];
+  rows: WeeklyCurveSourceRow[];
+  overline?: string;
+  title?: string;
+  description?: string;
+  emptyText?: string;
+  showDrg?: boolean;
 }) {
   const [impacts, setImpacts] = useState<WeeklyImpact[]>([]);
   const [draft, setDraft] = useState<WeeklyImpactDraft>(initialImpactDraft);
@@ -106,19 +111,25 @@ export function PeriodizationCurveSection(props: {
   return (
     <SectionCard>
       <FormSection
-        overline="2. Periodiseringskurva"
-        title="Personalbehov per vecka"
-        description="Årsvolymen periodiseras till 52 veckor och justeras med planerade händelser."
+        overline={props.overline ?? "2. Periodiseringskurva"}
+        title={props.title ?? "Personalbehov per vecka"}
+        description={
+          props.description ??
+          "Årsvolymen periodiseras till 52 veckor och justeras med planerade händelser."
+        }
       />
 
       {props.rows.length === 0 ? (
         <Alert severity="info">
-          Periodiseringskurvan visas när det finns en sparad årsplan att räkna
-          på.
+          {props.emptyText ??
+            "Periodiseringskurvan visas när det finns en sparad årsplan att räkna på."}
         </Alert>
       ) : (
         <>
-          <PeriodizationSummaryCards summary={annualSummary} />
+          <PeriodizationSummaryCards
+            summary={annualSummary}
+            showDrg={props.showDrg}
+          />
 
           <Box sx={curveLayoutSx}>
             <WeeklyCurveChart
@@ -127,10 +138,16 @@ export function PeriodizationCurveSection(props: {
               selectedWeek={selectedWeek}
               onSelectWeek={setSelectedWeek}
             />
-            <SelectedWeekPanel selectedPoint={selectedPoint} />
+            <SelectedWeekPanel
+              selectedPoint={selectedPoint}
+              showDrg={props.showDrg}
+            />
           </Box>
 
-          <WeeklyBreakdownTable selectedPoint={selectedPoint} />
+          <WeeklyBreakdownTable
+            selectedPoint={selectedPoint}
+            showDrg={props.showDrg}
+          />
 
           <WeeklyImpactControls
             draft={draft}
