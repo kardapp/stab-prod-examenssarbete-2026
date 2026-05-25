@@ -126,6 +126,7 @@ export function useOutpatientProductionResults() {
     drgRows,
     errorMessage,
     filters,
+    filteredRows,
     groupedRows,
     handleFilterChange,
     isLoading,

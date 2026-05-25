@@ -20,6 +20,7 @@ import {
   formatWholeNumber,
 } from "@/shared/utils/format-number";
 import { useOutpatientProductionResults } from "../hooks/use-outpatient-production-results";
+import { PeriodizationCurveSection } from "./periodization-curve-section";
 import type {
   DrgResultRow,
   ProductionPlanningPeriodization,
@@ -93,6 +94,8 @@ export function OutpatientProductionResultsView() {
               />
 
               <DrgSection periodLabel={periodLabel} rows={results.drgRows} />
+
+              <PeriodizationCurveSection rows={results.filteredRows} />
 
               <ActionsSection />
             </Stack>
