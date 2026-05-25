@@ -6,6 +6,8 @@ import {
     Container,
     Stack,
     Typography,
+    TextField,
+    MenuItem
 } from "@mui/material";
 
 export default function HomePage() {
@@ -14,7 +16,7 @@ export default function HomePage() {
             component="main"
             sx={{
                 minHeight: "100vh",
-                bgcolor: "background.default",
+                bgcolor: "var(--page-background)",
                 py: 6,
             }}
         >
@@ -37,9 +39,27 @@ export default function HomePage() {
                             öppenvård och slutenvård.
                         </Typography>
                     </Box>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                        <Typography variant="h5">Sektion</Typography>
 
+                        <TextField
+                            select
+                            label="Välj sektion"
+                            defaultValue=""
+                            sx={{ minWidth: 180 }}
+                        >
+                            <MenuItem value="sektion-1">Sektion 1</MenuItem>
+                            <MenuItem value="sektion-2">Sektion 2</MenuItem>
+                            <MenuItem value="sektion-3">Sektion 3</MenuItem>
+                        </TextField>
+                    </Box>
                     <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
-                        <Card sx={{ flex: 1 }}>
+                        <Card
+                            sx={{
+                                flex: 1,
+                                bgcolor: "var(--section-background)",
+                            }}
+                        >
                             <CardContent>
                                 <Box
                                     component="h2"
@@ -56,13 +76,22 @@ export default function HomePage() {
                                     Planera vårdhändelser.
                                 </Typography>
 
-                                <Button href="/production" variant="contained" sx={{ mt: 3 }}>
+                                <Button
+                                    href="/production-planning/outpatient"
+                                    variant="contained"
+                                    sx={{ mt: 3 }}
+                                >
                                     Gå till produktionsplanering
                                 </Button>
                             </CardContent>
                         </Card>
 
-                        <Card sx={{ flex: 1 }}>
+                        <Card
+                            sx={{
+                                flex: 1,
+                                bgcolor: "var(--section-background)",
+                            }}
+                        >
                             <CardContent>
                                 <Box
                                     component="h2"
@@ -79,7 +108,11 @@ export default function HomePage() {
                                     Beräkna resursbehov.
                                 </Typography>
 
-                                <Button href="/dimensioning" variant="outlined" sx={{ mt: 3 }}>
+                                <Button
+                                    href="/outpatient/dimensioning"
+                                    variant="outlined"
+                                    sx={{ mt: 3 }}
+                                >
                                     Gå till dimensionering
                                 </Button>
                             </CardContent>
