@@ -2,6 +2,7 @@ import type { OutpatientProductionRow } from "@/types/production";
 import type { SavedOoDistributionRow } from "../types/outpatient-oo-distribution.types";
 import type {
   DrgResultRow,
+  ProductionPlanningPeriodization,
   ProductionPlanningResultFilters,
   ProductionPlanningResultOptions,
   ProductionPlanningResultRow,
@@ -17,8 +18,20 @@ import {
 
 const NOT_DISTRIBUTED = "Ej fördelad";
 const MISSING_VALUE = "Saknas";
+const WEEKS_PER_YEAR = 52;
+const WORKING_DAYS_PER_YEAR = 260;
+
+export const productionResultPeriodizationOptions: Array<{
+  value: ProductionPlanningPeriodization;
+  label: string;
+}> = [
+  { value: "year", label: "År" },
+  { value: "week", label: "Vecka" },
+  { value: "day", label: "Dag" },
+];
 
 export const initialProductionResultFilters: ProductionPlanningResultFilters = {
+  periodization: "week",
   economicUnit: "",
   careUnit: "",
   roleCategory: "",
@@ -66,6 +79,29 @@ export function filterProductionPlanningResultRows(
     }
 
     return true;
+  });
+}
+
+export function periodizeProductionPlanningResultRows(
+  rows: ProductionPlanningResultRow[],
+  periodization: ProductionPlanningPeriodization
+): ProductionPlanningResultRow[] {
+  const factor = getPeriodizationFactor(periodization);
+
+  return rows.map((row) => {
+    const visits = row.visits * factor;
+    const totalVisitMinutes = row.totalVisitMinutes * factor;
+    const drgPoints = row.drgPoints * factor;
+
+    return {
+      ...row,
+      id: `${row.id}-${periodization}`,
+      visits,
+      totalVisitMinutes,
+      averageMinutesPerVisit: safeDivide(totalVisitMinutes, visits),
+      drgPoints,
+      drgAverage: safeDivide(drgPoints, visits),
+    };
   });
 }
 
@@ -274,6 +310,20 @@ function safeDivide(value: number, divisor: number) {
   }
 
   return value / divisor;
+}
+
+function getPeriodizationFactor(
+  periodization: ProductionPlanningPeriodization
+): number {
+  if (periodization === "week") {
+    return 1 / WEEKS_PER_YEAR;
+  }
+
+  if (periodization === "day") {
+    return 1 / WORKING_DAYS_PER_YEAR;
+  }
+
+  return 1;
 }
 
 function formatProductionYear(row: OutpatientProductionRow): string {

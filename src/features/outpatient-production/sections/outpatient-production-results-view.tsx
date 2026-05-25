@@ -22,6 +22,7 @@ import {
 import { useOutpatientProductionResults } from "../hooks/use-outpatient-production-results";
 import type {
   DrgResultRow,
+  ProductionPlanningPeriodization,
   ProductionPlanningResultFilters,
   ProductionPlanningResultOptions,
   ProductionPlanningResultRow,
@@ -31,10 +32,12 @@ import {
   formatCareUnit,
   formatDrgEconomicUnit,
   formatEconomicUnit,
+  productionResultPeriodizationOptions,
 } from "../utils/outpatient-production-results-calculations";
 
 export function OutpatientProductionResultsView() {
   const results = useOutpatientProductionResults();
+  const periodLabel = formatPeriodLabel(results.filters.periodization);
 
   return (
     <Box
@@ -74,13 +77,22 @@ export function OutpatientProductionResultsView() {
                 </Alert>
               ) : null}
 
-              <SummaryStrip summary={results.summary} />
+              <SummaryStrip
+                periodLabel={periodLabel}
+                summary={results.summary}
+              />
 
-              <VisitsSection rows={results.groupedRows} />
+              <VisitsSection
+                periodLabel={periodLabel}
+                rows={results.groupedRows}
+              />
 
-              <VisitTimeSection rows={results.groupedRows} />
+              <VisitTimeSection
+                periodLabel={periodLabel}
+                rows={results.groupedRows}
+              />
 
-              <DrgSection rows={results.drgRows} />
+              <DrgSection periodLabel={periodLabel} rows={results.drgRows} />
 
               <ActionsSection />
             </Stack>
@@ -105,10 +117,26 @@ function FilterSection(props: {
       <FormSection
         overline="Filter"
         title="Resultatnivå"
-        description="Resultat per ekonomisk kombika, vårdande enhet, år och yrkeskategori."
+        description="Resultat per ekonomisk kombika, vårdande enhet, period och yrkeskategori."
       />
 
       <Box sx={filterGridSx}>
+        <TextField
+          select
+          label="Periodisering"
+          size="small"
+          value={props.filters.periodization}
+          onChange={(event) =>
+            props.onFilterChange("periodization", event.target.value)
+          }
+          sx={fieldSx}
+        >
+          {productionResultPeriodizationOptions.map((option) => (
+            <MenuItem key={option.value} value={option.value}>
+              {option.label}
+            </MenuItem>
+          ))}
+        </TextField>
         <FilterSelect
           label="Ekonomisk kombika"
           value={props.filters.economicUnit}
@@ -165,20 +193,23 @@ function FilterSelect(props: {
   );
 }
 
-function SummaryStrip(props: { summary: ProductionPlanningResultSummary }) {
+function SummaryStrip(props: {
+  periodLabel: string;
+  summary: ProductionPlanningResultSummary;
+}) {
   return (
     <SectionCard>
       <Box sx={summaryGridSx}>
         <MetricValue
-          label="Vårdtillfällen per år"
+          label={`Vårdtillfällen ${props.periodLabel}`}
           value={formatOneDecimal(props.summary.visits)}
         />
         <MetricValue
-          label="Besökstid"
+          label={`Besökstid ${props.periodLabel}`}
           value={`${formatWholeNumber(props.summary.totalVisitMinutes)} min`}
         />
         <MetricValue
-          label="Antal DRG"
+          label={`Antal DRG ${props.periodLabel}`}
           value={formatTwoDecimals(props.summary.drgPoints)}
         />
         <MetricValue
@@ -190,15 +221,19 @@ function SummaryStrip(props: { summary: ProductionPlanningResultSummary }) {
   );
 }
 
-function VisitsSection(props: { rows: ProductionPlanningResultRow[] }) {
+function VisitsSection(props: {
+  periodLabel: string;
+  rows: ProductionPlanningResultRow[];
+}) {
   return (
     <ResultSection
       overline="1. Antal vårdtillfällen"
-      title="Antal vårdtillfällen"
+      title={`Antal vårdtillfällen ${props.periodLabel}`}
       dimensions={[
         "Ekonomisk kombika",
         "Vårdande enhet",
         "År",
+        `Periodisering: ${props.periodLabel}`,
         "Yrkeskategori",
       ]}
       emptyText="Inga vårdtillfällen matchar valt filter."
@@ -209,7 +244,7 @@ function VisitsSection(props: { rows: ProductionPlanningResultRow[] }) {
         "Vårdande enhet",
         "År",
         "Yrkeskategori",
-        "Vårdtillfällen",
+        `Vårdtillfällen ${props.periodLabel}`,
       ]}
       rows={props.rows.map((row) => ({
         id: `visits-${row.id}`,
@@ -225,15 +260,19 @@ function VisitsSection(props: { rows: ProductionPlanningResultRow[] }) {
   );
 }
 
-function VisitTimeSection(props: { rows: ProductionPlanningResultRow[] }) {
+function VisitTimeSection(props: {
+  periodLabel: string;
+  rows: ProductionPlanningResultRow[];
+}) {
   return (
     <ResultSection
       overline="2. Besökstid"
-      title="Besökstid"
+      title={`Besökstid ${props.periodLabel}`}
       dimensions={[
         "Ekonomisk kombika",
         "Vårdande enhet",
         "År",
+        `Periodisering: ${props.periodLabel}`,
         "Yrkeskategori",
       ]}
       emptyText="Inga besökstider matchar valt filter."
@@ -245,7 +284,7 @@ function VisitTimeSection(props: { rows: ProductionPlanningResultRow[] }) {
         "År",
         "Yrkeskategori",
         "Snitt-tid",
-        "Total tid",
+        `Total tid ${props.periodLabel}`,
       ]}
       rows={props.rows.map((row) => ({
         id: `visit-time-${row.id}`,
@@ -265,16 +304,25 @@ function VisitTimeSection(props: { rows: ProductionPlanningResultRow[] }) {
   );
 }
 
-function DrgSection(props: { rows: DrgResultRow[] }) {
+function DrgSection(props: { periodLabel: string; rows: DrgResultRow[] }) {
   return (
     <ResultSection
       overline="3. Antal DRG"
-      title="Antal DRG"
-      dimensions={["Ekonomisk kombika", "År"]}
+      title={`Antal DRG ${props.periodLabel}`}
+      dimensions={[
+        "Ekonomisk kombika",
+        "År",
+        `Periodisering: ${props.periodLabel}`,
+      ]}
       emptyText="Inga DRG-rader matchar valt filter."
       headerSx={drgGridSx}
       rowSx={drgGridSx}
-      headers={["Ekonomisk kombika", "År", "Vårdtillfällen", "Antal DRG"]}
+      headers={[
+        "Ekonomisk kombika",
+        "År",
+        `Vårdtillfällen ${props.periodLabel}`,
+        `Antal DRG ${props.periodLabel}`,
+      ]}
       rows={props.rows.map((row) => ({
         id: `drg-${row.id}`,
         values: [
@@ -409,6 +457,20 @@ function ResultCell(props: {
       </Typography>
     </Box>
   );
+}
+
+function formatPeriodLabel(
+  periodization: ProductionPlanningPeriodization
+): string {
+  if (periodization === "day") {
+    return "per dag";
+  }
+
+  if (periodization === "week") {
+    return "per vecka";
+  }
+
+  return "per år";
 }
 
 const filterGridSx = {

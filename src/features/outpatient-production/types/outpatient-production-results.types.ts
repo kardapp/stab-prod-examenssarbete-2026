@@ -1,4 +1,7 @@
+export type ProductionPlanningPeriodization = "year" | "week" | "day";
+
 export type ProductionPlanningResultFilters = {
+  periodization: ProductionPlanningPeriodization;
   economicUnit: string;
   careUnit: string;
   roleCategory: string;

@@ -12,6 +12,7 @@ import {
   filterProductionPlanningResultRows,
   groupVisitsAndVisitTimeRows,
   initialProductionResultFilters,
+  periodizeProductionPlanningResultRows,
 } from "../utils/outpatient-production-results-calculations";
 
 export function useOutpatientProductionResults() {
@@ -80,12 +81,24 @@ export function useOutpatientProductionResults() {
     [filters, resultRows]
   );
 
-  const groupedRows = useMemo(
-    () => groupVisitsAndVisitTimeRows(filteredRows),
-    [filteredRows]
+  const periodizedRows = useMemo(
+    () =>
+      periodizeProductionPlanningResultRows(
+        filteredRows,
+        filters.periodization
+      ),
+    [filteredRows, filters.periodization]
   );
 
-  const drgRows = useMemo(() => calculateDrgRows(filteredRows), [filteredRows]);
+  const groupedRows = useMemo(
+    () => groupVisitsAndVisitTimeRows(periodizedRows),
+    [periodizedRows]
+  );
+
+  const drgRows = useMemo(
+    () => calculateDrgRows(periodizedRows),
+    [periodizedRows]
+  );
 
   const options = useMemo(
     () => buildProductionPlanningResultOptions(resultRows),
@@ -93,8 +106,8 @@ export function useOutpatientProductionResults() {
   );
 
   const summary = useMemo(
-    () => calculateProductionPlanningResultSummary(filteredRows),
-    [filteredRows]
+    () => calculateProductionPlanningResultSummary(periodizedRows),
+    [periodizedRows]
   );
 
   function handleFilterChange(
