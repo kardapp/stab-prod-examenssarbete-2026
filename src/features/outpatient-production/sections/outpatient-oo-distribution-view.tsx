@@ -501,7 +501,7 @@ function formatProductionRowDetails(row: OutpatientProductionRow): string {
 
 function getDimensioningHref(row: OutpatientProductionRow | null): string {
   if (!row) {
-    return "/outpatient/dimensioning";
+    return "/outpatient/dimensioning/oo-opv";
   }
 
   const params = new URLSearchParams({
@@ -510,7 +510,7 @@ function getDimensioningHref(row: OutpatientProductionRow | null): string {
     careType: isDayCareRow(row) ? "dagvard" : "mottagning",
   });
 
-  return `/outpatient/dimensioning?${params.toString()}`;
+  return `/outpatient/dimensioning/oo-opv?${params.toString()}`;
 }
 
 function isDayCareRow(row: OutpatientProductionRow): boolean {
