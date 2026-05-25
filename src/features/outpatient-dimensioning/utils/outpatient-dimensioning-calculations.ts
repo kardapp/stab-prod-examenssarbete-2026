@@ -1,4 +1,5 @@
 import type { OutpatientProductionRow } from "@/types/production";
+import { getAnnualVisits } from "@/features/outpatient-production/utils/outpatient-production-calculations";
 import type {
   CareType,
   DayCareMethod,
@@ -9,6 +10,7 @@ import type {
 } from "../types/outpatient-dimensioning.types";
 
 export const DEFAULT_WEEKLY_WORK_HOURS = 40;
+export const WORKING_WEEKS_PER_YEAR = 52;
 
 export function toNumber(value: string | number | null | undefined): number {
   if (value === null || value === undefined || value === "") {
@@ -41,7 +43,7 @@ export function calculatePresenceNeed(
     return 0;
   }
 
-  return totalVisitMinutes / weeklyWorkMinutes;
+  return totalVisitMinutes / (weeklyWorkMinutes * WORKING_WEEKS_PER_YEAR);
 }
 
 export function calculateDayCarePresenceNeed(params: {
@@ -120,12 +122,13 @@ export function calculateProductionBasisSummary(
   rows: OutpatientProductionRow[],
   careType: CareType
 ): ProductionBasisSummary {
-  const totalVisits = rows.reduce((sum, row) => sum + toNumber(row.visits), 0);
+  const comparisonRows = uniqueComparisonRows(rows);
+  const totalVisits = rows.reduce((sum, row) => sum + getAnnualVisits(row), 0);
   const totalVisitMinutes = rows.reduce(
     (sum, row) =>
       sum +
       calculateTotalVisitMinutes(
-        toNumber(row.visits),
+        getAnnualVisits(row),
         toNumber(row.average_minutes_per_visit)
       ),
     0
@@ -153,30 +156,33 @@ export function calculateProductionBasisSummary(
     totalVisitMinutes,
     averageMinutesPerVisit:
       totalVisits > 0 ? totalVisitMinutes / totalVisits : 0,
-    r12Outcome: rows.reduce((sum, row) => sum + toNumber(row.r12_outcome), 0),
-    r12PresenceFouu: rows.reduce(
+    r12Outcome: comparisonRows.reduce(
+      (sum, row) => sum + toNumber(row.r12_outcome),
+      0
+    ),
+    r12PresenceFouu: comparisonRows.reduce(
       (sum, row) => sum + toNumber(row.r12_presence_fouu),
       0
     ),
-    r12PresenceProduction: rows.reduce(
+    r12PresenceProduction: comparisonRows.reduce(
       (sum, row) => sum + toNumber(row.r12_presence_production),
       0
     ),
     r12SalaryCostPerPresence: calculateWeightedAverage(
-      rows.map((row) => ({
+      comparisonRows.map((row) => ({
         value: toNumber(row.r12_salary_cost_per_presence),
-        weight: toNumber(row.visits),
+        weight: getAnnualVisits(row),
       }))
     ),
-    previousYearPlan: rows.reduce(
+    previousYearPlan: comparisonRows.reduce(
       (sum, row) => sum + toNumber(row.previous_year_plan),
       0
     ),
-    previousYearOutcome: rows.reduce(
+    previousYearOutcome: comparisonRows.reduce(
       (sum, row) => sum + toNumber(row.previous_year_outcome),
       0
     ),
-    previousDimensioningPresence: rows.reduce(
+    previousDimensioningPresence: comparisonRows.reduce(
       (sum, row) => sum + toNumber(row.previous_dimensioning_presence),
       0
     ),
@@ -286,6 +292,27 @@ function firstNumber(values: Array<number | null | undefined>): number | null {
   );
 
   return numberValue ?? null;
+}
+
+function uniqueComparisonRows(
+  rows: OutpatientProductionRow[]
+): OutpatientProductionRow[] {
+  const rowsByComparisonKey = new Map<string, OutpatientProductionRow>();
+
+  rows.forEach((row) => {
+    const key = [
+      row.production_plan_id ?? "",
+      row.kombika_pf_id ?? "",
+      row.period_type ?? "",
+      row.period_value ?? "",
+    ].join("|");
+
+    if (!rowsByComparisonKey.has(key)) {
+      rowsByComparisonKey.set(key, row);
+    }
+  });
+
+  return Array.from(rowsByComparisonKey.values());
 }
 
 function calculateWeightedAverage(

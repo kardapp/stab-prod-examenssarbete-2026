@@ -19,7 +19,7 @@ export function ComparisonValuesSection(props: ComparisonValuesSectionProps) {
       <FormSection
         overline="Steg 6"
         title="Jämförelsevärden"
-        description="Stöddata visas som jämförelse mot planerad huvudvolym."
+        description="Stöddata från föregående år visas som jämförelse mot årets planerade huvudvolym."
       />
 
       {props.comparisonValues ? (
@@ -27,11 +27,6 @@ export function ComparisonValuesSection(props: ComparisonValuesSectionProps) {
           <SummaryValueCard
             label="Plan föregående år"
             value={formatWholeNumber(props.comparisonValues.previousYearPlan)}
-            helperText={props.selectedKombika.code}
-          />
-          <SummaryValueCard
-            label="Utfall R12"
-            value={formatWholeNumber(props.comparisonValues.r12Outcome)}
             helperText={props.selectedKombika.code}
           />
           <SummaryValueCard
@@ -55,7 +50,7 @@ const summaryGridSx = {
   display: "grid",
   gridTemplateColumns: {
     xs: "1fr",
-    md: "repeat(3, minmax(0, 1fr))",
+    md: "repeat(2, minmax(0, 1fr))",
   },
   gap: 1.5,
 };

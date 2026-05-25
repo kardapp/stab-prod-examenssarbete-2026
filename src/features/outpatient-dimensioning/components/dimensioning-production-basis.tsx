@@ -18,6 +18,7 @@ import {
   formatWholeNumber,
 } from "@/shared/utils/format-number";
 import type { OutpatientProductionRow } from "@/types/production";
+import { getAnnualVisits } from "@/features/outpatient-production/utils/outpatient-production-calculations";
 import type { ProductionBasisSummary } from "../types/outpatient-dimensioning.types";
 
 type DimensioningProductionBasisProps = {
@@ -37,7 +38,7 @@ export function DimensioningProductionBasis(
         <FormSection
           overline="Hämtat från produktionsplan"
           title="Produktionsunderlag från produktionsplan"
-          description="Värdena nedan är sparade produktionsrader och används som underlag för beräknad närvaro."
+          description="Värdena nedan är sparade produktionsrader för året och används som underlag för beräknad närvaro."
         />
       </Stack>
 
@@ -55,7 +56,7 @@ export function DimensioningProductionBasis(
           value={props.productionBasis.sections.join(", ") || "Saknas"}
         />
         <SupportValue
-          label="Antal besök/vårdtillfällen"
+          label="Antal besök/vårdtillfällen per år"
           value={formatWholeNumber(props.productionBasis.totalVisits)}
         />
         <SupportValue
@@ -78,26 +79,6 @@ export function DimensioningProductionBasis(
         <SupportValue
           label="Föregående års plan"
           value={formatWholeNumber(props.productionBasis.previousYearPlan)}
-        />
-        <SupportValue
-          label="Utfall R12"
-          value={formatWholeNumber(props.productionBasis.r12Outcome)}
-        />
-        <SupportValue
-          label="R12 närvaro FoUU"
-          value={formatTwoDecimals(props.productionBasis.r12PresenceFouu)}
-        />
-        <SupportValue
-          label="R12 närvaro produktion"
-          value={formatTwoDecimals(
-            props.productionBasis.r12PresenceProduction
-          )}
-        />
-        <SupportValue
-          label="R12 lönekostnad/närvaro"
-          value={`${formatWholeNumber(
-            props.productionBasis.r12SalaryCostPerPresence
-          )} kr`}
         />
         <SupportValue
           label="Föregående års utfall"
@@ -144,7 +125,7 @@ export function DimensioningProductionBasis(
                   <TableCell>{row.section}</TableCell>
                   <TableCell>{row.visit_type}</TableCell>
                   <TableCell align="right">
-                    {formatWholeNumber(row.visits ?? 0)}
+                    {formatWholeNumber(getAnnualVisits(row))}
                   </TableCell>
                   <TableCell align="right">
                     {formatWholeNumber(row.average_minutes_per_visit ?? 0)} min
@@ -186,7 +167,7 @@ const supportGridSx = {
 
 const comparisonGridSx = {
   ...supportGridSx,
-  gridTemplateColumns: { xs: "1fr", md: "repeat(4, 1fr)", xl: "repeat(7, 1fr)" },
+  gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
   mt: 1.5,
 };
 

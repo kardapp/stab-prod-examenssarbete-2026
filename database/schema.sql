@@ -34,7 +34,7 @@ CREATE TABLE outpatient_production_rows (
   site TEXT,
   assignment TEXT,
 
-  period_type TEXT DEFAULT 'day',
+  period_type TEXT DEFAULT 'year',
   period_value TEXT,
   care_type TEXT DEFAULT 'open_care',
   visit_type TEXT,
@@ -99,7 +99,7 @@ CREATE TABLE dimensionering_me_opv_rows (
   admin_other_presence NUMERIC(10,2) DEFAULT 0,
   salary_cost_per_presence NUMERIC(12,2) DEFAULT 0,
   comment TEXT,
-  periodization_type TEXT DEFAULT 'day',
+  periodization_type TEXT DEFAULT 'year',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE (production_plan_id, kombika_pf_id, care_type, competence_level)

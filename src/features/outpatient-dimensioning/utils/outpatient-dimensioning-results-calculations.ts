@@ -1,4 +1,5 @@
 import type { OutpatientProductionRow } from "@/types/production";
+import { getAnnualVisits } from "@/features/outpatient-production/utils/outpatient-production-calculations";
 import type {
   CareType,
   DayCareMethod,
@@ -14,16 +15,15 @@ import type {
 import { isDayCareRow, toNumber } from "./outpatient-dimensioning-calculations";
 
 const DEFAULT_WEEKLY_WORK_HOURS = 40;
+const WORKING_WEEKS_PER_YEAR = 52;
 const NOT_DISTRIBUTED = "Ej fördelat";
 const MISSING_VALUE = "Saknas";
 
 export const initialResultFilters: DimensioningResultFilters = {
-  periodization: "day",
+  periodization: "year",
   section: "",
   roleCategory: "",
   competenceLevel: "",
-  startDate: "",
-  endDate: "",
   careType: "",
 };
 
@@ -40,7 +40,10 @@ export function calculatePresence(
   averageMinutesPerVisit: number,
   weeklyWorkingMinutes: number
 ) {
-  return safeDivide(visits * averageMinutesPerVisit, weeklyWorkingMinutes);
+  return safeDivide(
+    visits * averageMinutesPerVisit,
+    weeklyWorkingMinutes * WORKING_WEEKS_PER_YEAR
+  );
 }
 
 export function calculateTotalPresence(
@@ -87,7 +90,7 @@ export function calculateOutpatientDimensioningResults(
     );
     basisVisitsByKey.set(
       key,
-      (basisVisitsByKey.get(key) ?? 0) + toNumber(row.visits)
+      (basisVisitsByKey.get(key) ?? 0) + getAnnualVisits(row)
     );
   });
 
@@ -109,7 +112,7 @@ export function calculateOutpatientDimensioningResults(
       ) ?? 0;
 
     return matchingProductionRows.map((productionRow) =>
-      calculateDailyResultRow(productionRow, dimensioningRow, basisVisits)
+      calculateYearResultRow(productionRow, dimensioningRow, basisVisits)
     );
   });
 }
@@ -138,10 +141,6 @@ export function filterDimensioningResultRows(
       return false;
     }
 
-    if (!isWithinDateRange(row.sourceDay, filters.startDate, filters.endDate)) {
-      return false;
-    }
-
     return true;
   });
 }
@@ -153,7 +152,7 @@ export function groupByPeriod(
   const rowsByKey = new Map<string, DimensioningResultRow>();
 
   rows.forEach((row) => {
-    const period = formatPeriod(row.sourceDay, periodType);
+    const period = formatPeriod(row.sourcePeriod, periodType);
     const key = [
       period,
       row.productionPlanId,
@@ -230,13 +229,13 @@ export function buildDimensioningResultOptions(
   };
 }
 
-function calculateDailyResultRow(
+function calculateYearResultRow(
   productionRow: OutpatientProductionRow,
   dimensioningRow: SavedMeDimensioningRow,
   basisVisits: number
 ): DimensioningResultRow {
   const productionShare = toNumber(dimensioningRow.production_share_percentage);
-  const productionVisits = toNumber(productionRow.visits);
+  const productionVisits = getAnnualVisits(productionRow);
   const visits = (productionVisits * productionShare) / 100;
   const basisShare =
     basisVisits > 0 ? safeDivide(productionVisits, basisVisits) : 0;
@@ -285,8 +284,8 @@ function calculateDailyResultRow(
     competenceLevel: dimensioningRow.competence_level,
     economicSection: formatEconomicSection(productionRow),
     careCostCenter: NOT_DISTRIBUTED,
-    sourceDay: productionRow.period_value ?? "",
-    period: productionRow.period_value ?? MISSING_VALUE,
+    sourcePeriod: formatProductionYear(productionRow),
+    period: formatProductionYear(productionRow),
     productionPresence,
     adminOtherPresence,
     nonContributingPresence,
@@ -392,36 +391,24 @@ function normalizeDayCareMethod(method: string | null): DayCareMethod {
   return "calculate_as_outpatient";
 }
 
-function isWithinDateRange(day: string, startDate: string, endDate: string) {
-  if (!day || day === MISSING_VALUE) {
-    return !startDate && !endDate;
-  }
-
-  if (startDate && day < startDate) {
-    return false;
-  }
-
-  if (endDate && day > endDate) {
-    return false;
-  }
-
-  return true;
-}
-
-function formatPeriod(day: string, periodType: PeriodizationType): string {
-  if (!day) {
+function formatPeriod(period: string, periodType: PeriodizationType): string {
+  if (!period || period === MISSING_VALUE) {
     return MISSING_VALUE;
   }
 
+  if (periodType === "year") {
+    return period.slice(0, 4);
+  }
+
   if (periodType === "month") {
-    return day.slice(0, 7);
+    return period.slice(0, 7);
   }
 
   if (periodType === "week") {
-    return formatIsoWeek(day);
+    return formatIsoWeek(period);
   }
 
-  return day;
+  return period;
 }
 
 function formatIsoWeek(day: string): string {
@@ -438,6 +425,14 @@ function formatIsoWeek(day: string): string {
   );
 
   return `${date.getUTCFullYear()}-V${String(week).padStart(2, "0")}`;
+}
+
+function formatProductionYear(row: OutpatientProductionRow): string {
+  if (row.production_plan_year) {
+    return String(row.production_plan_year);
+  }
+
+  return row.period_value ?? MISSING_VALUE;
 }
 
 function compareResultRows(

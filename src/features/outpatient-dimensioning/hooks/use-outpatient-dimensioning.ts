@@ -542,8 +542,7 @@ function mergeSavedDimensioningRows(
         defaultRow.salaryCostPerPresence
       ),
       comment: savedRow.comment ?? "",
-      periodizationType:
-        savedRow.periodization_type ?? defaultRow.periodizationType,
+      periodizationType: "year",
     };
   });
 }

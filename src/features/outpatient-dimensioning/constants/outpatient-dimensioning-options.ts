@@ -52,9 +52,7 @@ export const periodizationTypeOptions: Array<{
   value: PeriodizationType;
   label: string;
 }> = [
-  { value: "day", label: "Dag" },
-  { value: "week", label: "Vecka" },
-  { value: "month", label: "Månad" },
+  { value: "year", label: "År" },
 ];
 
 function createInitialDimensioningRow(
@@ -73,6 +71,6 @@ function createInitialDimensioningRow(
     adminOtherPresence: "0",
     salaryCostPerPresence: "",
     comment: "",
-    periodizationType: "day",
+    periodizationType: "year",
   };
 }

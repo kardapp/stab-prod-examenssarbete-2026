@@ -28,8 +28,6 @@ export type DimensioningResultFilters = {
   section: string;
   roleCategory: string;
   competenceLevel: string;
-  startDate: string;
-  endDate: string;
   careType: string;
 };
 
@@ -42,7 +40,7 @@ export type DimensioningResultRow = {
   competenceLevel: CompetenceLevel;
   economicSection: string;
   careCostCenter: string;
-  sourceDay: string;
+  sourcePeriod: string;
   period: string;
   productionPresence: number;
   adminOtherPresence: number;

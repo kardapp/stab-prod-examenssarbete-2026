@@ -5,7 +5,7 @@ export type DayCareMethod =
   | "key_ratio"
   | "manual_presence";
 
-export type PeriodizationType = "day" | "week" | "month";
+export type PeriodizationType = "year" | "day" | "week" | "month";
 
 export type CompetenceLevel = "ÖL" | "BÖL" | "SPEC" | "ST/LEG" | "UL";
 

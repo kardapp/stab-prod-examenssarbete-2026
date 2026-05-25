@@ -55,31 +55,30 @@ export const visitTypeOptions = ["Nybesök", "Återbesök", "Etc."];
 
 export const comparisonValuesByKombikaId: Record<string, ComparisonValues> = {
   "PF-001": {
-    previousYearPlan: 92,
-    r12Outcome: 88,
-    previousYearOutcome: 95,
+    previousYearPlan: 5000,
+    r12Outcome: 5100,
+    previousYearOutcome: 5050,
   },
   "PF-002": {
-    previousYearPlan: 70,
-    r12Outcome: 68,
-    previousYearOutcome: 72,
+    previousYearPlan: 3700,
+    r12Outcome: 3800,
+    previousYearOutcome: 3750,
   },
   "PF-003": {
-    previousYearPlan: 45,
-    r12Outcome: 47,
-    previousYearOutcome: 44,
+    previousYearPlan: 2500,
+    r12Outcome: 2550,
+    previousYearOutcome: 2480,
   },
   "PF-004": {
-    previousYearPlan: 58,
-    r12Outcome: 61,
-    previousYearOutcome: 55,
+    previousYearPlan: 3000,
+    r12Outcome: 3100,
+    previousYearOutcome: 2950,
   },
 };
 
 export const initialFormState: OutpatientProductionFormState = {
   selectedKombikaId: "",
-  date: "2027-03-22",
-  careEvents: 100,
+  careEvents: 5200,
   sllPercentage: 80,
   uulpPercentage: 20,
   acutePercentage: 30,

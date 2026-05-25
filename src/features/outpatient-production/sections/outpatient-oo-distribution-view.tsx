@@ -27,6 +27,7 @@ import type {
   OoDistributionDraftRow,
 } from "../types/outpatient-oo-distribution.types";
 import { calculateDistributedVisits } from "../utils/outpatient-oo-distribution-calculations";
+import { getAnnualVisits } from "../utils/outpatient-production-calculations";
 
 export function OutpatientOoDistributionView() {
   const ooDistribution = useOutpatientOoDistribution();
@@ -100,8 +101,8 @@ function OoIntroSection() {
     <SectionCard>
       <FormSection
         overline="Steg 2"
-        title="Vårdtillfällen fördelas till vårdande enhet"
-        description="Efter överenskommelse matas fördelningen in i verktyget per produktionsrad."
+        title="Årets vårdtillfällen fördelas till vårdande enhet"
+        description="Efter överenskommelse matas årets fördelning in i verktyget per produktionsrad."
       />
       <Box sx={introGridSx}>
         <MetricValue label="Underlag" value="Sparade produktionsrader" />
@@ -199,12 +200,12 @@ function DistributionEditorSection(props: {
       <FormSection
         overline="OO-fördelning"
         title="Fördelning till vårdande enhet"
-        description="Vårdtillfällen fördelas procentuellt till en eller flera vårdande enheter."
+        description="Årets vårdtillfällen fördelas procentuellt till en eller flera vårdande enheter."
       />
 
       <Box sx={summaryGridSx}>
         <MetricValue
-          label="Vårdtillfällen"
+          label="Vårdtillfällen per år"
           value={formatWholeNumber(props.summary.totalVisits)}
         />
         <MetricValue
@@ -273,7 +274,7 @@ function DistributionRow(props: {
   ) => void;
 }) {
   const visits = calculateDistributedVisits(
-    props.selectedProductionRow?.visits,
+    props.selectedProductionRow ? getAnnualVisits(props.selectedProductionRow) : 0,
     props.row.percentage
   );
 
@@ -473,10 +474,10 @@ function StatusChip(props: { status: string | null }) {
 
 function formatProductionRowOption(row: OutpatientProductionRow): string {
   return [
-    row.period_value || "Saknar datum",
+    formatProductionYear(row),
     row.kombika_pf_id,
     row.kombika_pf || row.row_label,
-    `${formatWholeNumber(Number(row.visits ?? 0))} vårdtillfällen`,
+    `${formatWholeNumber(getAnnualVisits(row))} vårdtillfällen`,
   ]
     .filter(Boolean)
     .join(" - ");
@@ -491,8 +492,8 @@ function formatProductionRowDetails(row: OutpatientProductionRow): string {
     row.section,
     row.site,
     row.primary_role_category,
-    row.period_value,
-    `${formatWholeNumber(Number(row.visits ?? 0))} vårdtillfällen`,
+    formatProductionYear(row),
+    `${formatWholeNumber(getAnnualVisits(row))} vårdtillfällen`,
   ]
     .filter(Boolean)
     .join(" · ");
@@ -523,6 +524,14 @@ function isDayCareRow(row: OutpatientProductionRow): boolean {
     values.includes("day_care") ||
     values.includes("dagvard")
   );
+}
+
+function formatProductionYear(row: OutpatientProductionRow): string {
+  if (row.production_plan_year) {
+    return String(row.production_plan_year);
+  }
+
+  return row.period_value || "Saknar år";
 }
 
 const introGridSx = {

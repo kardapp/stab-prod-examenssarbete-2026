@@ -8,6 +8,7 @@ import type {
 } from "../types/outpatient-production.types";
 
 export const WEEKLY_WORKING_MINUTES = 40 * 60;
+export const WORKING_WEEKS_PER_YEAR = 52;
 
 export function toNumber(value: string | number | null | undefined): number {
   if (value === null || value === undefined || value === "") {
@@ -85,7 +86,7 @@ export function calculatePresenceNeed(
     return 0;
   }
 
-  return totalMinutes / weeklyWorkingMinutes;
+  return totalMinutes / (weeklyWorkingMinutes * WORKING_WEEKS_PER_YEAR);
 }
 
 export function calculateWeeklyAverage(annualVolume: number): number {
@@ -178,7 +179,7 @@ export function formatRoleDistributionLabel(
 }
 
 export function calculateProductionRowMetrics(row: OutpatientProductionRow) {
-  const visits = toNumber(row.visits);
+  const visits = getAnnualVisits(row);
   const averageMinutes = toNumber(row.average_minutes_per_visit);
   const drgAverage = toNumber(row.drg_average);
 
@@ -200,6 +201,17 @@ export function sumVisitMinutes(rows: OutpatientProductionRow[]): number {
     (sum, row) => sum + calculateProductionRowMetrics(row).totalVisitMinutes,
     0
   );
+}
+
+export function getAnnualVisits(row: OutpatientProductionRow): number {
+  const visits = toNumber(row.visits);
+  const annualVolume = toNumber(row.annual_volume);
+
+  if (row.period_type && row.period_type !== "year" && annualVolume > 0) {
+    return annualVolume;
+  }
+
+  return visits;
 }
 
 export function calculateProductionSupportValues(
@@ -225,7 +237,7 @@ export function mapProductionRowsToDimensioningInput(
 
   rows.forEach((row) => {
     const roleCategory = row.primary_role_category ?? "Ej angiven";
-    const visits = toNumber(row.visits);
+    const visits = getAnnualVisits(row);
     const totalMinutes = calculateProductionRowMetrics(row).totalVisitMinutes;
     const existing = summaries.get(roleCategory) ?? {
       roleCategory,

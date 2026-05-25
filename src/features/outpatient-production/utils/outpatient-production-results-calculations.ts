@@ -11,6 +11,7 @@ import {
   calculateDrgPoints,
   calculateTotalVisitMinutes,
   formatRoleDistributionLabel,
+  getAnnualVisits,
   toNumber,
 } from "./outpatient-production-calculations";
 
@@ -21,8 +22,6 @@ export const initialProductionResultFilters: ProductionPlanningResultFilters = {
   economicUnit: "",
   careUnit: "",
   roleCategory: "",
-  startDate: "",
-  endDate: "",
 };
 
 export function calculateProductionPlanningResultRows(
@@ -66,7 +65,7 @@ export function filterProductionPlanningResultRows(
       return false;
     }
 
-    return isWithinDateRange(row.day, filters.startDate, filters.endDate);
+    return true;
   });
 }
 
@@ -82,7 +81,7 @@ export function groupVisitsAndVisitTimeRows(
       row.economicSection,
       row.careUnitId,
       row.careUnitName,
-      row.day,
+      row.year,
       row.roleCategory,
     ].join("|");
     const existing = rowsByKey.get(key);
@@ -116,7 +115,7 @@ export function calculateDrgRows(
   const rowsByKey = new Map<string, DrgResultRow>();
 
   rows.forEach((row) => {
-    const key = [row.economicKombikaId, row.economicKombikaName, row.day].join(
+    const key = [row.economicKombikaId, row.economicKombikaName, row.year].join(
       "|"
     );
     const existing = rowsByKey.get(key);
@@ -126,7 +125,7 @@ export function calculateDrgRows(
         id: key,
         economicKombikaId: row.economicKombikaId,
         economicKombikaName: row.economicKombikaName,
-        day: row.day,
+        year: row.year,
         visits: row.visits,
         drgPoints: row.drgPoints,
       });
@@ -142,7 +141,7 @@ export function calculateDrgRows(
 
   return Array.from(rowsByKey.values()).sort(
     (first, second) =>
-      first.day.localeCompare(second.day, "sv") ||
+      first.year.localeCompare(second.year, "sv") ||
       formatDrgEconomicUnit(first).localeCompare(
         formatDrgEconomicUnit(second),
         "sv"
@@ -207,8 +206,10 @@ function createResultRow(
   productionRow: OutpatientProductionRow,
   distribution: SavedOoDistributionRow | null
 ): ProductionPlanningResultRow {
-  const productionVisits = toNumber(productionRow.visits);
-  const visits = distribution ? toNumber(distribution.visits) : productionVisits;
+  const productionVisits = getAnnualVisits(productionRow);
+  const visits = distribution
+    ? (productionVisits * toNumber(distribution.distribution_percentage)) / 100
+    : productionVisits;
   const averageMinutesPerVisit = toNumber(
     productionRow.average_minutes_per_visit
   );
@@ -228,7 +229,7 @@ function createResultRow(
     economicSection: productionRow.section ?? MISSING_VALUE,
     careUnitId: distribution?.care_unit_id ?? "",
     careUnitName: distribution?.care_unit ?? NOT_DISTRIBUTED,
-    day: productionRow.period_value ?? MISSING_VALUE,
+    year: formatProductionYear(productionRow),
     roleCategory: formatRoleDistributionLabel(
       productionRow.primary_role_category ?? MISSING_VALUE,
       productionRow.secondary_role_category ?? undefined
@@ -260,27 +261,11 @@ function compareResultRows(
   second: ProductionPlanningResultRow
 ): number {
   return (
-    first.day.localeCompare(second.day, "sv") ||
+    first.year.localeCompare(second.year, "sv") ||
     formatEconomicUnit(first).localeCompare(formatEconomicUnit(second), "sv") ||
     formatCareUnit(first).localeCompare(formatCareUnit(second), "sv") ||
     first.roleCategory.localeCompare(second.roleCategory, "sv")
   );
-}
-
-function isWithinDateRange(day: string, startDate: string, endDate: string) {
-  if (!day || day === MISSING_VALUE) {
-    return !startDate && !endDate;
-  }
-
-  if (startDate && day < startDate) {
-    return false;
-  }
-
-  if (endDate && day > endDate) {
-    return false;
-  }
-
-  return true;
 }
 
 function safeDivide(value: number, divisor: number) {
@@ -289,6 +274,14 @@ function safeDivide(value: number, divisor: number) {
   }
 
   return value / divisor;
+}
+
+function formatProductionYear(row: OutpatientProductionRow): string {
+  if (row.production_plan_year) {
+    return String(row.production_plan_year);
+  }
+
+  return row.period_value ?? MISSING_VALUE;
 }
 
 function uniqueSorted(values: string[]): string[] {

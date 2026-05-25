@@ -58,6 +58,12 @@ export async function GET(request: Request) {
       conditions.push(`plans.year = $${params.length}`);
     }
 
+    if (!productionPlanId && !year) {
+      conditions.push(
+        `plans.year = (SELECT MAX(year) FROM production_plans)`
+      );
+    }
+
     if (careType === "dagvard") {
       conditions.push(dayCareCondition);
     } else if (careType === "mottagning") {
@@ -145,6 +151,11 @@ export async function GET(request: Request) {
 
 async function ensureOutpatientComparisonColumns() {
   await db.query(`
+    ALTER TABLE outpatient_production_rows
+      ALTER COLUMN period_type SET DEFAULT 'year'
+  `);
+
+  await db.query(`
     ALTER TABLE outpatient_comparison_values
       ADD COLUMN IF NOT EXISTS r12_presence_fouu NUMERIC(8,2),
       ADD COLUMN IF NOT EXISTS r12_presence_production NUMERIC(8,2),
@@ -152,12 +163,47 @@ async function ensureOutpatientComparisonColumns() {
   `);
 }
 
+async function getProductionPlanYear(
+  productionPlanId: number
+): Promise<number | null> {
+  const result = await db.query(
+    `
+      SELECT year
+      FROM production_plans
+      WHERE id = $1
+    `,
+    [productionPlanId]
+  );
+
+  return result.rows[0]?.year ?? null;
+}
+
+async function getProductionPlanYearForRow(
+  productionRowId: number
+): Promise<number | null> {
+  const result = await db.query(
+    `
+      SELECT plans.year
+      FROM outpatient_production_rows AS rows
+      LEFT JOIN production_plans AS plans
+        ON rows.production_plan_id = plans.id
+      WHERE rows.id = $1
+    `,
+    [productionRowId]
+  );
+
+  return result.rows[0]?.year ?? null;
+}
+
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as CreateOutpatientProductionRowPayload;
 
     const productionPlanId = body.production_plan_id ?? 1;
-    const periodType = body.period_type ?? "day";
+    const periodType = body.period_type ?? "year";
+    const productionPlanYear = await getProductionPlanYear(productionPlanId);
+    const periodValue =
+      body.period_value ?? (productionPlanYear ? String(productionPlanYear) : "");
     const careType = body.care_type ?? "open_care";
     const visitType = body.visit_type ?? "Nybesök";
     const visits = Number(body.visits ?? 0);
@@ -169,7 +215,7 @@ export async function POST(request: Request) {
     if (
       !body.kombika_pf_id ||
       !body.kombika_pf ||
-      !body.period_value ||
+      !periodValue ||
       !body.primary_role_category ||
       !body.sll_uulp ||
       !body.acute_elective ||
@@ -268,7 +314,7 @@ export async function POST(request: Request) {
         body.site ?? null,
         body.assignment ?? null,
         periodType,
-        body.period_value,
+        periodValue,
         careType,
         visitType,
         visits,
@@ -313,7 +359,12 @@ export async function PATCH(request: Request) {
       );
     }
 
-    const periodType = body.period_type ?? "day";
+    const periodType = body.period_type ?? "year";
+    const productionPlanYear = body.production_plan_id
+      ? await getProductionPlanYear(body.production_plan_id)
+      : await getProductionPlanYearForRow(body.id);
+    const periodValue =
+      body.period_value ?? (productionPlanYear ? String(productionPlanYear) : "");
     const careType = body.care_type ?? "open_care";
     const visitType = body.visit_type ?? "Nybesök";
     const visits = Number(body.visits ?? 0);
@@ -325,7 +376,7 @@ export async function PATCH(request: Request) {
     if (
       !body.kombika_pf_id ||
       !body.kombika_pf ||
-      !body.period_value ||
+      !periodValue ||
       !body.primary_role_category ||
       !body.sll_uulp ||
       !body.acute_elective ||
@@ -384,7 +435,7 @@ export async function PATCH(request: Request) {
         body.site ?? null,
         body.assignment ?? null,
         periodType,
-        body.period_value,
+        periodValue,
         careType,
         visitType,
         visits,

@@ -90,13 +90,13 @@ function FilterSection(props: {
       <FormSection
         overline="Filter"
         title="Resultatnivå"
-        description="Sammanställning av beräknad närvaro, bemanningskostnader och kostnad per DRG/vårdhändelse baserat på produktionsplanering och Dimensionering ME ÖPV."
+        description="Sammanställning för planåret av beräknad närvaro, bemanningskostnader och kostnad per DRG/vårdhändelse baserat på produktionsplanering och Dimensionering ME ÖPV."
       />
 
       <Box sx={filterGridSx}>
         <TextField
           select
-          label="Periodisering"
+          label="Resultatperiod"
           size="small"
           value={props.filters.periodization}
           onChange={(event) =>
@@ -104,9 +104,7 @@ function FilterSection(props: {
           }
           sx={fieldSx}
         >
-          <MenuItem value="day">Dag</MenuItem>
-          <MenuItem value="week">Vecka</MenuItem>
-          <MenuItem value="month">Månad</MenuItem>
+          <MenuItem value="year">År</MenuItem>
         </TextField>
         <FilterSelect
           label="Ekonomisk kombika/sektion"
@@ -127,28 +125,6 @@ function FilterSection(props: {
           onChange={(value) =>
             props.onFilterChange("competenceLevel", value)
           }
-        />
-        <TextField
-          label="Från datum"
-          type="date"
-          size="small"
-          value={props.filters.startDate}
-          onChange={(event) =>
-            props.onFilterChange("startDate", event.target.value)
-          }
-          slotProps={{ inputLabel: { shrink: true } }}
-          sx={fieldSx}
-        />
-        <TextField
-          label="Till datum"
-          type="date"
-          size="small"
-          value={props.filters.endDate}
-          onChange={(event) =>
-            props.onFilterChange("endDate", event.target.value)
-          }
-          slotProps={{ inputLabel: { shrink: true } }}
-          sx={fieldSx}
         />
         <TextField
           select
@@ -240,7 +216,7 @@ function PresenceSection(props: { rows: DimensioningResultRow[] }) {
       headerSx={presenceGridSx}
       rowSx={presenceGridSx}
       headers={[
-        "Period",
+        "År",
         "Yrkeskategori",
         "Kompetensnivå",
         "Ekonomisk kombika/sektion",
@@ -276,7 +252,7 @@ function StaffingCostSection(props: { rows: DimensioningResultRow[] }) {
       headerSx={staffingGridSx}
       rowSx={staffingGridSx}
       headers={[
-        "Period",
+        "År",
         "Yrkeskategori",
         "Kompetensnivå",
         "Ekonomisk kombika/sektion",
@@ -310,7 +286,7 @@ function CostPerProductionSection(props: { rows: DimensioningResultRow[] }) {
       headerSx={productionCostGridSx}
       rowSx={productionCostGridSx}
       headers={[
-        "Period",
+        "År",
         "Yrkeskategori",
         "Kompetensnivå",
         "Ekonomisk kombika/sektion",

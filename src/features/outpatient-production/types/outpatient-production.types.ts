@@ -27,7 +27,6 @@ export type DrgAverageInput = {
 
 export type OutpatientProductionFormState = {
   selectedKombikaId: string;
-  date: string;
   careEvents: number;
 
   sllPercentage: number;

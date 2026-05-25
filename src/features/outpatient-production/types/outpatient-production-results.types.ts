@@ -2,8 +2,6 @@ export type ProductionPlanningResultFilters = {
   economicUnit: string;
   careUnit: string;
   roleCategory: string;
-  startDate: string;
-  endDate: string;
 };
 
 export type ProductionPlanningResultRow = {
@@ -14,7 +12,7 @@ export type ProductionPlanningResultRow = {
   economicSection: string;
   careUnitId: string;
   careUnitName: string;
-  day: string;
+  year: string;
   roleCategory: string;
   visits: number;
   averageMinutesPerVisit: number;
@@ -28,7 +26,7 @@ export type DrgResultRow = {
   id: string;
   economicKombikaId: string;
   economicKombikaName: string;
-  day: string;
+  year: string;
   visits: number;
   drgPoints: number;
 };

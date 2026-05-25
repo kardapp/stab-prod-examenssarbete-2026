@@ -105,7 +105,7 @@ function FilterSection(props: {
       <FormSection
         overline="Filter"
         title="Resultatnivå"
-        description="Resultat per ekonomisk kombika, vårdande enhet, dag och yrkeskategori."
+        description="Resultat per ekonomisk kombika, vårdande enhet, år och yrkeskategori."
       />
 
       <Box sx={filterGridSx}>
@@ -126,28 +126,6 @@ function FilterSection(props: {
           value={props.filters.roleCategory}
           options={props.options.roleCategories}
           onChange={(value) => props.onFilterChange("roleCategory", value)}
-        />
-        <TextField
-          label="Från datum"
-          type="date"
-          size="small"
-          value={props.filters.startDate}
-          onChange={(event) =>
-            props.onFilterChange("startDate", event.target.value)
-          }
-          slotProps={{ inputLabel: { shrink: true } }}
-          sx={fieldSx}
-        />
-        <TextField
-          label="Till datum"
-          type="date"
-          size="small"
-          value={props.filters.endDate}
-          onChange={(event) =>
-            props.onFilterChange("endDate", event.target.value)
-          }
-          slotProps={{ inputLabel: { shrink: true } }}
-          sx={fieldSx}
         />
         <Button
           type="button"
@@ -192,7 +170,7 @@ function SummaryStrip(props: { summary: ProductionPlanningResultSummary }) {
     <SectionCard>
       <Box sx={summaryGridSx}>
         <MetricValue
-          label="Antal vårdtillfällen"
+          label="Vårdtillfällen per år"
           value={formatOneDecimal(props.summary.visits)}
         />
         <MetricValue
@@ -220,7 +198,7 @@ function VisitsSection(props: { rows: ProductionPlanningResultRow[] }) {
       dimensions={[
         "Ekonomisk kombika",
         "Vårdande enhet",
-        "Dag",
+        "År",
         "Yrkeskategori",
       ]}
       emptyText="Inga vårdtillfällen matchar valt filter."
@@ -229,7 +207,7 @@ function VisitsSection(props: { rows: ProductionPlanningResultRow[] }) {
       headers={[
         "Ekonomisk kombika",
         "Vårdande enhet",
-        "Dag",
+        "År",
         "Yrkeskategori",
         "Vårdtillfällen",
       ]}
@@ -238,7 +216,7 @@ function VisitsSection(props: { rows: ProductionPlanningResultRow[] }) {
         values: [
           { value: formatEconomicUnit(row) },
           { value: formatCareUnit(row) },
-          { value: row.day },
+          { value: row.year },
           { value: row.roleCategory },
           { value: formatOneDecimal(row.visits), strong: true },
         ],
@@ -255,7 +233,7 @@ function VisitTimeSection(props: { rows: ProductionPlanningResultRow[] }) {
       dimensions={[
         "Ekonomisk kombika",
         "Vårdande enhet",
-        "Dag",
+        "År",
         "Yrkeskategori",
       ]}
       emptyText="Inga besökstider matchar valt filter."
@@ -264,7 +242,7 @@ function VisitTimeSection(props: { rows: ProductionPlanningResultRow[] }) {
       headers={[
         "Ekonomisk kombika",
         "Vårdande enhet",
-        "Dag",
+        "År",
         "Yrkeskategori",
         "Snitt-tid",
         "Total tid",
@@ -274,7 +252,7 @@ function VisitTimeSection(props: { rows: ProductionPlanningResultRow[] }) {
         values: [
           { value: formatEconomicUnit(row) },
           { value: formatCareUnit(row) },
-          { value: row.day },
+          { value: row.year },
           { value: row.roleCategory },
           { value: `${formatOneDecimal(row.averageMinutesPerVisit)} min` },
           {
@@ -292,16 +270,16 @@ function DrgSection(props: { rows: DrgResultRow[] }) {
     <ResultSection
       overline="3. Antal DRG"
       title="Antal DRG"
-      dimensions={["Ekonomisk kombika", "Dag"]}
+      dimensions={["Ekonomisk kombika", "År"]}
       emptyText="Inga DRG-rader matchar valt filter."
       headerSx={drgGridSx}
       rowSx={drgGridSx}
-      headers={["Ekonomisk kombika", "Dag", "Vårdtillfällen", "Antal DRG"]}
+      headers={["Ekonomisk kombika", "År", "Vårdtillfällen", "Antal DRG"]}
       rows={props.rows.map((row) => ({
         id: `drg-${row.id}`,
         values: [
           { value: formatDrgEconomicUnit(row) },
-          { value: row.day },
+          { value: row.year },
           { value: formatOneDecimal(row.visits) },
           { value: formatTwoDecimals(row.drgPoints), strong: true },
         ],
@@ -438,7 +416,7 @@ const filterGridSx = {
   gridTemplateColumns: {
     xs: "1fr",
     md: "repeat(2, minmax(0, 1fr))",
-    lg: "repeat(3, minmax(0, 1fr))",
+    lg: "repeat(4, minmax(0, 1fr))",
   },
   gap: 1.5,
 };

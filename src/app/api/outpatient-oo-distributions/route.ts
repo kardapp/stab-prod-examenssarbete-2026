@@ -38,6 +38,12 @@ export async function GET(request: Request) {
       conditions.push(`rows.production_plan_id = $${params.length}`);
     }
 
+    if (!productionRowId && !productionPlanId) {
+      conditions.push(
+        `plans.year = (SELECT MAX(year) FROM production_plans)`
+      );
+    }
+
     const whereClause = conditions.length
       ? `WHERE ${conditions.join(" AND ")}`
       : "";
@@ -55,6 +61,8 @@ export async function GET(request: Request) {
         FROM outpatient_oo_distributions AS distributions
         INNER JOIN outpatient_production_rows AS rows
           ON distributions.production_row_id = rows.id
+        LEFT JOIN production_plans AS plans
+          ON rows.production_plan_id = plans.id
         ${whereClause}
         ORDER BY distributions.production_row_id ASC,
           distributions.distribution_order ASC,
@@ -92,7 +100,7 @@ export async function PUT(request: Request) {
 
     const productionRowResult = await db.query(
       `
-        SELECT id, visits
+        SELECT id, visits, annual_volume, period_type
         FROM outpatient_production_rows
         WHERE id = $1
       `,
@@ -106,7 +114,7 @@ export async function PUT(request: Request) {
       );
     }
 
-    const productionVisits = toNumber(productionRowResult.rows[0]?.visits);
+    const productionVisits = getAnnualVisits(productionRowResult.rows[0]);
     const distributions = sanitizeDistributions(
       body.distributions ?? [],
       productionVisits
@@ -255,4 +263,19 @@ function toNumber(value: string | number | null | undefined): number {
   const numericValue = Number(value ?? 0);
 
   return Number.isFinite(numericValue) ? numericValue : 0;
+}
+
+function getAnnualVisits(row: {
+  visits?: string | number | null;
+  annual_volume?: string | number | null;
+  period_type?: string | null;
+}): number {
+  const visits = toNumber(row.visits);
+  const annualVolume = toNumber(row.annual_volume);
+
+  if (row.period_type && row.period_type !== "year" && annualVolume > 0) {
+    return annualVolume;
+  }
+
+  return visits;
 }

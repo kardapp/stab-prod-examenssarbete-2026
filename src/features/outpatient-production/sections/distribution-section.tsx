@@ -50,7 +50,7 @@ export function DistributionSection(props: DistributionSectionProps) {
       <FormSection
         overline="Steg 3"
         title="Procentuell fördelning av vårdtillfällen"
-        description="SLL/UULP, akut/elektivt och yrkeskategorier bryter ner samma huvudvolym."
+        description="SLL/UULP, akut/elektivt och yrkeskategorier bryter ner samma årsvolym."
       />
 
       <Stack spacing={3}>

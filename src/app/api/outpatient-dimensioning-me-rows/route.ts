@@ -41,6 +41,16 @@ export async function GET(request: Request) {
       conditions.push(`production_plan_id = $${params.length}`);
     }
 
+    if (!productionPlanId) {
+      conditions.push(`
+        production_plan_id IN (
+          SELECT id
+          FROM production_plans
+          WHERE year = (SELECT MAX(year) FROM production_plans)
+        )
+      `);
+    }
+
     if (kombikaId !== null) {
       params.push(kombikaId);
       conditions.push(`kombika_pf_id = $${params.length}`);
@@ -179,7 +189,7 @@ export async function PUT(request: Request) {
             toNullableNumber(row.adminOtherPresence),
             toNullableNumber(row.salaryCostPerPresence),
             row.comment ?? "",
-            row.periodizationType ?? "day",
+            row.periodizationType ?? "year",
           ]
         );
       }
@@ -255,7 +265,7 @@ async function ensureDimensioningTable() {
       admin_other_presence NUMERIC(10,2) DEFAULT 0,
       salary_cost_per_presence NUMERIC(12,2) DEFAULT 0,
       comment TEXT,
-      periodization_type TEXT DEFAULT 'day',
+      periodization_type TEXT DEFAULT 'year',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       UNIQUE (production_plan_id, kombika_pf_id, care_type, competence_level)
@@ -265,6 +275,11 @@ async function ensureDimensioningTable() {
   await db.query(`
     ALTER TABLE dimensionering_me_opv_rows
       ADD COLUMN IF NOT EXISTS admin_other_presence NUMERIC(10,2) DEFAULT 0
+  `);
+
+  await db.query(`
+    ALTER TABLE dimensionering_me_opv_rows
+      ALTER COLUMN periodization_type SET DEFAULT 'year'
   `);
 }
 

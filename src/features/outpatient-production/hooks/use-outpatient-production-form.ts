@@ -27,6 +27,8 @@ type DistributionPercentageField =
   | "electivePercentage";
 
 const STORAGE_KEY_PREFIX = "outpatient-production-plan";
+const DEFAULT_PRODUCTION_PLAN_ID = 1;
+const ANNUAL_PERIOD_TYPE = "year";
 
 export function useOutpatientProductionForm() {
   const [formState, setFormState] =
@@ -66,7 +68,7 @@ export function useOutpatientProductionForm() {
       ? "dagvard"
       : "mottagning";
     const params = new URLSearchParams({
-      productionPlanId: "1",
+      productionPlanId: String(DEFAULT_PRODUCTION_PLAN_ID),
       kombikaId: selectedKombika.id,
       careType,
     });
@@ -85,10 +87,6 @@ export function useOutpatientProductionForm() {
 
   function handleKombikaChange(selectedKombikaId: string) {
     updateFormState((current) => ({ ...current, selectedKombikaId }));
-  }
-
-  function handleDateChange(date: string) {
-    updateFormState((current) => ({ ...current, date }));
   }
 
   function handleCareEventsChange(careEvents: number) {
@@ -165,7 +163,7 @@ export function useOutpatientProductionForm() {
     }
 
     const nextSavedPlan: OutpatientProductionSavedPlan = {
-      id: `${selectedKombika.id}-${formState.date}`,
+      id: `${selectedKombika.id}-${DEFAULT_PRODUCTION_PLAN_ID}`,
       kombika: selectedKombika,
       formState,
       calculatedValues,
@@ -190,14 +188,14 @@ export function useOutpatientProductionForm() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            production_plan_id: DEFAULT_PRODUCTION_PLAN_ID,
             kombika_pf_id: selectedKombika.id,
             kombika_pf: selectedKombika.name,
             section: selectedKombika.section,
             cost_center: selectedKombika.costCenter,
             site: selectedKombika.site,
             assignment: selectedKombika.assignment,
-            period_type: "day",
-            period_value: formState.date,
+            period_type: ANNUAL_PERIOD_TYPE,
             care_type: "open_care",
             visit_type: formState.visitTime.visitType,
             visits: Math.round(
@@ -225,7 +223,7 @@ export function useOutpatientProductionForm() {
     }
 
     setSaveMessage(
-      `Produktionsplan sparad för ${selectedKombika.code} – ${selectedKombika.name}.`
+      `Produktionsplan sparad för året: ${selectedKombika.code} – ${selectedKombika.name}.`
     );
   }
 
@@ -240,7 +238,6 @@ export function useOutpatientProductionForm() {
     saveMessage,
     dimensioningHref,
     handleKombikaChange,
-    handleDateChange,
     handleCareEventsChange,
     handleDistributionPercentageChange,
     handleRoleDistributionChange,

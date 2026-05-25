@@ -10,7 +10,6 @@ import {
 
 type DimensioningComparisonValuesProps = {
   currentYearPlan: number;
-  r12Outcome: number;
   previousYearOutcome: number;
   previousDimensioningPresence: number;
 };
@@ -23,17 +22,13 @@ export function DimensioningComparisonValues(
       <FormSection
         overline="Jämförelse"
         title="Jämförelsevärden"
-        description="Stödvärden från mockdata/databas. Dessa är inte primära inputfält."
+        description="Stödvärden från föregående år. Dessa är inte primära inputfält."
       />
 
       <Stack spacing={1.5}>
         <MetricCard
           label="Plan i år"
           value={formatWholeNumber(props.currentYearPlan)}
-        />
-        <MetricCard
-          label="Utfall R12"
-          value={formatWholeNumber(props.r12Outcome)}
         />
         <MetricCard
           label="Utfall föreg år"

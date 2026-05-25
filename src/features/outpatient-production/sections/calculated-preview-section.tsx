@@ -17,7 +17,7 @@ export function CalculatedPreviewSection(
       <FormSection
         overline="Förhandsvisning"
         title="Beräknade värden"
-        description="Värdena räknas från huvudvolymen och procentfördelningarna."
+        description="Värdena räknas från årets huvudvolym och procentfördelningarna."
       />
 
       <Box sx={summaryGridSx}>

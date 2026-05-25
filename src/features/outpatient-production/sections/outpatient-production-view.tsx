@@ -40,10 +40,8 @@ export function OutpatientProductionView() {
           {production.selectedKombika ? (
             <Stack spacing={2}>
               <ProductionVolumeSection
-                date={production.formState.date}
                 careEvents={production.formState.careEvents}
                 validationMessage={getValidationMessage("volume")}
-                onDateChange={production.handleDateChange}
                 onCareEventsChange={production.handleCareEventsChange}
               />
 

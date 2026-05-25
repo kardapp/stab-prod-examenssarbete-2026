@@ -4,6 +4,7 @@ import type {
   OoDistributionDraftRow,
   SavedOoDistributionRow,
 } from "../types/outpatient-oo-distribution.types";
+import { getAnnualVisits } from "./outpatient-production-calculations";
 
 export const careUnitOptions: CareUnitOption[] = [
   {
@@ -50,7 +51,7 @@ export function calculateDistributionSummary(
   productionRow: OutpatientProductionRow | null,
   rows: OoDistributionDraftRow[]
 ) {
-  const totalVisits = toNumber(productionRow?.visits);
+  const totalVisits = productionRow ? getAnnualVisits(productionRow) : 0;
   const totalPercentage = rows.reduce(
     (sum, row) => sum + toNumber(row.percentage),
     0

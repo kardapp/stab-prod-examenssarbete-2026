@@ -257,7 +257,7 @@ export function DimensioningCompetenceLevels(
             <HeaderCell align="right">Total närvaro</HeaderCell>
             <HeaderCell align="right">Lönekostnad/närvaro</HeaderCell>
             <HeaderCell align="right">Bemanningskostnad</HeaderCell>
-            <HeaderCell>Periodisering</HeaderCell>
+            <HeaderCell>År</HeaderCell>
             <HeaderCell>Kommentar</HeaderCell>
           </Box>
 
@@ -319,7 +319,7 @@ export function DimensioningCompetenceLevels(
                   align="right"
                   calculated
                 />
-                <InputValue label="Periodisering">
+                <InputValue label="År">
                   <TextField
                     select
                     size="small"
