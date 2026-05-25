@@ -83,6 +83,7 @@ export function OutpatientProductionView() {
 
               <ProductionActionsSection
                 saveMessage={production.saveMessage}
+                saveSeverity={production.saveSeverity}
                 dimensioningHref={production.dimensioningHref}
                 onSave={production.saveProductionPlan}
               />

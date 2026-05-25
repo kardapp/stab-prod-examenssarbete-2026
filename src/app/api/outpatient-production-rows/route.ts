@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { PoolClient } from "pg";
 import { calculateAnnualVolumeFromVisits } from "@/features/outpatient-production/utils/outpatient-production-calculations";
 import { db } from "@/lib/db/db";
 
@@ -471,5 +472,66 @@ export async function PATCH(request: Request) {
       { message: "Failed to update outpatient production row." },
       { status: 500 }
     );
+  }
+}
+
+export async function DELETE(request: Request) {
+  let client: PoolClient | null = null;
+
+  try {
+    const { searchParams } = new URL(request.url);
+    const productionPlanId = Number(searchParams.get("productionPlanId"));
+
+    if (!productionPlanId) {
+      return NextResponse.json(
+        { message: "Missing production plan id." },
+        { status: 400 }
+      );
+    }
+
+    client = await db.connect();
+    await client.query("BEGIN");
+
+    const dimensioningTableResult = await client.query(
+      "SELECT to_regclass('public.dimensionering_me_opv_rows') AS table_name"
+    );
+    const hasDimensioningTable = Boolean(
+      dimensioningTableResult.rows[0]?.table_name
+    );
+
+    if (hasDimensioningTable) {
+      await client.query(
+        `
+          DELETE FROM dimensionering_me_opv_rows
+          WHERE production_plan_id = $1
+        `,
+        [productionPlanId]
+      );
+    }
+
+    await client.query(
+      `
+        DELETE FROM outpatient_production_rows
+        WHERE production_plan_id = $1
+      `,
+      [productionPlanId]
+    );
+
+    await client.query("COMMIT");
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    if (client) {
+      await client.query("ROLLBACK");
+    }
+
+    console.error("Failed to delete outpatient production rows:", error);
+
+    return NextResponse.json(
+      { message: "Failed to delete outpatient production rows." },
+      { status: 500 }
+    );
+  } finally {
+    client?.release();
   }
 }

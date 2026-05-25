@@ -5,6 +5,7 @@ import { SectionCard } from "@/shared/components/section-card";
 
 type ProductionActionsSectionProps = {
   saveMessage: string;
+  saveSeverity: "success" | "error";
   dimensioningHref: string;
   onSave: () => void | Promise<void>;
 };
@@ -14,7 +15,7 @@ export function ProductionActionsSection(props: ProductionActionsSectionProps) {
     <SectionCard>
       <Stack spacing={2}>
         {props.saveMessage ? (
-          <Alert severity="success">{props.saveMessage}</Alert>
+          <Alert severity={props.saveSeverity}>{props.saveMessage}</Alert>
         ) : null}
 
         <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>

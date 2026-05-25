@@ -2,6 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { OutpatientProductionRow } from "@/types/production";
+import {
+  CURRENT_OUTPATIENT_PRODUCTION_PLAN_ID,
+  filterCurrentOutpatientProductionRows,
+  readCurrentOutpatientProductionRowIds,
+} from "@/features/outpatient-production/utils/current-outpatient-production-session";
 import type {
   DimensioningResultFilters,
   SavedMeDimensioningRow,
@@ -32,13 +37,27 @@ export function useOutpatientDimensioningResults() {
 
     async function fetchResultBasis() {
       try {
+        const currentRowIds = readCurrentOutpatientProductionRowIds();
+
+        if (currentRowIds.length === 0) {
+          setProductionRows([]);
+          setDimensioningRows([]);
+          return;
+        }
+
         const [productionResponse, dimensioningResponse] = await Promise.all([
-          fetch("/api/outpatient-production-rows", {
-            signal: controller.signal,
-          }),
-          fetch("/api/outpatient-dimensioning-me-rows", {
-            signal: controller.signal,
-          }),
+          fetch(
+            `/api/outpatient-production-rows?productionPlanId=${CURRENT_OUTPATIENT_PRODUCTION_PLAN_ID}`,
+            {
+              signal: controller.signal,
+            }
+          ),
+          fetch(
+            `/api/outpatient-dimensioning-me-rows?productionPlanId=${CURRENT_OUTPATIENT_PRODUCTION_PLAN_ID}`,
+            {
+              signal: controller.signal,
+            }
+          ),
         ]);
 
         if (!productionResponse.ok || !dimensioningResponse.ok) {
@@ -50,8 +69,19 @@ export function useOutpatientDimensioningResults() {
           dimensioningResponse.json() as Promise<SavedMeDimensioningRow[]>,
         ]);
 
-        setProductionRows(productionData);
-        setDimensioningRows(dimensioningData);
+        const currentProductionRows = filterCurrentOutpatientProductionRows(
+          productionData,
+          currentRowIds
+        );
+        const currentRowIdSet = new Set(currentRowIds);
+        const currentDimensioningRows = dimensioningData.filter(
+          (row) =>
+            row.production_row_id === null ||
+            currentRowIdSet.has(row.production_row_id)
+        );
+
+        setProductionRows(currentProductionRows);
+        setDimensioningRows(currentDimensioningRows);
       } catch (error) {
         if (!controller.signal.aborted) {
           console.error(error);

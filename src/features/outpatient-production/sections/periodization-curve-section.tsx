@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Box } from "@mui/material";
+import { Alert, Box } from "@mui/material";
 import { FormSection } from "@/shared/components/form-section";
 import { SectionCard } from "@/shared/components/section-card";
 import type { ProductionPlanningResultRow } from "../types/outpatient-production-results.types";
@@ -106,34 +106,43 @@ export function PeriodizationCurveSection(props: {
   return (
     <SectionCard>
       <FormSection
-        overline="4. Periodiseringskurva"
+        overline="2. Periodiseringskurva"
         title="Personalbehov per vecka"
         description="Årsvolymen periodiseras till 52 veckor och justeras med planerade händelser."
       />
 
-      <PeriodizationSummaryCards summary={annualSummary} />
+      {props.rows.length === 0 ? (
+        <Alert severity="info">
+          Periodiseringskurvan visas när det finns en sparad årsplan att räkna
+          på.
+        </Alert>
+      ) : (
+        <>
+          <PeriodizationSummaryCards summary={annualSummary} />
 
-      <Box sx={curveLayoutSx}>
-        <WeeklyCurveChart
-          curvePoints={curvePoints}
-          maxPresence={maxPresence}
-          selectedWeek={selectedWeek}
-          onSelectWeek={setSelectedWeek}
-        />
-        <SelectedWeekPanel selectedPoint={selectedPoint} />
-      </Box>
+          <Box sx={curveLayoutSx}>
+            <WeeklyCurveChart
+              curvePoints={curvePoints}
+              maxPresence={maxPresence}
+              selectedWeek={selectedWeek}
+              onSelectWeek={setSelectedWeek}
+            />
+            <SelectedWeekPanel selectedPoint={selectedPoint} />
+          </Box>
 
-      <WeeklyBreakdownTable selectedPoint={selectedPoint} />
+          <WeeklyBreakdownTable selectedPoint={selectedPoint} />
 
-      <WeeklyImpactControls
-        draft={draft}
-        impacts={impacts}
-        validationMessage={validationMessage}
-        onAddImpact={addImpact}
-        onDraftChange={handleDraftChange}
-        onRemoveImpact={removeImpact}
-        onTypeChange={handleTypeChange}
-      />
+          <WeeklyImpactControls
+            draft={draft}
+            impacts={impacts}
+            validationMessage={validationMessage}
+            onAddImpact={addImpact}
+            onDraftChange={handleDraftChange}
+            onRemoveImpact={removeImpact}
+            onTypeChange={handleTypeChange}
+          />
+        </>
+      )}
     </SectionCard>
   );
 }

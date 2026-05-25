@@ -3,17 +3,19 @@
 import { useEffect, useMemo, useState } from "react";
 import type { OutpatientProductionRow } from "@/types/production";
 import type { SavedOoDistributionRow } from "../types/outpatient-oo-distribution.types";
-import type { ProductionPlanningResultFilters } from "../types/outpatient-production-results.types";
+import { comparisonValuesByKombikaId } from "../constants/outpatient-production-options";
 import {
-  buildProductionPlanningResultOptions,
-  calculateDrgRows,
+  calculateProductionPlanningComparisonRows,
   calculateProductionPlanningResultRows,
   calculateProductionPlanningResultSummary,
-  filterProductionPlanningResultRows,
-  groupVisitsAndVisitTimeRows,
-  initialProductionResultFilters,
   periodizeProductionPlanningResultRows,
 } from "../utils/outpatient-production-results-calculations";
+import {
+  CURRENT_OUTPATIENT_PRODUCTION_PLAN_ID,
+  filterCurrentOoDistributionRows,
+  filterCurrentOutpatientProductionRows,
+  readCurrentOutpatientProductionRowIds,
+} from "../utils/current-outpatient-production-session";
 
 export function useOutpatientProductionResults() {
   const [productionRows, setProductionRows] = useState<OutpatientProductionRow[]>(
@@ -22,9 +24,6 @@ export function useOutpatientProductionResults() {
   const [ooDistributions, setOoDistributions] = useState<
     SavedOoDistributionRow[]
   >([]);
-  const [filters, setFilters] = useState<ProductionPlanningResultFilters>(
-    initialProductionResultFilters
-  );
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -33,13 +32,28 @@ export function useOutpatientProductionResults() {
 
     async function fetchResultBasis() {
       try {
+        const currentRowIds = readCurrentOutpatientProductionRowIds();
+
+        if (currentRowIds.length === 0) {
+          setErrorMessage("");
+          setProductionRows([]);
+          setOoDistributions([]);
+          return;
+        }
+
         const [productionResponse, ooDistributionResponse] = await Promise.all([
-          fetch("/api/outpatient-production-rows", {
-            signal: controller.signal,
-          }),
-          fetch("/api/outpatient-oo-distributions", {
-            signal: controller.signal,
-          }),
+          fetch(
+            `/api/outpatient-production-rows?productionPlanId=${CURRENT_OUTPATIENT_PRODUCTION_PLAN_ID}`,
+            {
+              signal: controller.signal,
+            }
+          ),
+          fetch(
+            `/api/outpatient-oo-distributions?productionPlanId=${CURRENT_OUTPATIENT_PRODUCTION_PLAN_ID}`,
+            {
+              signal: controller.signal,
+            }
+          ),
         ]);
 
         if (!productionResponse.ok || !ooDistributionResponse.ok) {
@@ -52,8 +66,12 @@ export function useOutpatientProductionResults() {
         ]);
 
         setErrorMessage("");
-        setProductionRows(productionData);
-        setOoDistributions(ooDistributionData);
+        setProductionRows(
+          filterCurrentOutpatientProductionRows(productionData, currentRowIds)
+        );
+        setOoDistributions(
+          filterCurrentOoDistributionRows(ooDistributionData, currentRowIds)
+        );
       } catch (error) {
         if (!controller.signal.aborted) {
           console.error(error);
@@ -76,32 +94,17 @@ export function useOutpatientProductionResults() {
     [ooDistributions, productionRows]
   );
 
-  const filteredRows = useMemo(
-    () => filterProductionPlanningResultRows(resultRows, filters),
-    [filters, resultRows]
+  const comparisonRows = useMemo(
+    () =>
+      calculateProductionPlanningComparisonRows(
+        productionRows,
+        comparisonValuesByKombikaId
+      ),
+    [productionRows]
   );
 
   const periodizedRows = useMemo(
-    () =>
-      periodizeProductionPlanningResultRows(
-        filteredRows,
-        filters.periodization
-      ),
-    [filteredRows, filters.periodization]
-  );
-
-  const groupedRows = useMemo(
-    () => groupVisitsAndVisitTimeRows(periodizedRows),
-    [periodizedRows]
-  );
-
-  const drgRows = useMemo(
-    () => calculateDrgRows(periodizedRows),
-    [periodizedRows]
-  );
-
-  const options = useMemo(
-    () => buildProductionPlanningResultOptions(resultRows),
+    () => periodizeProductionPlanningResultRows(resultRows, "year"),
     [resultRows]
   );
 
@@ -110,27 +113,11 @@ export function useOutpatientProductionResults() {
     [periodizedRows]
   );
 
-  function handleFilterChange(
-    field: keyof ProductionPlanningResultFilters,
-    value: string
-  ) {
-    setFilters((current) => ({ ...current, [field]: value }));
-  }
-
-  function clearFilters() {
-    setFilters(initialProductionResultFilters);
-  }
-
   return {
-    clearFilters,
-    drgRows,
+    annualRows: resultRows,
+    comparisonRows,
     errorMessage,
-    filters,
-    filteredRows,
-    groupedRows,
-    handleFilterChange,
     isLoading,
-    options,
     resultRows,
     summary,
   };

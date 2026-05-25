@@ -125,14 +125,14 @@ function ProductionRowSection(props: {
     <SectionCard>
       <FormSection
         overline="Produktionsrad"
-        title="Välj vårdtillfällen att fördela"
-        description="Fördelningen sparas på den valda raden och kan justeras efter ny överenskommelse."
+        title="Aktuella vårdtillfällen att fördela"
+        description="Endast raderna från den senast sparade inmatningen visas här."
       />
 
       <Box sx={selectionGridSx}>
         <TextField
           select
-          label="Produktionsrad"
+          label="Aktuell produktionsrad"
           size="small"
           value={props.selectedProductionRowId}
           onChange={(event) =>

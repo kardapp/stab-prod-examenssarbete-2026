@@ -3,6 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import type { OutpatientProductionRow } from "@/types/production";
+import {
+  CURRENT_OUTPATIENT_PRODUCTION_PLAN_ID,
+  filterCurrentOutpatientProductionRows,
+  readCurrentOutpatientProductionRowIds,
+} from "@/features/outpatient-production/utils/current-outpatient-production-session";
 import { initialDimensioningRows } from "../constants/outpatient-dimensioning-options";
 import type {
   CareType,
@@ -63,17 +68,33 @@ export function useOutpatientDimensioning() {
 
     async function fetchProductionRows() {
       try {
-        const response = await fetch("/api/outpatient-production-rows", {
-          signal: controller.signal,
-        });
+        const currentRowIds = readCurrentOutpatientProductionRowIds();
+
+        if (currentRowIds.length === 0) {
+          setAllProductionRows([]);
+          setSelection((current) => normalizeSelection(current, []));
+          return;
+        }
+
+        const response = await fetch(
+          `/api/outpatient-production-rows?productionPlanId=${CURRENT_OUTPATIENT_PRODUCTION_PLAN_ID}`,
+          {
+            signal: controller.signal,
+          }
+        );
 
         if (!response.ok) {
           throw new Error("Could not fetch production basis.");
         }
 
         const data = (await response.json()) as OutpatientProductionRow[];
-        setAllProductionRows(data);
-        setSelection((current) => normalizeSelection(current, data));
+        const currentRows = filterCurrentOutpatientProductionRows(
+          data,
+          currentRowIds
+        );
+
+        setAllProductionRows(currentRows);
+        setSelection((current) => normalizeSelection(current, currentRows));
       } catch (error) {
         if (!controller.signal.aborted) {
           console.error(error);
@@ -93,8 +114,9 @@ export function useOutpatientDimensioning() {
 
   useEffect(() => {
     const productionPlanId = Number(selection.productionPlanId);
+    const currentRowIds = readCurrentOutpatientProductionRowIds();
 
-    if (!productionPlanId) {
+    if (!productionPlanId || currentRowIds.length === 0) {
       return;
     }
 

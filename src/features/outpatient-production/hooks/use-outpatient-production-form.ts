@@ -19,6 +19,11 @@ import {
   hasValidationErrors,
   validateOutpatientProductionForm,
 } from "../utils/outpatient-production-validation";
+import {
+  clearCurrentOutpatientProductionRowIds,
+  CURRENT_OUTPATIENT_PRODUCTION_PLAN_ID,
+  saveCurrentOutpatientProductionRowIds,
+} from "../utils/current-outpatient-production-session";
 
 type DistributionPercentageField =
   | "sllPercentage"
@@ -26,8 +31,6 @@ type DistributionPercentageField =
   | "acutePercentage"
   | "electivePercentage";
 
-const STORAGE_KEY_PREFIX = "outpatient-production-plan";
-const DEFAULT_PRODUCTION_PLAN_ID = 1;
 const ANNUAL_PERIOD_TYPE = "year";
 
 export function useOutpatientProductionForm() {
@@ -36,6 +39,9 @@ export function useOutpatientProductionForm() {
   const [savedPlan, setSavedPlan] =
     useState<OutpatientProductionSavedPlan | null>(null);
   const [saveMessage, setSaveMessage] = useState("");
+  const [saveSeverity, setSaveSeverity] = useState<"success" | "error">(
+    "success"
+  );
   const [submitAttempted, setSubmitAttempted] = useState(false);
 
   const selectedKombika = useMemo(
@@ -68,7 +74,7 @@ export function useOutpatientProductionForm() {
       ? "dagvard"
       : "mottagning";
     const params = new URLSearchParams({
-      productionPlanId: String(DEFAULT_PRODUCTION_PLAN_ID),
+      productionPlanId: String(CURRENT_OUTPATIENT_PRODUCTION_PLAN_ID),
       kombikaId: selectedKombika.id,
       careType,
     });
@@ -82,6 +88,7 @@ export function useOutpatientProductionForm() {
     ) => OutpatientProductionFormState
   ) {
     setSaveMessage("");
+    setSaveSeverity("success");
     setFormState(updater);
   }
 
@@ -163,68 +170,80 @@ export function useOutpatientProductionForm() {
     }
 
     const nextSavedPlan: OutpatientProductionSavedPlan = {
-      id: `${selectedKombika.id}-${DEFAULT_PRODUCTION_PLAN_ID}`,
+      id: `${selectedKombika.id}-${CURRENT_OUTPATIENT_PRODUCTION_PLAN_ID}`,
       kombika: selectedKombika,
       formState,
       calculatedValues,
       savedAt: new Date().toISOString(),
     };
 
-    setSavedPlan(nextSavedPlan);
     try {
-      window.localStorage.setItem(
-        `${STORAGE_KEY_PREFIX}:${nextSavedPlan.id}`,
-        JSON.stringify(nextSavedPlan)
-      );
-    } catch {
-      // The saved plan still remains in React state if browser storage is blocked.
-    }
+      clearCurrentOutpatientProductionRowIds();
 
-    // Save to database via API
-    try {
-      // Create one row per role distribution
-      const savePromises = formState.roleDistributions.map((role) =>
-        fetch("/api/outpatient-production-rows", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            production_plan_id: DEFAULT_PRODUCTION_PLAN_ID,
-            kombika_pf_id: selectedKombika.id,
-            kombika_pf: selectedKombika.name,
-            section: selectedKombika.section,
-            cost_center: selectedKombika.costCenter,
-            site: selectedKombika.site,
-            assignment: selectedKombika.assignment,
-            period_type: ANNUAL_PERIOD_TYPE,
-            care_type: "open_care",
-            visit_type: formState.visitTime.visitType,
-            visits: Math.round(
-              (formState.careEvents * role.percentage) / 100
-            ),
-            primary_role_category: role.primaryRole,
-            secondary_role_category: role.secondaryRole || undefined,
-            sll_uulp:
-              formState.sllPercentage > 50 ? "SLL" : "UULP",
-            acute_elective:
-              formState.acutePercentage > 50 ? "Akut" : "Elektivt",
-            average_minutes_per_visit:
-              formState.visitTime.averageMinutes,
-            drg_average:
-              formState.sllPercentage > 50
-                ? formState.drgAverage.sll
-                : formState.drgAverage.uulp,
-          }),
+      await fetch(
+        `/api/outpatient-production-rows?productionPlanId=${CURRENT_OUTPATIENT_PRODUCTION_PLAN_ID}`,
+        {
+          method: "DELETE",
+        }
+      ).then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to reset current production plan.");
+        }
+      });
+
+      const savedRows = await Promise.all(
+        formState.roleDistributions.map(async (role) => {
+          const response = await fetch("/api/outpatient-production-rows", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              production_plan_id: CURRENT_OUTPATIENT_PRODUCTION_PLAN_ID,
+              kombika_pf_id: selectedKombika.id,
+              kombika_pf: selectedKombika.name,
+              section: selectedKombika.section,
+              cost_center: selectedKombika.costCenter,
+              site: selectedKombika.site,
+              assignment: selectedKombika.assignment,
+              period_type: ANNUAL_PERIOD_TYPE,
+              care_type: "open_care",
+              visit_type: formState.visitTime.visitType,
+              visits: Math.round(
+                (formState.careEvents * role.percentage) / 100
+              ),
+              primary_role_category: role.primaryRole,
+              secondary_role_category: role.secondaryRole || undefined,
+              sll_uulp: formState.sllPercentage > 50 ? "SLL" : "UULP",
+              acute_elective:
+                formState.acutePercentage > 50 ? "Akut" : "Elektivt",
+              average_minutes_per_visit: formState.visitTime.averageMinutes,
+              drg_average:
+                formState.sllPercentage > 50
+                  ? formState.drgAverage.sll
+                  : formState.drgAverage.uulp,
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to save outpatient production row.");
+          }
+
+          return (await response.json()) as { id: number };
         })
       );
 
-      await Promise.all(savePromises);
+      saveCurrentOutpatientProductionRowIds(savedRows.map((row) => row.id));
+      setSavedPlan(nextSavedPlan);
+      setSaveSeverity("success");
+      setSaveMessage(
+        `Produktionsplan sparad för året: ${selectedKombika.code} – ${selectedKombika.name}.`
+      );
     } catch (error) {
       console.error("Failed to save production plan to database:", error);
+      clearCurrentOutpatientProductionRowIds();
+      setSavedPlan(null);
+      setSaveSeverity("error");
+      setSaveMessage("Produktionsplanen kunde inte sparas. Försök igen.");
     }
-
-    setSaveMessage(
-      `Produktionsplan sparad för året: ${selectedKombika.code} – ${selectedKombika.name}.`
-    );
   }
 
   return {
@@ -236,6 +255,7 @@ export function useOutpatientProductionForm() {
     showValidation: submitAttempted || hasValidationErrors(validationErrors),
     savedPlan,
     saveMessage,
+    saveSeverity,
     dimensioningHref,
     handleKombikaChange,
     handleCareEventsChange,

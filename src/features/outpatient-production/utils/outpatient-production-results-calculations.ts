@@ -1,10 +1,10 @@
 import type { OutpatientProductionRow } from "@/types/production";
 import type { SavedOoDistributionRow } from "../types/outpatient-oo-distribution.types";
+import type { ComparisonValues } from "../types/outpatient-production.types";
 import type {
   DrgResultRow,
+  ProductionPlanningComparisonRow,
   ProductionPlanningPeriodization,
-  ProductionPlanningResultFilters,
-  ProductionPlanningResultOptions,
   ProductionPlanningResultRow,
   ProductionPlanningResultSummary,
 } from "../types/outpatient-production-results.types";
@@ -20,22 +20,6 @@ const NOT_DISTRIBUTED = "Ej fördelad";
 const MISSING_VALUE = "Saknas";
 const WEEKS_PER_YEAR = 52;
 const WORKING_DAYS_PER_YEAR = 260;
-
-export const productionResultPeriodizationOptions: Array<{
-  value: ProductionPlanningPeriodization;
-  label: string;
-}> = [
-  { value: "year", label: "År" },
-  { value: "week", label: "Vecka" },
-  { value: "day", label: "Dag" },
-];
-
-export const initialProductionResultFilters: ProductionPlanningResultFilters = {
-  periodization: "week",
-  economicUnit: "",
-  careUnit: "",
-  roleCategory: "",
-};
 
 export function calculateProductionPlanningResultRows(
   productionRows: OutpatientProductionRow[],
@@ -59,27 +43,6 @@ export function calculateProductionPlanningResultRows(
       );
     })
     .sort(compareResultRows);
-}
-
-export function filterProductionPlanningResultRows(
-  rows: ProductionPlanningResultRow[],
-  filters: ProductionPlanningResultFilters
-): ProductionPlanningResultRow[] {
-  return rows.filter((row) => {
-    if (filters.economicUnit && formatEconomicUnit(row) !== filters.economicUnit) {
-      return false;
-    }
-
-    if (filters.careUnit && formatCareUnit(row) !== filters.careUnit) {
-      return false;
-    }
-
-    if (filters.roleCategory && row.roleCategory !== filters.roleCategory) {
-      return false;
-    }
-
-    return true;
-  });
 }
 
 export function periodizeProductionPlanningResultRows(
@@ -212,14 +175,73 @@ export function calculateProductionPlanningResultSummary(
   );
 }
 
-export function buildProductionPlanningResultOptions(
-  rows: ProductionPlanningResultRow[]
-): ProductionPlanningResultOptions {
-  return {
-    economicUnits: uniqueSorted(rows.map(formatEconomicUnit)),
-    careUnits: uniqueSorted(rows.map(formatCareUnit)),
-    roleCategories: uniqueSorted(rows.map((row) => row.roleCategory)),
-  };
+export function calculateProductionPlanningComparisonRows(
+  productionRows: OutpatientProductionRow[],
+  mockComparisonValues: Record<string, ComparisonValues> = {}
+): ProductionPlanningComparisonRow[] {
+  const rowsByKey = new Map<string, ProductionPlanningComparisonRow>();
+
+  productionRows.forEach((row) => {
+    const currentVisits = getAnnualVisits(row);
+    const key = [
+      row.production_plan_id ?? "",
+      row.kombika_pf_id ?? "",
+      formatProductionYear(row),
+    ].join("|");
+    const existing = rowsByKey.get(key);
+    const mockComparison = row.kombika_pf_id
+      ? mockComparisonValues[row.kombika_pf_id]
+      : undefined;
+    const previousYearVisits = getPreviousYearComparison(row, mockComparison);
+
+    if (!existing) {
+      rowsByKey.set(key, {
+        id: key,
+        economicKombikaId: row.kombika_pf_id ?? "",
+        economicKombikaName: row.kombika_pf ?? MISSING_VALUE,
+        year: formatProductionYear(row),
+        currentVisits,
+        previousYearVisits,
+        difference: currentVisits - previousYearVisits,
+        percentageDifference: calculatePercentageDifference(
+          currentVisits,
+          previousYearVisits
+        ),
+        source:
+          row.comparison_source ??
+          (mockComparison ? "Mockdata föregående år" : "Saknas"),
+      });
+      return;
+    }
+
+    const nextCurrentVisits = existing.currentVisits + currentVisits;
+    const nextPreviousYearVisits =
+      existing.previousYearVisits || previousYearVisits;
+
+    rowsByKey.set(key, {
+      ...existing,
+      currentVisits: nextCurrentVisits,
+      previousYearVisits: nextPreviousYearVisits,
+      difference: nextCurrentVisits - nextPreviousYearVisits,
+      percentageDifference: calculatePercentageDifference(
+        nextCurrentVisits,
+        nextPreviousYearVisits
+      ),
+      source:
+        existing.source ||
+        row.comparison_source ||
+        (mockComparison ? "Mockdata föregående år" : "Saknas"),
+    });
+  });
+
+  return Array.from(rowsByKey.values()).sort(
+    (first, second) =>
+      first.year.localeCompare(second.year, "sv") ||
+      formatComparisonEconomicUnit(first).localeCompare(
+        formatComparisonEconomicUnit(second),
+        "sv"
+      )
+  );
 }
 
 export function formatEconomicUnit(row: ProductionPlanningResultRow): string {
@@ -233,6 +255,14 @@ export function formatCareUnit(row: ProductionPlanningResultRow): string {
 }
 
 export function formatDrgEconomicUnit(row: DrgResultRow): string {
+  return [row.economicKombikaId, row.economicKombikaName]
+    .filter(Boolean)
+    .join(" - ");
+}
+
+export function formatComparisonEconomicUnit(
+  row: ProductionPlanningComparisonRow
+): string {
   return [row.economicKombikaId, row.economicKombikaName]
     .filter(Boolean)
     .join(" - ");
@@ -312,6 +342,42 @@ function safeDivide(value: number, divisor: number) {
   return value / divisor;
 }
 
+function calculatePercentageDifference(
+  currentValue: number,
+  previousValue: number
+): number | null {
+  if (previousValue <= 0) {
+    return null;
+  }
+
+  return ((currentValue - previousValue) / previousValue) * 100;
+}
+
+function getPreviousYearComparison(
+  row: OutpatientProductionRow,
+  mockComparison?: ComparisonValues
+): number {
+  const previousYearOutcome = toNumber(row.previous_year_outcome);
+
+  if (previousYearOutcome > 0) {
+    return previousYearOutcome;
+  }
+
+  const r12Outcome = toNumber(row.r12_outcome);
+
+  if (r12Outcome > 0) {
+    return r12Outcome;
+  }
+
+  const previousYearPlan = toNumber(row.previous_year_plan);
+
+  if (previousYearPlan > 0) {
+    return previousYearPlan;
+  }
+
+  return mockComparison?.previousYearOutcome ?? 0;
+}
+
 function getPeriodizationFactor(
   periodization: ProductionPlanningPeriodization
 ): number {
@@ -332,10 +398,4 @@ function formatProductionYear(row: OutpatientProductionRow): string {
   }
 
   return row.period_value ?? MISSING_VALUE;
-}
-
-function uniqueSorted(values: string[]): string[] {
-  return Array.from(new Set(values.filter(Boolean))).sort((first, second) =>
-    first.localeCompare(second, "sv")
-  );
 }

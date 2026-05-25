@@ -15,6 +15,12 @@ import {
   mapSavedDistributionToDraft,
   validateOoDistribution,
 } from "../utils/outpatient-oo-distribution-calculations";
+import {
+  CURRENT_OUTPATIENT_PRODUCTION_PLAN_ID,
+  filterCurrentOoDistributionRows,
+  filterCurrentOutpatientProductionRows,
+  readCurrentOutpatientProductionRowIds,
+} from "../utils/current-outpatient-production-session";
 
 type DraftRowsByProductionRowId = Record<number, OoDistributionDraftRow[]>;
 
@@ -36,13 +42,29 @@ export function useOutpatientOoDistribution() {
 
     async function fetchOoBasis() {
       try {
+        const currentRowIds = readCurrentOutpatientProductionRowIds();
+
+        if (currentRowIds.length === 0) {
+          setErrorMessage("");
+          setProductionRows([]);
+          setDraftRowsByProductionRowId({});
+          setSelectedProductionRowId("");
+          return;
+        }
+
         const [productionResponse, distributionResponse] = await Promise.all([
-          fetch("/api/outpatient-production-rows", {
-            signal: controller.signal,
-          }),
-          fetch("/api/outpatient-oo-distributions", {
-            signal: controller.signal,
-          }),
+          fetch(
+            `/api/outpatient-production-rows?productionPlanId=${CURRENT_OUTPATIENT_PRODUCTION_PLAN_ID}`,
+            {
+              signal: controller.signal,
+            }
+          ),
+          fetch(
+            `/api/outpatient-oo-distributions?productionPlanId=${CURRENT_OUTPATIENT_PRODUCTION_PLAN_ID}`,
+            {
+              signal: controller.signal,
+            }
+          ),
         ]);
 
         if (!productionResponse.ok || !distributionResponse.ok) {
@@ -55,11 +77,23 @@ export function useOutpatientOoDistribution() {
         ]);
 
         setErrorMessage("");
-        setProductionRows(productionData);
-        setDraftRowsByProductionRowId(
-          createDraftRowsByProductionRowId(productionData, distributionData)
+        const currentProductionRows = filterCurrentOutpatientProductionRows(
+          productionData,
+          currentRowIds
         );
-        setSelectedProductionRowId(String(productionData[0]?.id ?? ""));
+        const currentDistributionRows = filterCurrentOoDistributionRows(
+          distributionData,
+          currentRowIds
+        );
+
+        setProductionRows(currentProductionRows);
+        setDraftRowsByProductionRowId(
+          createDraftRowsByProductionRowId(
+            currentProductionRows,
+            currentDistributionRows
+          )
+        );
+        setSelectedProductionRowId(String(currentProductionRows[0]?.id ?? ""));
       } catch (error) {
         if (!controller.signal.aborted) {
           console.error(error);

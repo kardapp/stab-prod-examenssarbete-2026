@@ -6,39 +6,20 @@ import {
   Button,
   CircularProgress,
   Container,
-  MenuItem,
   Stack,
-  TextField,
   Typography,
 } from "@mui/material";
 import { FormSection } from "@/shared/components/form-section";
 import { PageHeader } from "@/shared/components/page-header";
 import { SectionCard } from "@/shared/components/section-card";
-import {
-  formatOneDecimal,
-  formatTwoDecimals,
-  formatWholeNumber,
-} from "@/shared/utils/format-number";
+import { formatOneDecimal } from "@/shared/utils/format-number";
 import { useOutpatientProductionResults } from "../hooks/use-outpatient-production-results";
 import { PeriodizationCurveSection } from "./periodization-curve-section";
-import type {
-  DrgResultRow,
-  ProductionPlanningPeriodization,
-  ProductionPlanningResultFilters,
-  ProductionPlanningResultOptions,
-  ProductionPlanningResultRow,
-  ProductionPlanningResultSummary,
-} from "../types/outpatient-production-results.types";
-import {
-  formatCareUnit,
-  formatDrgEconomicUnit,
-  formatEconomicUnit,
-  productionResultPeriodizationOptions,
-} from "../utils/outpatient-production-results-calculations";
+import type { ProductionPlanningComparisonRow } from "../types/outpatient-production-results.types";
+import { formatComparisonEconomicUnit } from "../utils/outpatient-production-results-calculations";
 
 export function OutpatientProductionResultsView() {
   const results = useOutpatientProductionResults();
-  const periodLabel = formatPeriodLabel(results.filters.periodization);
 
   return (
     <Box
@@ -58,44 +39,26 @@ export function OutpatientProductionResultsView() {
             </SectionCard>
           ) : results.errorMessage ? (
             <Alert severity="error">{results.errorMessage}</Alert>
-          ) : results.resultRows.length === 0 ? (
-            <Alert severity="info">
-              Det finns inga sparade produktionsrader att visa ännu.
-            </Alert>
           ) : (
             <Stack spacing={2}>
-              <FilterSection
-                filters={results.filters}
-                options={results.options}
-                onClearFilters={results.clearFilters}
-                onFilterChange={results.handleFilterChange}
-              />
-
-              {results.summary.undistributedRows > 0 ? (
-                <Alert severity="warning">
-                  {results.summary.undistributedRows} produktionsrad(er) saknar
-                  OO-fördelning och visas som ej fördelade.
+              {results.resultRows.length === 0 ? (
+                <Alert severity="info">
+                  Det finns inga sparade produktionsrader att visa ännu.
                 </Alert>
-              ) : null}
+              ) : (
+                <>
+                  {results.summary.undistributedRows > 0 ? (
+                    <Alert severity="warning">
+                      {results.summary.undistributedRows} produktionsrad(er)
+                      saknar OO-fördelning och visas som ej fördelade.
+                    </Alert>
+                  ) : null}
 
-              <SummaryStrip
-                periodLabel={periodLabel}
-                summary={results.summary}
-              />
+                  <ComparisonSection rows={results.comparisonRows} />
+                </>
+              )}
 
-              <VisitsSection
-                periodLabel={periodLabel}
-                rows={results.groupedRows}
-              />
-
-              <VisitTimeSection
-                periodLabel={periodLabel}
-                rows={results.groupedRows}
-              />
-
-              <DrgSection periodLabel={periodLabel} rows={results.drgRows} />
-
-              <PeriodizationCurveSection rows={results.filteredRows} />
+              <PeriodizationCurveSection rows={results.annualRows} />
 
               <ActionsSection />
             </Stack>
@@ -106,293 +69,94 @@ export function OutpatientProductionResultsView() {
   );
 }
 
-function FilterSection(props: {
-  filters: ProductionPlanningResultFilters;
-  options: ProductionPlanningResultOptions;
-  onFilterChange: (
-    field: keyof ProductionPlanningResultFilters,
-    value: string
-  ) => void;
-  onClearFilters: () => void;
-}) {
+function ComparisonSection(props: { rows: ProductionPlanningComparisonRow[] }) {
+  const summary = props.rows.reduce(
+    (current, row) => ({
+      currentVisits: current.currentVisits + row.currentVisits,
+      previousYearVisits: current.previousYearVisits + row.previousYearVisits,
+    }),
+    {
+      currentVisits: 0,
+      previousYearVisits: 0,
+    }
+  );
+  const difference = summary.currentVisits - summary.previousYearVisits;
+  const percentageDifference =
+    summary.previousYearVisits > 0
+      ? (difference / summary.previousYearVisits) * 100
+      : null;
+
   return (
     <SectionCard>
       <FormSection
-        overline="Filter"
-        title="Resultatnivå"
-        description="Resultat per ekonomisk kombika, vårdande enhet, period och yrkeskategori."
+        overline="1. Jämförelse"
+        title="Aktuell plan jämfört med samma period föregående år"
+        description="Resultatet visar den senast sparade planen och jämför med föregående års mockdata."
       />
 
-      <Box sx={filterGridSx}>
-        <TextField
-          select
-          label="Periodisering"
-          size="small"
-          value={props.filters.periodization}
-          onChange={(event) =>
-            props.onFilterChange("periodization", event.target.value)
-          }
-          sx={fieldSx}
-        >
-          {productionResultPeriodizationOptions.map((option) => (
-            <MenuItem key={option.value} value={option.value}>
-              {option.label}
-            </MenuItem>
-          ))}
-        </TextField>
-        <FilterSelect
-          label="Ekonomisk kombika"
-          value={props.filters.economicUnit}
-          options={props.options.economicUnits}
-          onChange={(value) => props.onFilterChange("economicUnit", value)}
-        />
-        <FilterSelect
-          label="Vårdande enhet"
-          value={props.filters.careUnit}
-          options={props.options.careUnits}
-          onChange={(value) => props.onFilterChange("careUnit", value)}
-        />
-        <FilterSelect
-          label="Yrkeskategori"
-          value={props.filters.roleCategory}
-          options={props.options.roleCategories}
-          onChange={(value) => props.onFilterChange("roleCategory", value)}
-        />
-        <Button
-          type="button"
-          variant="outlined"
-          onClick={props.onClearFilters}
-          sx={{ alignSelf: "center" }}
-        >
-          Rensa filter
-        </Button>
-      </Box>
-    </SectionCard>
-  );
-}
-
-function FilterSelect(props: {
-  label: string;
-  value: string;
-  options: string[];
-  onChange: (value: string) => void;
-}) {
-  return (
-    <TextField
-      select
-      label={props.label}
-      size="small"
-      value={props.value}
-      onChange={(event) => props.onChange(event.target.value)}
-      sx={fieldSx}
-    >
-      <MenuItem value="">Alla</MenuItem>
-      {props.options.map((option) => (
-        <MenuItem key={option} value={option}>
-          {option}
-        </MenuItem>
-      ))}
-    </TextField>
-  );
-}
-
-function SummaryStrip(props: {
-  periodLabel: string;
-  summary: ProductionPlanningResultSummary;
-}) {
-  return (
-    <SectionCard>
-      <Box sx={summaryGridSx}>
+      <Box sx={comparisonSummaryGridSx}>
         <MetricValue
-          label={`Vårdtillfällen ${props.periodLabel}`}
-          value={formatOneDecimal(props.summary.visits)}
+          label="Aktuell plan"
+          value={formatOneDecimal(summary.currentVisits)}
         />
         <MetricValue
-          label={`Besökstid ${props.periodLabel}`}
-          value={`${formatWholeNumber(props.summary.totalVisitMinutes)} min`}
+          label="Samma period föregående år"
+          value={formatOneDecimal(summary.previousYearVisits)}
         />
+        <MetricValue label="Skillnad" value={formatSignedNumber(difference)} />
         <MetricValue
-          label={`Antal DRG ${props.periodLabel}`}
-          value={formatTwoDecimals(props.summary.drgPoints)}
-        />
-        <MetricValue
-          label="Ofördelade rader"
-          value={formatWholeNumber(props.summary.undistributedRows)}
+          label="Förändring"
+          value={formatPercentageDifference(percentageDifference)}
         />
       </Box>
-    </SectionCard>
-  );
-}
-
-function VisitsSection(props: {
-  periodLabel: string;
-  rows: ProductionPlanningResultRow[];
-}) {
-  return (
-    <ResultSection
-      overline="1. Antal vårdtillfällen"
-      title={`Antal vårdtillfällen ${props.periodLabel}`}
-      dimensions={[
-        "Ekonomisk kombika",
-        "Vårdande enhet",
-        "År",
-        `Periodisering: ${props.periodLabel}`,
-        "Yrkeskategori",
-      ]}
-      emptyText="Inga vårdtillfällen matchar valt filter."
-      headerSx={visitGridSx}
-      rowSx={visitGridSx}
-      headers={[
-        "Ekonomisk kombika",
-        "Vårdande enhet",
-        "År",
-        "Yrkeskategori",
-        `Vårdtillfällen ${props.periodLabel}`,
-      ]}
-      rows={props.rows.map((row) => ({
-        id: `visits-${row.id}`,
-        values: [
-          { value: formatEconomicUnit(row) },
-          { value: formatCareUnit(row) },
-          { value: row.year },
-          { value: row.roleCategory },
-          { value: formatOneDecimal(row.visits), strong: true },
-        ],
-      }))}
-    />
-  );
-}
-
-function VisitTimeSection(props: {
-  periodLabel: string;
-  rows: ProductionPlanningResultRow[];
-}) {
-  return (
-    <ResultSection
-      overline="2. Besökstid"
-      title={`Besökstid ${props.periodLabel}`}
-      dimensions={[
-        "Ekonomisk kombika",
-        "Vårdande enhet",
-        "År",
-        `Periodisering: ${props.periodLabel}`,
-        "Yrkeskategori",
-      ]}
-      emptyText="Inga besökstider matchar valt filter."
-      headerSx={visitTimeGridSx}
-      rowSx={visitTimeGridSx}
-      headers={[
-        "Ekonomisk kombika",
-        "Vårdande enhet",
-        "År",
-        "Yrkeskategori",
-        "Snitt-tid",
-        `Total tid ${props.periodLabel}`,
-      ]}
-      rows={props.rows.map((row) => ({
-        id: `visit-time-${row.id}`,
-        values: [
-          { value: formatEconomicUnit(row) },
-          { value: formatCareUnit(row) },
-          { value: row.year },
-          { value: row.roleCategory },
-          { value: `${formatOneDecimal(row.averageMinutesPerVisit)} min` },
-          {
-            value: `${formatWholeNumber(row.totalVisitMinutes)} min`,
-            strong: true,
-          },
-        ],
-      }))}
-    />
-  );
-}
-
-function DrgSection(props: { periodLabel: string; rows: DrgResultRow[] }) {
-  return (
-    <ResultSection
-      overline="3. Antal DRG"
-      title={`Antal DRG ${props.periodLabel}`}
-      dimensions={[
-        "Ekonomisk kombika",
-        "År",
-        `Periodisering: ${props.periodLabel}`,
-      ]}
-      emptyText="Inga DRG-rader matchar valt filter."
-      headerSx={drgGridSx}
-      rowSx={drgGridSx}
-      headers={[
-        "Ekonomisk kombika",
-        "År",
-        `Vårdtillfällen ${props.periodLabel}`,
-        `Antal DRG ${props.periodLabel}`,
-      ]}
-      rows={props.rows.map((row) => ({
-        id: `drg-${row.id}`,
-        values: [
-          { value: formatDrgEconomicUnit(row) },
-          { value: row.year },
-          { value: formatOneDecimal(row.visits) },
-          { value: formatTwoDecimals(row.drgPoints), strong: true },
-        ],
-      }))}
-    />
-  );
-}
-
-function ResultSection(props: {
-  overline: string;
-  title: string;
-  dimensions: string[];
-  emptyText: string;
-  headers: string[];
-  rows: Array<{ id: string; values: Array<{ value: string; strong?: boolean }> }>;
-  headerSx: object;
-  rowSx: object;
-}) {
-  return (
-    <SectionCard>
-      <FormSection overline={props.overline} title={props.title} />
-      <DimensionList dimensions={props.dimensions} />
 
       {props.rows.length === 0 ? (
-        <Alert severity="info">{props.emptyText}</Alert>
+        <Alert severity="info">Det finns inga jämförelserader att visa.</Alert>
       ) : (
-        <Box sx={{ display: "grid", gap: 0.75 }}>
-          <Box sx={props.headerSx}>
-            {props.headers.map((header) => (
+        <Box sx={{ display: "grid", gap: 0.75, mt: 2 }}>
+          <Box sx={comparisonGridSx}>
+            {[
+              "Ekonomisk kombika",
+              "År",
+              "Aktuell plan",
+              "Föregående år",
+              "Skillnad",
+              "Förändring",
+              "Källa",
+            ].map((header) => (
               <HeaderCell key={header}>{header}</HeaderCell>
             ))}
           </Box>
           {props.rows.map((row) => (
-            <Box key={row.id} sx={props.rowSx}>
-              {row.values.map((cell, index) => (
-                <ResultCell
-                  key={`${row.id}-${props.headers[index]}`}
-                  label={props.headers[index]}
-                  value={cell.value}
-                  strong={cell.strong}
-                />
-              ))}
+            <Box key={row.id} sx={comparisonGridSx}>
+              <ResultCell
+                label="Ekonomisk kombika"
+                value={formatComparisonEconomicUnit(row)}
+              />
+              <ResultCell label="År" value={row.year} />
+              <ResultCell
+                label="Aktuell plan"
+                value={formatOneDecimal(row.currentVisits)}
+                strong
+              />
+              <ResultCell
+                label="Föregående år"
+                value={formatOneDecimal(row.previousYearVisits)}
+              />
+              <ResultCell
+                label="Skillnad"
+                value={formatSignedNumber(row.difference)}
+              />
+              <ResultCell
+                label="Förändring"
+                value={formatPercentageDifference(row.percentageDifference)}
+              />
+              <ResultCell label="Källa" value={row.source} />
             </Box>
           ))}
         </Box>
       )}
     </SectionCard>
-  );
-}
-
-function DimensionList(props: { dimensions: string[] }) {
-  return (
-    <Box sx={dimensionListSx}>
-      <Typography variant="caption" sx={dimensionLabelSx}>
-        Visas per
-      </Typography>
-      {props.dimensions.map((dimension) => (
-        <Typography key={dimension} variant="caption" sx={dimensionItemSx}>
-          {dimension}
-        </Typography>
-      ))}
-    </Box>
   );
 }
 
@@ -462,36 +226,21 @@ function ResultCell(props: {
   );
 }
 
-function formatPeriodLabel(
-  periodization: ProductionPlanningPeriodization
-): string {
-  if (periodization === "day") {
-    return "per dag";
-  }
+function formatSignedNumber(value: number): string {
+  const formattedValue = formatOneDecimal(value);
 
-  if (periodization === "week") {
-    return "per vecka";
-  }
-
-  return "per år";
+  return value > 0 ? `+${formattedValue}` : formattedValue;
 }
 
-const filterGridSx = {
-  display: "grid",
-  gridTemplateColumns: {
-    xs: "1fr",
-    md: "repeat(2, minmax(0, 1fr))",
-    lg: "repeat(4, minmax(0, 1fr))",
-  },
-  gap: 1.5,
-};
+function formatPercentageDifference(value: number | null): string {
+  if (value === null) {
+    return "Saknas";
+  }
 
-const fieldSx = {
-  minWidth: 0,
-  width: "100%",
-};
+  return `${formatSignedNumber(value)}%`;
+}
 
-const summaryGridSx = {
+const comparisonSummaryGridSx = {
   display: "grid",
   gridTemplateColumns: {
     xs: "1fr",
@@ -499,35 +248,7 @@ const summaryGridSx = {
     xl: "repeat(4, minmax(0, 1fr))",
   },
   gap: 1.5,
-};
-
-const metricSx = {
-  border: "1px solid #d0d7de",
-  borderRadius: 1,
-  p: 1.5,
-  bgcolor: "var(--page-background)",
-};
-
-const dimensionListSx = {
-  display: "flex",
-  flexWrap: "wrap",
-  gap: 1,
   mb: 2,
-};
-
-const dimensionLabelSx = {
-  alignSelf: "center",
-  color: "text.secondary",
-  fontWeight: 700,
-};
-
-const dimensionItemSx = {
-  border: "1px solid #d0d7de",
-  borderRadius: 1,
-  color: "#005883",
-  fontWeight: 700,
-  px: 1,
-  py: 0.5,
 };
 
 const baseResultRowSx = {
@@ -538,28 +259,19 @@ const baseResultRowSx = {
   pt: 1,
 };
 
-const visitGridSx = {
+const comparisonGridSx = {
   ...baseResultRowSx,
   gridTemplateColumns: {
     xs: "1fr",
-    xl: "minmax(180px, 1.2fr) minmax(170px, 1.1fr) minmax(82px, 0.6fr) minmax(150px, 1fr) minmax(112px, 0.8fr)",
+    xl: "minmax(180px, 1.4fr) minmax(72px, 0.5fr) repeat(4, minmax(112px, 0.75fr)) minmax(150px, 1fr)",
   },
 };
 
-const visitTimeGridSx = {
-  ...baseResultRowSx,
-  gridTemplateColumns: {
-    xs: "1fr",
-    xl: "minmax(180px, 1.2fr) minmax(170px, 1.1fr) minmax(82px, 0.6fr) minmax(150px, 1fr) minmax(96px, 0.7fr) minmax(106px, 0.8fr)",
-  },
-};
-
-const drgGridSx = {
-  ...baseResultRowSx,
-  gridTemplateColumns: {
-    xs: "1fr",
-    xl: "minmax(190px, 1.4fr) minmax(82px, 0.6fr) minmax(120px, 0.8fr) minmax(110px, 0.8fr)",
-  },
+const metricSx = {
+  border: "1px solid #d0d7de",
+  borderRadius: 1,
+  p: 1.5,
+  bgcolor: "var(--page-background)",
 };
 
 const headerCellSx = {

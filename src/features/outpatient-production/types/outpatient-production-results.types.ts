@@ -1,12 +1,5 @@
 export type ProductionPlanningPeriodization = "year" | "week" | "day";
 
-export type ProductionPlanningResultFilters = {
-  periodization: ProductionPlanningPeriodization;
-  economicUnit: string;
-  careUnit: string;
-  roleCategory: string;
-};
-
 export type ProductionPlanningResultRow = {
   id: string;
   productionRowId: number;
@@ -41,8 +34,14 @@ export type ProductionPlanningResultSummary = {
   undistributedRows: number;
 };
 
-export type ProductionPlanningResultOptions = {
-  economicUnits: string[];
-  careUnits: string[];
-  roleCategories: string[];
+export type ProductionPlanningComparisonRow = {
+  id: string;
+  economicKombikaId: string;
+  economicKombikaName: string;
+  year: string;
+  currentVisits: number;
+  previousYearVisits: number;
+  difference: number;
+  percentageDifference: number | null;
+  source: string;
 };
