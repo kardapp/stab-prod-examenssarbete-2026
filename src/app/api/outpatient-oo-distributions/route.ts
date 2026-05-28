@@ -5,6 +5,7 @@ import { db } from "@/lib/db/db";
 type SaveOoDistributionPayload = {
   productionRowId?: number;
   distributions?: Array<{
+    productionRowId?: number | null;
     careUnitId?: string;
     careUnit?: string;
     percentage?: string | number;
@@ -24,6 +25,7 @@ type SanitizedRoleAllocation = {
 };
 
 type SanitizedDistributionRow = {
+  productionRowId: number;
   careUnitId: string;
   careUnit: string;
   percentage: number;
@@ -102,9 +104,18 @@ export async function PUT(request: Request) {
     await ensureOoDistributionTable();
 
     const body = (await request.json()) as SaveOoDistributionPayload;
-    const productionRowId = Number(body.productionRowId ?? 0);
+    const fallbackProductionRowId = Number(body.productionRowId ?? 0);
+    const requestedProductionRowIds = Array.from(
+      new Set(
+        (body.distributions ?? [])
+          .map((distribution) =>
+            Number(distribution.productionRowId ?? fallbackProductionRowId)
+          )
+          .filter((id) => id > 0)
+      )
+    );
 
-    if (!productionRowId) {
+    if (requestedProductionRowIds.length === 0) {
       return NextResponse.json(
         { message: "Missing production row id." },
         { status: 400 }
@@ -115,39 +126,56 @@ export async function PUT(request: Request) {
       `
         SELECT id, visits, annual_volume, period_type
         FROM outpatient_production_rows
-        WHERE id = $1
+        WHERE id = ANY($1::int[])
       `,
-      [productionRowId]
+      [requestedProductionRowIds]
     );
 
-    if (productionRowResult.rowCount === 0) {
+    if (productionRowResult.rowCount !== requestedProductionRowIds.length) {
       return NextResponse.json(
-        { message: "Outpatient production row not found." },
+        { message: "One or more outpatient production rows were not found." },
         { status: 404 }
       );
     }
 
-    const productionVisits = getAnnualVisits(productionRowResult.rows[0]);
-    const distributions = sanitizeDistributions(
-      body.distributions ?? [],
-      productionVisits
-    );
-    const percentageTotal = distributions.reduce(
-      (sum, row) => sum + row.percentage,
-      0
+    const incompleteDistribution = (body.distributions ?? []).some(
+      (distribution) =>
+        toNumber(distribution.percentage) > 0 &&
+        (!Number(distribution.productionRowId ?? fallbackProductionRowId) ||
+          !distribution.careUnitId?.trim() ||
+          !distribution.careUnit?.trim())
     );
 
-    if (
-      distributions.length > 0 &&
-      Math.abs(percentageTotal - 100) > 0.01
-    ) {
+    if (incompleteDistribution) {
       return NextResponse.json(
-        { message: "OO distribution must add up to 100 percent." },
+        { message: "OO distribution rows must include production row and care unit." },
         { status: 400 }
       );
     }
 
-    const status = distributions.length ? "Fördelad" : "Ej fördelad";
+    const productionRowsById = new Map(
+      productionRowResult.rows.map((row) => [Number(row.id), row])
+    );
+    const distributions = sanitizeDistributions(
+      body.distributions ?? [],
+      productionRowsById,
+      fallbackProductionRowId
+    );
+
+    for (const productionRowId of requestedProductionRowIds) {
+      const percentageTotal = distributions
+        .filter((distribution) => distribution.productionRowId === productionRowId)
+        .reduce((sum, distribution) => sum + distribution.percentage, 0);
+
+      if (Math.abs(percentageTotal - 100) > 0.01) {
+        return NextResponse.json(
+          { message: "OO distribution must add up to 100 percent per production row." },
+          { status: 400 }
+        );
+      }
+    }
+
+    const status = "Fördelad";
     const savedRows = [];
 
     client = await db.connect();
@@ -155,9 +183,9 @@ export async function PUT(request: Request) {
     await client.query(
       `
         DELETE FROM outpatient_oo_distributions
-        WHERE production_row_id = $1
+        WHERE production_row_id = ANY($1::int[])
       `,
-      [productionRowId]
+      [requestedProductionRowIds]
     );
 
     for (const [index, distribution] of distributions.entries()) {
@@ -182,7 +210,7 @@ export async function PUT(request: Request) {
             visits
         `,
         [
-          productionRowId,
+          distribution.productionRowId,
           index,
           distribution.careUnitId || null,
           distribution.careUnit,
@@ -225,9 +253,9 @@ export async function PUT(request: Request) {
         UPDATE outpatient_production_rows
         SET oo_distribution_status = $1,
             updated_at = CURRENT_TIMESTAMP
-        WHERE id = $2
+        WHERE id = ANY($2::int[])
       `,
-      [status, productionRowId]
+      [status, requestedProductionRowIds]
     );
     await client.query("COMMIT");
 
@@ -289,12 +317,22 @@ async function ensureOoDistributionTable() {
 
 function sanitizeDistributions(
   distributions: SaveOoDistributionPayload["distributions"],
-  productionVisits: number
+  productionRowsById: Map<number, {
+    visits?: string | number | null;
+    annual_volume?: string | number | null;
+    period_type?: string | null;
+  }>,
+  fallbackProductionRowId: number
 ): SanitizedDistributionRow[] {
   return (distributions ?? [])
     .map((distribution) => {
       const percentage = toNumber(distribution.percentage);
+      const productionRowId = Number(
+        distribution.productionRowId ?? fallbackProductionRowId
+      );
+      const productionRow = productionRowsById.get(productionRowId);
       const careUnitId = distribution.careUnitId?.trim() ?? "";
+      const productionVisits = productionRow ? getAnnualVisits(productionRow) : 0;
       const distributionVisits = (productionVisits * percentage) / 100;
       const roleAllocations = (distribution.roleAllocations ?? [])
         .map((role) => {
@@ -313,6 +351,7 @@ function sanitizeDistributions(
         );
 
       return {
+        productionRowId,
         careUnitId,
         careUnit: distribution.careUnit?.trim() ?? "",
         percentage,
@@ -322,6 +361,7 @@ function sanitizeDistributions(
     })
     .filter(
       (distribution) =>
+        distribution.productionRowId &&
         distribution.careUnitId &&
         distribution.careUnit &&
         distribution.percentage > 0

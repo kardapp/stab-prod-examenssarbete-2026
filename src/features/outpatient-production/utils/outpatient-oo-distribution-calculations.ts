@@ -73,24 +73,16 @@ export function calculateDistributionSummary(
 
 export function createEmptyDistributionRow(
   percentage = "0",
-  productionRows?: OutpatientProductionRow[]
+  productionRows?: OutpatientProductionRow[],
+  productionRowId?: number
 ): OoDistributionDraftRow {
-  const roleAllocations: OoRoleAllocation[] = productionRows
-    ? productionRows.map((row) =>
-      createRoleAllocation(
-        row.primary_role_category || "Ej angiven",
-        row.secondary_role_category ?? undefined,
-        "0"
-      )
-    )
-    : [];
-
   return {
     id: `draft-${Date.now()}-${Math.random().toString(36).slice(2)}`,
     careUnitId: "",
     careUnit: "",
+    productionRowId: productionRowId ?? productionRows?.[0]?.id ?? null,
     percentage,
-    roleAllocations,
+    roleAllocations: [],
   };
 }
 
@@ -111,19 +103,13 @@ export function mapSavedDistributionToDraft(
   row: SavedOoDistributionRow,
   productionRows?: OutpatientProductionRow[]
 ): OoDistributionDraftRow {
-  const roleAllocations: OoRoleAllocation[] = productionRows
-    ? productionRows.map((pRow) =>
-      createRoleAllocation(
-        pRow.primary_role_category || "Ej angiven",
-        pRow.secondary_role_category ?? undefined,
-        "0"
-      )
-    )
-    : [];
-
   return {
     id: `saved-${row.id}`,
     savedId: row.id,
+    productionRowId:
+      productionRows?.some((productionRow) => productionRow.id === row.production_row_id)
+        ? row.production_row_id
+        : null,
     careUnitId: row.care_unit_id ?? getCareUnitOptionId(row.care_unit),
     careUnit: row.care_unit ?? "",
     percentage:
@@ -131,7 +117,7 @@ export function mapSavedDistributionToDraft(
         row.distribution_percentage === undefined
         ? "0"
         : String(row.distribution_percentage),
-    roleAllocations,
+    roleAllocations: [],
   };
 }
 
@@ -191,6 +177,14 @@ export function validateOoDistributionForAllRoles(
 
   if (
     rows.some(
+      (row) => toNumber(row.percentage) > 0 && !row.productionRowId
+    )
+  ) {
+    return "Välj yrkeskategori för alla rader med andel.";
+  }
+
+  if (
+    rows.some(
       (row) =>
         toNumber(row.percentage) > 0 &&
         (!row.careUnitId.trim() || !row.careUnit.trim())
@@ -199,26 +193,18 @@ export function validateOoDistributionForAllRoles(
     return "Ange vårdande enhet för alla rader med andel.";
   }
 
-  const percentageTotal = rows.reduce(
-    (sum, row) => sum + toNumber(row.percentage),
-    0
-  );
+  for (const productionRow of productionRows) {
+    const percentageTotal = rows
+      .filter((row) => row.productionRowId === productionRow.id)
+      .reduce((sum, row) => sum + toNumber(row.percentage), 0);
 
-  if (Math.abs(percentageTotal - 100) > 0.01) {
-    return "Fördelningen måste summera till 100%.";
-  }
+    if (Math.abs(percentageTotal - 100) > 0.01) {
+      const primaryRole = productionRow.primary_role_category || "Ej angiven";
+      const secondaryRole = productionRow.secondary_role_category
+        ? ` + ${productionRow.secondary_role_category}`
+        : "";
 
-  // Validate role allocations for each distribution row
-  for (const row of rows) {
-    if (toNumber(row.percentage) > 0 && row.roleAllocations.length > 0) {
-      const rolePercentageTotal = row.roleAllocations.reduce(
-        (sum, role) => sum + toNumber(role.rolePercentage),
-        0
-      );
-
-      if (Math.abs(rolePercentageTotal - 100) > 0.01) {
-        return `Yrkeskategori-fördelningen för ${row.careUnit} måste summera till 100%.`;
-      }
+      return `Fördelningen för ${primaryRole}${secondaryRole} måste summera till 100%.`;
     }
   }
 

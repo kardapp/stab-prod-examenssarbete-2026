@@ -146,7 +146,10 @@ export function useOutpatientOoDistribution() {
     }
 
     setSaveMessage("");
-    setDraftRows((current) => [...current, createEmptyDistributionRow("0", productionRows)]);
+    setDraftRows((current) => [
+      ...current,
+      createEmptyDistributionRow("0", productionRows),
+    ]);
   }
 
   function removeDistributionRow(draftRowId: string) {
@@ -157,7 +160,9 @@ export function useOutpatientOoDistribution() {
     const nextRows = draftRows.filter((row) => row.id !== draftRowId);
 
     setSaveMessage("");
-    setDraftRows(nextRows.length ? nextRows : [createEmptyDistributionRow("100", productionRows)]);
+    setDraftRows(
+      nextRows.length ? nextRows : [createEmptyDistributionRow("100", productionRows)]
+    );
   }
 
   async function saveDistribution() {
@@ -165,7 +170,7 @@ export function useOutpatientOoDistribution() {
     setSaveMessage("");
     setErrorMessage("");
 
-    if (!selectedProductionRow || validationMessage) {
+    if (productionRows.length === 0 || validationMessage) {
       return;
     }
 
@@ -176,8 +181,8 @@ export function useOutpatientOoDistribution() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          productionRowId: selectedProductionRow.id,
           distributions: draftRows.map((row) => ({
+            productionRowId: row.productionRowId,
             careUnitId: row.careUnitId,
             careUnit: row.careUnit,
             percentage: row.percentage,
@@ -197,20 +202,18 @@ export function useOutpatientOoDistribution() {
       const saveResponse = (await response.json()) as OoDistributionSaveResponse;
 
       setDraftRows(
-        saveResponse.distributions.length
-          ? saveResponse.distributions.map((row) =>
-            mapSavedDistributionToDraft(row, productionRows)
-          )
-          : [createEmptyDistributionRow("100", productionRows)]
-      );
-      setProductionRows((current) =>
-        current.map((row) =>
-          row.id === selectedProductionRow.id
-            ? { ...row, oo_distribution_status: saveResponse.status }
-            : row
+        createDraftRowsForCurrentProduction(
+          productionRows,
+          saveResponse.distributions
         )
       );
-      setSaveMessage("OO-fördelningen är sparad för denna yrkeskategori.");
+      setProductionRows((current) =>
+        current.map((row) => ({
+          ...row,
+          oo_distribution_status: saveResponse.status,
+        }))
+      );
+      setSaveMessage("OO-fördelningen är sparad.");
       setSubmitAttempted(false);
     } catch (error) {
       console.error(error);
@@ -248,46 +251,57 @@ function createDraftRowsForCurrentProduction(
     return [createEmptyDistributionRow("100", productionRows)];
   }
 
-  // Group saved rows by production_row_id to get all distributions for the first production row
-  const savedRowsByProductionRowId = savedRows.reduce<
-    Record<number, SavedOoDistributionRow[]>
-  >((rowsById, row) => {
-    const currentRows = rowsById[row.production_row_id] ?? [];
-    return {
-      ...rowsById,
-      [row.production_row_id]: [...currentRows, row],
-    };
-  }, {});
+  const currentProductionRowIds = new Set(productionRows.map((row) => row.id));
+  const currentSavedRows = savedRows.filter((row) =>
+    currentProductionRowIds.has(row.production_row_id)
+  );
 
-  const firstProductionRowId = productionRows[0].id;
-  const firstSavedDistributionRows =
-    savedRowsByProductionRowId[firstProductionRowId] ?? [];
-
-  // If we have saved rows, use them - for now keep the old behavior for compatibility
-  // TODO: Migrate to aggregate by care_unit instead of by production_row
-  if (firstSavedDistributionRows.length > 0) {
-    return firstSavedDistributionRows.map((row) =>
+  if (currentSavedRows.length > 0) {
+    const savedDraftRows = currentSavedRows.map((row) =>
       mapSavedDistributionToDraft(row, productionRows)
     );
+    const savedProductionRowIds = new Set(
+      savedDraftRows
+        .map((row) => row.productionRowId)
+        .filter((id): id is number => id !== null)
+    );
+    const missingDraftRows = productionRows
+      .filter((row) => !savedProductionRowIds.has(row.id))
+      .map((row) => createEmptyDistributionRow("100", productionRows, row.id));
+
+    return [...savedDraftRows, ...missingDraftRows];
   }
 
-  // No saved rows, create empty with role allocations from all production rows
-  return [createEmptyDistributionRow("100", productionRows)];
+  return productionRows.map((row) =>
+    createEmptyDistributionRow("100", productionRows, row.id)
+  );
 }
 
 function calculateAggregateDistributionSummary(
   productionRows: OutpatientProductionRow[],
   rows: OoDistributionDraftRow[]
 ) {
+  const productionRowsById = new Map(
+    productionRows.map((row) => [row.id, row])
+  );
   const totalVisits = productionRows.reduce(
     (sum, row) => sum + getAnnualVisits(row),
     0
   );
-  const totalPercentage = rows.reduce(
-    (sum, row) => sum + toNumber(row.percentage),
-    0
-  );
-  const distributedVisits = (totalVisits * totalPercentage) / 100;
+  const distributedVisits = rows.reduce((sum, row) => {
+    const productionRow = row.productionRowId
+      ? productionRowsById.get(row.productionRowId)
+      : undefined;
+
+    if (!productionRow || !row.careUnitId.trim() || !row.careUnit.trim()) {
+      return sum;
+    }
+
+    return sum + (getAnnualVisits(productionRow) * toNumber(row.percentage)) / 100;
+  }, 0);
+  const totalPercentage = totalVisits
+    ? (distributedVisits / totalVisits) * 100
+    : 0;
 
   return {
     totalVisits,

@@ -11,6 +11,7 @@ export type SavedOoDistributionRow = {
 export type OoDistributionDraftRow = {
   id: string;
   savedId?: number;
+  productionRowId: number | null;
   careUnitId: string;
   careUnit: string;
   percentage: string;

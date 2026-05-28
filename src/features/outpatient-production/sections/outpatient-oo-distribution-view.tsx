@@ -2,14 +2,12 @@
 
 import type { ReactNode } from "react";
 import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
   Alert,
   Box,
   Button,
   CircularProgress,
   Container,
+  InputAdornment,
   MenuItem,
   Stack,
   TextField,
@@ -28,7 +26,19 @@ import type {
   CareUnitOption,
   OoDistributionDraftRow,
 } from "../types/outpatient-oo-distribution.types";
-import { calculateDistributedVisits } from "../utils/outpatient-oo-distribution-calculations";
+import {
+  calculateDistributedVisits,
+  toNumber,
+} from "../utils/outpatient-oo-distribution-calculations";
+import { getAnnualVisits } from "../utils/outpatient-production-calculations";
+
+type OoDistributionSummary = {
+  totalVisits: number;
+  totalPercentage: number;
+  distributedVisits: number;
+  remainingPercentage: number;
+  remainingVisits: number;
+};
 
 export function OutpatientOoDistributionView() {
   const ooDistribution = useOutpatientOoDistribution();
@@ -66,15 +76,16 @@ export function OutpatientOoDistributionView() {
 
               <ProfessionalCategoriesSection
                 productionRows={ooDistribution.productionRows}
+                distributionRows={ooDistribution.selectedDraftRows}
               />
 
               <DistributionEditorSection
                 careUnitOptions={ooDistribution.careUnitOptions}
+                productionRows={ooDistribution.productionRows}
                 rows={ooDistribution.selectedDraftRows}
                 summary={ooDistribution.summary}
                 showValidation={ooDistribution.showValidation}
                 validationMessage={ooDistribution.validationMessage}
-                selectedProductionRow={ooDistribution.selectedProductionRow}
                 onAddRow={ooDistribution.addDistributionRow}
                 onCareUnitChange={ooDistribution.handleCareUnitChange}
                 onRemoveRow={ooDistribution.removeDistributionRow}
@@ -148,49 +159,52 @@ function ProductionBasisSection(props: {
 
 function ProfessionalCategoriesSection(props: {
   productionRows: OutpatientProductionRow[];
+  distributionRows: OoDistributionDraftRow[];
 }) {
   return (
     <SectionCard>
       <FormSection
-        overline="Yrkeskategorier"
-        title="Valda yrkeskategorier från produktionsplaneringen"
-        description="Dessa är de yrkeskategorier som är valda för denna fördelning. Du kan inte ändra yrkeskategorier här – gå tillbaka till produktionsplaneringen om du behöver göra ändringar."
+        overline="Fördelningsunderlag"
+        title="Yrkeskategorier och totalvolymer"
       />
 
-      <Box sx={{ display: "grid", gap: 0.75 }}>
-        <Box sx={distributionHeaderSx}>
+      <Box sx={[tableStackSx, { mt: 2 }]}>
+        <Box sx={professionalHeaderSx}>
           <HeaderCell>Primär yrkeskategori</HeaderCell>
           <HeaderCell>Sekundär yrkeskategori</HeaderCell>
-          <HeaderCell align="right">Vårdtillfällen</HeaderCell>
+          <HeaderCell>Totala vårdtillfällen</HeaderCell>
+          <HeaderCell>Fördelat</HeaderCell>
         </Box>
 
-        {props.productionRows.map((row) => (
-          <Box
-            key={row.id}
-            sx={{
-              display: "grid",
-              gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr 150px" },
-              gap: 1,
-              padding: 1.5,
-              bgcolor: "background.default",
-              borderRadius: 1,
-              border: "1px solid var(--color-border)",
-            }}
-          >
-            <Typography variant="body2">
-              {row.primary_role_category || "Ej angiven"}
-            </Typography>
-            <Typography variant="body2">
-              {row.secondary_role_category || "Ej angiven"}
-            </Typography>
-            <Typography
-              variant="body2"
-              sx={{ fontWeight: 600, textAlign: { xs: "left", lg: "right" } }}
-            >
-              {formatWholeNumber(row.visits ?? 0)}
-            </Typography>
-          </Box>
-        ))}
+        {props.productionRows.map((row) => {
+          const allocatedPercentage = getAllocatedPercentageForProductionRow(
+            row.id,
+            props.distributionRows
+          );
+
+          return (
+            <Box key={row.id} sx={professionalRowSx}>
+              <TableValue
+                label="Primär yrkeskategori"
+                value={row.primary_role_category || "Ej angiven"}
+              />
+              <TableValue
+                label="Sekundär yrkeskategori"
+                value={row.secondary_role_category || "Ej angiven"}
+              />
+              <TableValue
+                label="Totala vårdtillfällen"
+                value={formatWholeNumber(getAnnualVisits(row))}
+                strong
+              />
+              <TableValue
+                label="Fördelat"
+                value={`${formatOneDecimal(allocatedPercentage)}%`}
+                strong
+              />
+            </Box>
+          );
+        })}
       </Box>
     </SectionCard>
   );
@@ -198,14 +212,9 @@ function ProfessionalCategoriesSection(props: {
 
 function DistributionEditorSection(props: {
   careUnitOptions: CareUnitOption[];
+  productionRows: OutpatientProductionRow[];
   rows: OoDistributionDraftRow[];
-  summary: {
-    totalVisits: number;
-    totalPercentage: number;
-    distributedVisits: number;
-    remainingPercentage: number;
-    remainingVisits: number;
-  };
+  summary: OoDistributionSummary;
   showValidation: boolean;
   validationMessage: string;
   onAddRow: () => void;
@@ -215,43 +224,19 @@ function DistributionEditorSection(props: {
     draftRowId: string,
     changes: Partial<Omit<OoDistributionDraftRow, "id" | "savedId">>
   ) => void;
-  selectedProductionRow?: OutpatientProductionRow | null;
 }) {
-  const professionalsLabel = props.selectedProductionRow
-    ? `${props.selectedProductionRow.primary_role_category || "Okänd"} ${props.selectedProductionRow.secondary_role_category
-        ? `+ ${props.selectedProductionRow.secondary_role_category}`
-        : ""
-      }`.trim()
-    : "Yrkeskategorier";
-
   return (
     <SectionCard>
       <FormSection
         overline="OO-fördelning"
-        title={`Fördelning till vårdande enhet – ${professionalsLabel}`}
-        description="Årets vårdtillfällen fördelas procentuellt till en eller flera vårdande enheter."
+        title="Fördela till vårdande enhet"
       />
 
-      <Box sx={summaryGridSx}>
-        <MetricValue
-          label="Vårdtillfällen per år"
-          value={formatWholeNumber(props.summary.totalVisits)}
-        />
-        <MetricValue
-          label="Fördelad andel"
-          value={`${formatOneDecimal(props.summary.totalPercentage)}%`}
-        />
-        <MetricValue
-          label="Fördelade vårdtillfällen"
-          value={formatOneDecimal(props.summary.distributedVisits)}
-        />
-        <MetricValue
-          label="Kvar att fördela"
-          value={`${formatOneDecimal(props.summary.remainingVisits)} (${formatOneDecimal(
-            props.summary.remainingPercentage
-          )}%)`}
-        />
-      </Box>
+      <DistributionProgressSummary
+        productionRows={props.productionRows}
+        rows={props.rows}
+        summary={props.summary}
+      />
 
       {props.showValidation && props.validationMessage ? (
         <Alert severity="warning" sx={{ mt: 2 }}>
@@ -259,11 +244,12 @@ function DistributionEditorSection(props: {
         </Alert>
       ) : null}
 
-      <Box sx={{ display: "grid", gap: 0.75, mt: 2 }}>
-        <Box sx={distributionHeaderSx}>
+      <Box sx={[tableStackSx, { mt: 2 }]}>
+        <Box sx={distributionHeaderRowSx}>
+          <HeaderCell>Yrkeskategori</HeaderCell>
           <HeaderCell>Vårdande enhet</HeaderCell>
-          <HeaderCell align="right">Andel</HeaderCell>
-          <HeaderCell align="right">Vårdtillfällen</HeaderCell>
+          <HeaderCell>Andel</HeaderCell>
+          <HeaderCell>Vårdtillfällen</HeaderCell>
           <HeaderCell>Åtgärd</HeaderCell>
         </Box>
 
@@ -271,8 +257,8 @@ function DistributionEditorSection(props: {
           <DistributionRow
             key={row.id}
             row={row}
+            productionRows={props.productionRows}
             careUnitOptions={props.careUnitOptions}
-            totalVisits={props.summary.totalVisits}
             canRemove={props.rows.length > 1}
             onCareUnitChange={props.onCareUnitChange}
             onRemoveRow={props.onRemoveRow}
@@ -283,7 +269,7 @@ function DistributionEditorSection(props: {
 
       <Box sx={{ mt: 2 }}>
         <Button type="button" variant="outlined" onClick={props.onAddRow}>
-          Lägg till vårdande enhet
+          Lägg till fördelningsrad
         </Button>
       </Box>
     </SectionCard>
@@ -292,8 +278,8 @@ function DistributionEditorSection(props: {
 
 function DistributionRow(props: {
   row: OoDistributionDraftRow;
+  productionRows: OutpatientProductionRow[];
   careUnitOptions: CareUnitOption[];
-  totalVisits: number;
   canRemove: boolean;
   onCareUnitChange: (draftRowId: string, option: CareUnitOption) => void;
   onRemoveRow: (draftRowId: string) => void;
@@ -302,20 +288,37 @@ function DistributionRow(props: {
     changes: Partial<Omit<OoDistributionDraftRow, "id" | "savedId">>
   ) => void;
 }) {
+  const selectedProductionRow =
+    props.productionRows.find((row) => row.id === props.row.productionRowId) ??
+    null;
   const visits = calculateDistributedVisits(
-    props.totalVisits,
+    selectedProductionRow ? getAnnualVisits(selectedProductionRow) : 0,
     props.row.percentage
   );
 
-  const rolePercentageSum = props.row.roleAllocations.reduce(
-    (sum, role) => sum + Number(role.rolePercentage ?? 0),
-    0
-  );
-
   return (
-    <Box sx={{ borderTop: "1px solid var(--color-border)", pt: 1.5, pb: 1.5 }}>
+    <Box sx={distributionRowContainerSx}>
       <Box sx={distributionRowSx}>
-        <InputValue label="Vårdande enhet">
+        <InputValue label="Yrkeskategori" hideLabelOnDesktop>
+          <TextField
+            select
+            size="small"
+            value={props.row.productionRowId ?? ""}
+            onChange={(event) =>
+              props.onRowChange(props.row.id, {
+                productionRowId: Number(event.target.value) || null,
+              })
+            }
+            fullWidth
+          >
+            {props.productionRows.map((row) => (
+              <MenuItem key={row.id} value={row.id}>
+                {formatProductionRowOption(row)}
+              </MenuItem>
+            ))}
+          </TextField>
+        </InputValue>
+        <InputValue label="Vårdande enhet" hideLabelOnDesktop>
           <TextField
             select
             size="small"
@@ -338,7 +341,7 @@ function DistributionRow(props: {
             ))}
           </TextField>
         </InputValue>
-        <InputValue label="Andel" align="right">
+        <InputValue label="Andel" hideLabelOnDesktop>
           <TextField
             type="number"
             size="small"
@@ -348,14 +351,19 @@ function DistributionRow(props: {
                 percentage: event.target.value,
               })
             }
-            slotProps={{ htmlInput: { min: 0, max: 100, step: 0.1 } }}
+            slotProps={{
+              input: {
+                endAdornment: <InputAdornment position="end">%</InputAdornment>,
+              },
+              htmlInput: { min: 0, max: 100, step: 0.1 },
+            }}
             fullWidth
           />
         </InputValue>
         <ReadOnlyValue
           label="Vårdtillfällen"
           value={formatOneDecimal(visits)}
-          align="right"
+          hideLabelOnDesktop
         />
         <Box>
           <Typography
@@ -377,79 +385,6 @@ function DistributionRow(props: {
           </Button>
         </Box>
       </Box>
-
-      {props.row.roleAllocations.length > 0 && Number(props.row.percentage) > 0 && (
-        <Accordion defaultExpanded={false} sx={{ mt: 1.5 }}>
-          <AccordionSummary>
-            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-              Fördelning per yrkeskategori ({formatOneDecimal(rolePercentageSum)}%)
-            </Typography>
-          </AccordionSummary>
-          <AccordionDetails sx={{ pt: 2 }}>
-            <Stack spacing={1.5}>
-              {props.row.roleAllocations.map((role) => {
-                const roleVisits = (visits * Number(role.rolePercentage ?? 0)) / 100;
-                return (
-                  <Box
-                    key={role.id}
-                    sx={{
-                      display: "grid",
-                      gridTemplateColumns: { xs: "1fr 1fr", lg: "2fr 1fr 1fr" },
-                      gap: 1,
-                      padding: 1.5,
-                      bgcolor: "background.default",
-                      borderRadius: 1,
-                      border: "1px solid var(--color-border)",
-                    }}
-                  >
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">
-                        Yrkeskategori
-                      </Typography>
-                      <Typography variant="body2">
-                        {role.primaryRoleCategory}
-                        {role.secondaryRoleCategory
-                          ? ` + ${role.secondaryRoleCategory}`
-                          : ""}
-                      </Typography>
-                    </Box>
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">
-                        Andel (%)
-                      </Typography>
-                      <TextField
-                        type="number"
-                        size="small"
-                        value={role.rolePercentage}
-                        onChange={(event) => {
-                          const updatedRoles = props.row.roleAllocations.map((r) =>
-                            r.id === role.id
-                              ? { ...r, rolePercentage: event.target.value }
-                              : r
-                          );
-                          props.onRowChange(props.row.id, {
-                            roleAllocations: updatedRoles,
-                          });
-                        }}
-                        slotProps={{ htmlInput: { min: 0, max: 100, step: 0.1 } }}
-                        fullWidth
-                      />
-                    </Box>
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">
-                        Besök
-                      </Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {formatOneDecimal(roleVisits)}
-                      </Typography>
-                    </Box>
-                  </Box>
-                );
-              })}
-            </Stack>
-          </AccordionDetails>
-        </Accordion>
-      )}
     </Box>
   );
 }
@@ -516,10 +451,200 @@ function MetricValue(props: { label: string; value: string }) {
   );
 }
 
-function HeaderCell(props: {
-  children: string;
-  align?: "left" | "right";
+function DistributionProgressSummary(props: {
+  productionRows: OutpatientProductionRow[];
+  rows: OoDistributionDraftRow[];
+  summary: OoDistributionSummary;
 }) {
+  const boundedPercentage = Math.max(
+    0,
+    Math.min(100, props.summary.totalPercentage)
+  );
+  const isUnderAllocated = props.summary.remainingPercentage > 0.01;
+  const isOverAllocated = props.summary.remainingPercentage < -0.01;
+  const roleStatuses = props.productionRows.map((row) => {
+    const allocatedPercentage = getAllocatedPercentageForProductionRow(
+      row.id,
+      props.rows
+    );
+    const remainingPercentage = 100 - allocatedPercentage;
+    const boundedRolePercentage = Math.max(0, Math.min(100, allocatedPercentage));
+    const totalVisits = getAnnualVisits(row);
+
+    return {
+      allocatedPercentage,
+      boundedRolePercentage,
+      distributedVisits: calculateDistributedVisits(
+        totalVisits,
+        allocatedPercentage
+      ),
+      remainingPercentage,
+      row,
+      totalVisits,
+    };
+  });
+  const statusLabel = isOverAllocated
+    ? `${formatOneDecimal(Math.abs(props.summary.remainingPercentage))}% över`
+    : `${formatOneDecimal(Math.max(0, props.summary.remainingPercentage))}% kvar`;
+  const progressFillColor = isOverAllocated
+    ? "#B42318"
+    : isUnderAllocated
+      ? "#F2C94C"
+      : "#005883";
+
+  return (
+    <Box sx={progressSummarySx}>
+      <Stack
+        direction={{ xs: "column", md: "row" }}
+        spacing={1}
+        sx={{
+          alignItems: { xs: "flex-start", md: "center" },
+          justifyContent: "space-between",
+        }}
+      >
+        <Box>
+          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+            Fördelning totalt
+          </Typography>
+        </Box>
+        <Typography sx={statusSx}>{statusLabel}</Typography>
+      </Stack>
+
+      <Box
+        aria-label="Fördelad andel"
+        aria-valuemax={100}
+        aria-valuemin={0}
+        aria-valuenow={boundedPercentage}
+        role="progressbar"
+        sx={progressTrackSx}
+      >
+        <Box
+          sx={{
+            ...progressFillSx,
+            bgcolor: progressFillColor,
+            width: `${boundedPercentage}%`,
+          }}
+        />
+      </Box>
+
+      <Box sx={progressMetricGridSx}>
+        <ProgressMetric
+          label="Årsvolym"
+          value={formatWholeNumber(props.summary.totalVisits)}
+        />
+        <ProgressMetric
+          label="Fördelad andel"
+          value={`${formatOneDecimal(props.summary.totalPercentage)}%`}
+        />
+        <ProgressMetric
+          label="Fördelade vårdtillfällen"
+          value={formatOneDecimal(props.summary.distributedVisits)}
+        />
+        <ProgressMetric
+          label={isOverAllocated ? "Överfördelat" : "Kvar att fördela"}
+          value={`${formatOneDecimal(
+            Math.abs(props.summary.remainingVisits)
+          )} (${formatOneDecimal(Math.abs(props.summary.remainingPercentage))}%)`}
+        />
+      </Box>
+
+      <Stack spacing={0.75}>
+        <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+          Status per yrkeskategori
+        </Typography>
+
+        <Box sx={roleStatusListSx}>
+          <Box sx={roleStatusHeaderSx}>
+            <HeaderCell>Yrkeskategori</HeaderCell>
+            <HeaderCell>Total volym</HeaderCell>
+            <HeaderCell>Fördelad andel</HeaderCell>
+            <HeaderCell>Vårdtillfällen</HeaderCell>
+            <HeaderCell>Avvikelse</HeaderCell>
+          </Box>
+
+          {roleStatuses.map((status) => {
+            const isRoleUnderAllocated = status.remainingPercentage > 0.01;
+            const isRoleOverAllocated = status.remainingPercentage < -0.01;
+            const roleFillColor = isRoleOverAllocated
+              ? "#B42318"
+              : isRoleUnderAllocated
+                ? "#F2C94C"
+                : "#005883";
+            const roleStatusLabel = isRoleOverAllocated
+              ? `${formatOneDecimal(Math.abs(status.remainingPercentage))}% över`
+              : `${formatOneDecimal(
+                  Math.max(0, status.remainingPercentage)
+                )}% kvar`;
+
+            return (
+              <Box key={status.row.id} sx={roleStatusRowSx}>
+                <TableValue
+                  label="Yrkeskategori"
+                  value={formatProductionRoleLabel(status.row)}
+                  strong
+                />
+                <TableValue
+                  label="Total volym"
+                  value={formatWholeNumber(status.totalVisits)}
+                />
+                <Box sx={roleStatusMeterSx}>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: { xs: "block", lg: "none" }, mb: 0.25 }}
+                  >
+                    Fördelad andel
+                  </Typography>
+                  <Typography sx={roleStatusTitleSx}>
+                    {formatOneDecimal(status.allocatedPercentage)}%
+                  </Typography>
+                  <Box
+                    aria-label={`Fördelad andel för ${formatProductionRoleLabel(
+                      status.row
+                    )}`}
+                    aria-valuemax={100}
+                    aria-valuemin={0}
+                    aria-valuenow={status.boundedRolePercentage}
+                    role="progressbar"
+                    sx={progressTrackSx}
+                  >
+                    <Box
+                      sx={{
+                        ...progressFillSx,
+                        bgcolor: roleFillColor,
+                        width: `${status.boundedRolePercentage}%`,
+                      }}
+                    />
+                  </Box>
+                </Box>
+                <TableValue
+                  label="Fördelade vårdtillfällen"
+                  value={formatOneDecimal(status.distributedVisits)}
+                />
+                <TableValue label="Avvikelse" value={roleStatusLabel} strong />
+              </Box>
+            );
+          })}
+        </Box>
+      </Stack>
+    </Box>
+  );
+}
+
+function ProgressMetric(props: { label: string; value: string }) {
+  return (
+    <Box sx={progressMetricSx}>
+      <Typography variant="caption" color="text.secondary">
+        {props.label}
+      </Typography>
+      <Typography sx={{ color: "primary.main", fontWeight: 700 }}>
+        {props.value}
+      </Typography>
+    </Box>
+  );
+}
+
+function HeaderCell(props: { children: string }) {
   return (
     <Typography
       variant="caption"
@@ -528,7 +653,6 @@ function HeaderCell(props: {
         display: { xs: "none", lg: "block" },
         fontWeight: 700,
         minWidth: 0,
-        textAlign: props.align ?? "left",
       }}
     >
       {props.children}
@@ -536,17 +660,46 @@ function HeaderCell(props: {
   );
 }
 
-function InputValue(props: {
-  children: ReactNode;
-  label: string;
-  align?: "left" | "right";
-}) {
+function TableValue(props: { label: string; value: string; strong?: boolean }) {
   return (
-    <Box sx={{ minWidth: 0, textAlign: { xs: "left", lg: props.align } }}>
+    <Box sx={{ minWidth: 0 }}>
       <Typography
         variant="caption"
         color="text.secondary"
         sx={{ display: { xs: "block", lg: "none" }, mb: 0.25 }}
+      >
+        {props.label}
+      </Typography>
+      <Typography
+        variant="body2"
+        sx={{
+          fontWeight: props.strong ? 700 : 400,
+          overflowWrap: "anywhere",
+        }}
+      >
+        {props.value}
+      </Typography>
+    </Box>
+  );
+}
+
+function InputValue(props: {
+  children: ReactNode;
+  hideLabelOnDesktop?: boolean;
+  label: string;
+}) {
+  return (
+    <Box sx={{ minWidth: 0, textAlign: "left" }}>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{
+          display: {
+            xs: "block",
+            lg: props.hideLabelOnDesktop ? "none" : "block",
+          },
+          mb: 0.25,
+        }}
       >
         {props.label}
       </Typography>
@@ -556,16 +709,22 @@ function InputValue(props: {
 }
 
 function ReadOnlyValue(props: {
+  hideLabelOnDesktop?: boolean;
   label: string;
   value: string;
-  align?: "left" | "right";
 }) {
   return (
-    <Box sx={{ minWidth: 0, textAlign: { xs: "left", lg: props.align } }}>
+    <Box sx={{ minWidth: 0, textAlign: "left" }}>
       <Typography
         variant="caption"
         color="text.secondary"
-        sx={{ display: { xs: "block", lg: "none" }, mb: 0.25 }}
+        sx={{
+          display: {
+            xs: "block",
+            lg: props.hideLabelOnDesktop ? "none" : "block",
+          },
+          mb: 0.25,
+        }}
       >
         {props.label}
       </Typography>
@@ -625,6 +784,34 @@ function formatProductionYear(row: OutpatientProductionRow | undefined): string 
   return row.period_value || "Saknar år";
 }
 
+function getAllocatedPercentageForProductionRow(
+  productionRowId: number,
+  rows: OoDistributionDraftRow[]
+): number {
+  return rows
+    .filter(
+      (row) =>
+        row.productionRowId === productionRowId &&
+        row.careUnitId.trim() &&
+        row.careUnit.trim()
+    )
+    .reduce((sum, row) => sum + toNumber(row.percentage), 0);
+}
+
+function formatProductionRoleLabel(row: OutpatientProductionRow): string {
+  return (
+    [row.primary_role_category, row.secondary_role_category]
+      .filter(Boolean)
+      .join(" + ") || "Ej angiven"
+  );
+}
+
+function formatProductionRowOption(row: OutpatientProductionRow): string {
+  return `${formatProductionRoleLabel(row)} · ${formatWholeNumber(
+    getAnnualVisits(row)
+  )} totala vårdtillfällen`;
+}
+
 const introGridSx = {
   display: "grid",
   gridTemplateColumns: {
@@ -643,14 +830,9 @@ const basisGridSx = {
   },
 };
 
-const summaryGridSx = {
+const tableStackSx = {
   display: "grid",
-  gridTemplateColumns: {
-    xs: "1fr",
-    md: "repeat(2, minmax(0, 1fr))",
-    xl: "repeat(4, minmax(0, 1fr))",
-  },
-  gap: 1.5,
+  gap: 0.75,
 };
 
 const metricSx = {
@@ -660,20 +842,145 @@ const metricSx = {
   bgcolor: "var(--section-background)",
 };
 
-const distributionHeaderSx = {
+const progressSummarySx = {
+  border: "1px solid var(--color-border)",
+  borderRadius: 1,
+  bgcolor: "var(--section-background)",
+  display: "grid",
+  gap: 1.25,
+  p: 1.5,
+};
+
+const statusSx = {
+  border: "1px solid var(--color-border)",
+  borderRadius: 1,
+  color: "text.secondary",
+  fontWeight: 700,
+  px: 1.25,
+  py: 0.5,
+};
+
+const progressTrackSx = {
+  bgcolor: "background.default",
+  border: "1px solid var(--color-border)",
+  borderRadius: 1,
+  height: 12,
+  overflow: "hidden",
+};
+
+const progressFillSx = {
+  height: "100%",
+  transition: "width 120ms ease",
+};
+
+const progressMetricGridSx = {
   display: "grid",
   gridTemplateColumns: {
     xs: "1fr",
-    lg: "minmax(260px, 1.4fr) minmax(96px, 0.6fr) minmax(120px, 0.7fr) minmax(96px, 0.6fr)",
+    md: "repeat(2, minmax(0, 1fr))",
+    xl: "repeat(4, minmax(0, 1fr))",
+  },
+  gap: 1,
+};
+
+const progressMetricSx = {
+  bgcolor: "background.default",
+  border: "1px solid var(--color-border)",
+  borderRadius: 1,
+  display: "grid",
+  gap: 0.25,
+  minWidth: 0,
+  p: 1,
+};
+
+const roleStatusListSx = {
+  display: "grid",
+  gap: 0.5,
+};
+
+const roleStatusGridSx = {
+  display: "grid",
+  gridTemplateColumns: {
+    xs: "1fr",
+    lg: "minmax(220px, 1.35fr) minmax(112px, 0.55fr) minmax(160px, 0.85fr) minmax(140px, 0.7fr) minmax(112px, 0.55fr)",
   },
   gap: 1,
   alignItems: "center",
 };
 
+const roleStatusHeaderSx = {
+  ...roleStatusGridSx,
+  px: 1,
+};
+
+const roleStatusRowSx = {
+  ...roleStatusGridSx,
+  bgcolor: "background.default",
+  border: "1px solid var(--color-border)",
+  borderRadius: 1,
+  p: 1,
+};
+
+const roleStatusTitleSx = {
+  color: "primary.main",
+  fontWeight: 700,
+  overflowWrap: "anywhere",
+};
+
+const roleStatusMeterSx = {
+  display: "grid",
+  gap: 0.35,
+  minWidth: 0,
+};
+
+const professionalGridSx = {
+  display: "grid",
+  gridTemplateColumns: {
+    xs: "1fr",
+    lg: "minmax(180px, 1fr) minmax(180px, 1fr) minmax(140px, 0.6fr) minmax(120px, 0.55fr)",
+  },
+  gap: 1,
+  alignItems: "center",
+};
+
+const professionalHeaderSx = {
+  ...professionalGridSx,
+  px: 1.5,
+};
+
+const professionalRowSx = {
+  ...professionalGridSx,
+  bgcolor: "background.default",
+  border: "1px solid var(--color-border)",
+  borderRadius: 1,
+  p: 1.5,
+};
+
+const distributionHeaderSx = {
+  display: "grid",
+  gridTemplateColumns: {
+    xs: "1fr",
+    lg: "minmax(220px, 1.15fr) minmax(260px, 1.3fr) minmax(132px, 0.55fr) minmax(150px, 0.6fr) minmax(110px, 0.45fr)",
+  },
+  gap: 1,
+  alignItems: "center",
+};
+
+const distributionHeaderRowSx = {
+  ...distributionHeaderSx,
+  px: 1.5,
+};
+
 const distributionRowSx = {
   ...distributionHeaderSx,
-  borderTop: "1px solid var(--color-border)",
-  pt: 1,
+  alignItems: "start",
+};
+
+const distributionRowContainerSx = {
+  bgcolor: "background.default",
+  border: "1px solid var(--color-border)",
+  borderRadius: 1,
+  p: 1.5,
 };
 
 const readOnlySx = {
