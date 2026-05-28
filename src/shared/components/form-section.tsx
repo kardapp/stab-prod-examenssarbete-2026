@@ -25,7 +25,7 @@ export function FormSection(props: FormSectionProps) {
 }
 
 const overlineSx = {
-  color: "#005883",
+  color: "primary.main",
   fontWeight: 700,
   letterSpacing: 0,
   textTransform: "uppercase",

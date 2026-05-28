@@ -137,7 +137,7 @@ const breakdownHeaderSx = {
 const breakdownRowSx = {
   ...breakdownBaseRowSx,
   alignItems: "start",
-  borderTop: "1px solid #d0d7de",
+  borderTop: "1px solid var(--color-border)",
   pt: 1,
 };
 
@@ -157,6 +157,6 @@ const breakdownHeaderWithoutDrgSx = {
 const breakdownRowWithoutDrgSx = {
   ...breakdownBaseRowWithoutDrgSx,
   alignItems: "start",
-  borderTop: "1px solid #d0d7de",
+  borderTop: "1px solid var(--color-border)",
   pt: 1,
 };

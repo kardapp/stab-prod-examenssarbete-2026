@@ -458,7 +458,7 @@ function formatCurrency(value: number): string {
 function shareSumSx(hasError: boolean) {
   return {
     border: "1px solid",
-    borderColor: hasError ? "warning.main" : "#d0d7de",
+    borderColor: hasError ? "warning.main" : "var(--color-border)",
     borderRadius: 1,
     px: 1.5,
     py: 1,
@@ -492,7 +492,7 @@ const needRowSx = {
   },
   gap: 1,
   alignItems: "center",
-  borderTop: "1px solid #d0d7de",
+  borderTop: "1px solid var(--color-border)",
   pt: 1,
 };
 
@@ -516,7 +516,7 @@ const dayCareRowSx = {
   },
   gap: 1,
   alignItems: "center",
-  borderTop: "1px solid #d0d7de",
+  borderTop: "1px solid var(--color-border)",
   pt: 1,
 };
 
@@ -540,7 +540,7 @@ const costRowSx = {
   },
   gap: 1,
   alignItems: "center",
-  borderTop: "1px solid #d0d7de",
+  borderTop: "1px solid var(--color-border)",
   pt: 1,
 };
 

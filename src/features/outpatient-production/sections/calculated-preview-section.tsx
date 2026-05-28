@@ -67,7 +67,7 @@ export function CalculatedPreviewSection(
             sx={{
               alignItems: "baseline",
               justifyContent: "space-between",
-              borderBottom: "1px solid #e5e7eb",
+              borderBottom: "1px solid var(--color-border)",
               pb: 1,
             }}
           >

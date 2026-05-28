@@ -192,11 +192,11 @@ export function parseImpactType(value: string): WeeklyImpactType {
 
 export function getCurveBarColor(point: WeeklyCurvePoint): string {
   if (point.impactPercentage > 0) {
-    return "#b42318";
+    return "#000000";
   }
 
   if (point.impactPercentage < 0) {
-    return "#0f766e";
+    return "#333333";
   }
 
   return "#005883";

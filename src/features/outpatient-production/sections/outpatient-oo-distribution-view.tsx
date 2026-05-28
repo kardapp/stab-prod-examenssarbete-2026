@@ -172,9 +172,9 @@ function ProfessionalCategoriesSection(props: {
               gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr 150px" },
               gap: 1,
               padding: 1.5,
-              bgcolor: "#f5f5f5",
+              bgcolor: "background.default",
               borderRadius: 1,
-              border: "1px solid #e0e0e0",
+              border: "1px solid var(--color-border)",
             }}
           >
             <Typography variant="body2">
@@ -313,7 +313,7 @@ function DistributionRow(props: {
   );
 
   return (
-    <Box sx={{ borderTop: "1px solid #d0d7de", pt: 1.5, pb: 1.5 }}>
+    <Box sx={{ borderTop: "1px solid var(--color-border)", pt: 1.5, pb: 1.5 }}>
       <Box sx={distributionRowSx}>
         <InputValue label="Vårdande enhet">
           <TextField
@@ -397,9 +397,9 @@ function DistributionRow(props: {
                       gridTemplateColumns: { xs: "1fr 1fr", lg: "2fr 1fr 1fr" },
                       gap: 1,
                       padding: 1.5,
-                      bgcolor: "#f9f9f9",
+                      bgcolor: "background.default",
                       borderRadius: 1,
-                      border: "1px solid #e8e8e8",
+                      border: "1px solid var(--color-border)",
                     }}
                   >
                     <Box>
@@ -654,10 +654,10 @@ const summaryGridSx = {
 };
 
 const metricSx = {
-  border: "1px solid #d0d7de",
+  border: "1px solid var(--color-border)",
   borderRadius: 1,
   p: 1.5,
-  bgcolor: "var(--page-background)",
+  bgcolor: "var(--section-background)",
 };
 
 const distributionHeaderSx = {
@@ -672,12 +672,12 @@ const distributionHeaderSx = {
 
 const distributionRowSx = {
   ...distributionHeaderSx,
-  borderTop: "1px solid #d0d7de",
+  borderTop: "1px solid var(--color-border)",
   pt: 1,
 };
 
 const readOnlySx = {
-  border: "1px solid #d0d7de",
+  border: "1px solid var(--color-border)",
   borderRadius: 1,
   minHeight: 40,
   px: 1.5,

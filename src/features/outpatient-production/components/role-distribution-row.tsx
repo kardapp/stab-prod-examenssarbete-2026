@@ -44,7 +44,7 @@ export function RoleDistributionRow(props: RoleDistributionRowProps) {
       spacing={1.5}
       sx={{
         alignItems: { xs: "stretch", md: "center" },
-        borderBottom: "1px solid #e5e7eb",
+        borderBottom: "1px solid var(--color-border)",
         pb: 1.5,
       }}
     >

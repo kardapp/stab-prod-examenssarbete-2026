@@ -105,7 +105,7 @@ const supportGridSx = {
 };
 
 const supportBlockSx = {
-  border: "1px solid #d0d7de",
+  border: "1px solid var(--color-border)",
   borderRadius: 1,
   bgcolor: "var(--page-background)",
   p: 1.5,

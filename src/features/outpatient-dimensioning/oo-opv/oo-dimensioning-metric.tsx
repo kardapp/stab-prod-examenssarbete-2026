@@ -25,9 +25,9 @@ export function OoDimensioningMetric(props: OoDimensioningMetricProps) {
 }
 
 const metricSx = {
-  border: "1px solid #d0d7de",
+  border: "1px solid var(--color-border)",
   borderRadius: 1,
-  bgcolor: "var(--page-background)",
+  bgcolor: "var(--section-background)",
   justifyContent: "center",
   minHeight: 72,
   minWidth: 0,

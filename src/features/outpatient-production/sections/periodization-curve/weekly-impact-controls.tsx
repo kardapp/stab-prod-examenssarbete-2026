@@ -139,7 +139,7 @@ const impactListSx = {
 
 const impactRowSx = {
   alignItems: "center",
-  border: "1px solid #d0d7de",
+  border: "1px solid var(--color-border)",
   borderRadius: 1,
   display: "grid",
   gap: 1,

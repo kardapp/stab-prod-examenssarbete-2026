@@ -36,7 +36,7 @@ export function WeeklyCurveChart(props: WeeklyCurveChartProps) {
                     height: `${Math.max(heightPercentage, 2)}%`,
                     outline:
                       props.selectedWeek === point.week
-                        ? "2px solid #111827"
+                        ? "2px solid var(--color-text)"
                         : "none",
                   }}
                 />
@@ -51,8 +51,8 @@ export function WeeklyCurveChart(props: WeeklyCurveChartProps) {
 
       <Box sx={curveLegendSx}>
         <LegendItem color="#005883" label="Basnivå" />
-        <LegendItem color="#0f766e" label="Lägre behov" />
-        <LegendItem color="#b42318" label="Högre behov" />
+        <LegendItem color="#333333" label="Lägre behov" />
+        <LegendItem color="#000000" label="Högre behov" />
       </Box>
     </Box>
   );
@@ -72,7 +72,7 @@ function LegendItem(props: { color: string; label: string }) {
 }
 
 const curveSx = {
-  border: "1px solid #d0d7de",
+  border: "1px solid var(--color-border)",
   borderRadius: 1,
   bgcolor: "var(--page-background)",
   display: "grid",

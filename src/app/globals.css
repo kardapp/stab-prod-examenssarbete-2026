@@ -3,8 +3,17 @@
 }
 
 :root {
-    --page-background: #ffffff;
-    --section-background: #F6F5F4;
+    --color-primary: #005883;
+    --color-background: #FFFFFF;
+    --color-section-background: #F6F5F4;
+    --color-text: #000000;
+    --color-text-muted: #333333;
+    --color-text-on-dark: #FFFFFF;
+    --color-link: #005883;
+    --color-border: color-mix(in srgb, var(--color-text-muted) 24%, var(--color-background));
+
+    --page-background: var(--color-background);
+    --section-background: var(--color-section-background);
 }
 
 html,
@@ -16,9 +25,10 @@ body {
 
 body {
     background: var(--page-background);
+    color: var(--color-text);
 }
 
 a {
-    color: inherit;
+    color: var(--color-link);
     text-decoration: none;
 }

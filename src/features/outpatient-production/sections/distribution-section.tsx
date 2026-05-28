@@ -54,66 +54,70 @@ export function DistributionSection(props: DistributionSectionProps) {
       />
 
       <Stack spacing={3}>
-        <Box sx={subSectionSx}>
-          <SubSectionHeader
-            title="Fördelning SLL/UULP"
-            sumLabel={`Summa ${formatOneDecimal(sllUulpSum)} %`}
-          />
-          <Stack spacing={1.5}>
-            <PercentageInputRow
-              label="SLL"
-              percentage={props.formState.sllPercentage}
-              calculatedCareEvents={props.calculatedValues.sllCareEvents}
-              onPercentageChange={(value) =>
-                props.onPercentageChange("sllPercentage", value)
+        <Box sx={distributionPairGridSx}>
+          <Box sx={[distributionSubSectionSx, sllUulpSubSectionSx]}>
+            <SubSectionHeader
+              title="Fördelning 1: SLL/UULP"
+              sumLabel={`Summa ${formatOneDecimal(sllUulpSum)} %`}
+            />
+            <Stack spacing={1.5}>
+              <PercentageInputRow
+                label="SLL"
+                percentage={props.formState.sllPercentage}
+                calculatedCareEvents={props.calculatedValues.sllCareEvents}
+                onPercentageChange={(value) =>
+                  props.onPercentageChange("sllPercentage", value)
+                }
+              />
+              <PercentageInputRow
+                label="UULP"
+                percentage={props.formState.uulpPercentage}
+                calculatedCareEvents={props.calculatedValues.uulpCareEvents}
+                onPercentageChange={(value) =>
+                  props.onPercentageChange("uulpPercentage", value)
+                }
+              />
+            </Stack>
+            <ValidationMessage
+              message={
+                props.showValidation
+                  ? props.validationErrors.sllUulp
+                  : undefined
               }
             />
-            <PercentageInputRow
-              label="UULP"
-              percentage={props.formState.uulpPercentage}
-              calculatedCareEvents={props.calculatedValues.uulpCareEvents}
-              onPercentageChange={(value) =>
-                props.onPercentageChange("uulpPercentage", value)
-              }
-            />
-          </Stack>
-          <ValidationMessage
-            message={
-              props.showValidation ? props.validationErrors.sllUulp : undefined
-            }
-          />
-        </Box>
+          </Box>
 
-        <Box sx={subSectionSx}>
-          <SubSectionHeader
-            title="Fördelning akut/elektivt"
-            sumLabel={`Summa ${formatOneDecimal(acuteElectiveSum)} %`}
-          />
-          <Stack spacing={1.5}>
-            <PercentageInputRow
-              label="Akut"
-              percentage={props.formState.acutePercentage}
-              calculatedCareEvents={props.calculatedValues.acuteCareEvents}
-              onPercentageChange={(value) =>
-                props.onPercentageChange("acutePercentage", value)
+          <Box sx={[distributionSubSectionSx, acuteElectiveSubSectionSx]}>
+            <SubSectionHeader
+              title="Fördelning 2: akut/elektivt"
+              sumLabel={`Summa ${formatOneDecimal(acuteElectiveSum)} %`}
+            />
+            <Stack spacing={1.5}>
+              <PercentageInputRow
+                label="Akut"
+                percentage={props.formState.acutePercentage}
+                calculatedCareEvents={props.calculatedValues.acuteCareEvents}
+                onPercentageChange={(value) =>
+                  props.onPercentageChange("acutePercentage", value)
+                }
+              />
+              <PercentageInputRow
+                label="Elektivt"
+                percentage={props.formState.electivePercentage}
+                calculatedCareEvents={props.calculatedValues.electiveCareEvents}
+                onPercentageChange={(value) =>
+                  props.onPercentageChange("electivePercentage", value)
+                }
+              />
+            </Stack>
+            <ValidationMessage
+              message={
+                props.showValidation
+                  ? props.validationErrors.acuteElective
+                  : undefined
               }
             />
-            <PercentageInputRow
-              label="Elektivt"
-              percentage={props.formState.electivePercentage}
-              calculatedCareEvents={props.calculatedValues.electiveCareEvents}
-              onPercentageChange={(value) =>
-                props.onPercentageChange("electivePercentage", value)
-              }
-            />
-          </Stack>
-          <ValidationMessage
-            message={
-              props.showValidation
-                ? props.validationErrors.acuteElective
-                : undefined
-            }
-          />
+          </Box>
         </Box>
 
         <Box sx={subSectionSx}>
@@ -176,7 +180,7 @@ function SubSectionHeader(props: { title: string; sumLabel: string }) {
       <Typography variant="subtitle1" component="h3" sx={{ fontWeight: 700 }}>
         {props.title}
       </Typography>
-      <Typography variant="body2" sx={{ color: "#005883", fontWeight: 700 }}>
+      <Typography variant="body2" sx={{ color: "primary.main", fontWeight: 700 }}>
         {props.sumLabel}
       </Typography>
     </Stack>
@@ -184,6 +188,39 @@ function SubSectionHeader(props: { title: string; sumLabel: string }) {
 }
 
 const subSectionSx = {
-  borderTop: "1px solid #e5e7eb",
+  borderTop: "1px solid",
+  borderTopColor: "divider",
   pt: 2,
+};
+
+const distributionPairGridSx = {
+  display: "grid",
+  gridTemplateColumns: {
+    xs: "1fr",
+    md: "repeat(2, minmax(0, 1fr))",
+  },
+  gap: { xs: 2, md: 2.5 },
+  width: "100%",
+};
+
+const distributionSubSectionSx = {
+  ...subSectionSx,
+  bgcolor: "background.default",
+  borderRight: "1px solid",
+  borderRightColor: "divider",
+  borderBottom: "1px solid",
+  borderBottomColor: "divider",
+  borderLeft: "4px solid",
+  borderRadius: 1,
+  pl: 2,
+  pr: 2,
+  py: 1.5,
+};
+
+const sllUulpSubSectionSx = {
+  borderLeftColor: "primary.main",
+};
+
+const acuteElectiveSubSectionSx = {
+  borderLeftColor: "text.secondary",
 };

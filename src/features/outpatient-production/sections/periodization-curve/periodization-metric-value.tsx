@@ -19,8 +19,8 @@ export function PeriodizationMetricValue(props: MetricValueProps) {
 }
 
 const metricSx = {
-  border: "1px solid #d0d7de",
+  border: "1px solid var(--color-border)",
   borderRadius: 1,
   p: 1.5,
-  bgcolor: "var(--page-background)",
+  bgcolor: "var(--section-background)",
 };

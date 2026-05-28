@@ -1,7 +1,7 @@
 "use client";
 
 import type { ChangeEvent } from "react";
-import { InputAdornment, Stack, TextField, Typography } from "@mui/material";
+import { Box, InputAdornment, TextField, Typography } from "@mui/material";
 import { formatOneDecimal } from "@/shared/utils/format-number";
 
 type PercentageInputRowProps = {
@@ -17,45 +17,46 @@ export function PercentageInputRow(props: PercentageInputRowProps) {
   }
 
   return (
-    <Stack
-      direction={{ xs: "column", sm: "row" }}
-      spacing={1.5}
+    <Box
       sx={{
-        alignItems: { xs: "stretch", sm: "center" },
-        justifyContent: "space-between",
+        display: "grid",
+        gridTemplateColumns: {
+          xs: "1fr",
+          sm: "minmax(72px, 1fr) 140px minmax(120px, auto)",
+        },
+        gap: { xs: 1, sm: 1.5 },
+        alignItems: { sm: "center" },
       }}
     >
       <Typography sx={{ fontWeight: 600 }}>{props.label}</Typography>
-      <Stack
-        direction="row"
-        spacing={1.5}
-        sx={{ alignItems: "center", justifyContent: "flex-end" }}
+      <TextField
+        label="Andel"
+        type="number"
+        value={props.percentage}
+        onChange={handleChange}
+        size="small"
+        sx={{ width: { xs: "100%", sm: 140 } }}
+        slotProps={{
+          input: {
+            endAdornment: <InputAdornment position="end">%</InputAdornment>,
+          },
+          htmlInput: {
+            min: 0,
+            max: 100,
+            step: 1,
+          },
+        }}
+      />
+      <Typography
+        variant="body2"
+        sx={{
+          minWidth: { sm: 120 },
+          textAlign: { xs: "left", sm: "right" },
+          color: "primary.main",
+        }}
       >
-        <TextField
-          label="Andel"
-          type="number"
-          value={props.percentage}
-          onChange={handleChange}
-          size="small"
-          sx={{ width: 140 }}
-          slotProps={{
-            input: {
-              endAdornment: <InputAdornment position="end">%</InputAdornment>,
-            },
-            htmlInput: {
-              min: 0,
-              max: 100,
-              step: 1,
-            },
-          }}
-        />
-        <Typography
-          variant="body2"
-          sx={{ minWidth: 120, textAlign: "right", color: "#005883" }}
-        >
-          {formatOneDecimal(props.calculatedCareEvents)} vårdtillfällen
-        </Typography>
-      </Stack>
-    </Stack>
+        {formatOneDecimal(props.calculatedCareEvents)} vårdtillfällen
+      </Typography>
+    </Box>
   );
 }

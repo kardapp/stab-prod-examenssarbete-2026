@@ -9,8 +9,8 @@ export function PageHeader(props: PageHeaderProps) {
   return (
     <Box
       sx={{
-        bgcolor: "#005883",
-        color: "white",
+        bgcolor: "primary.main",
+        color: "primary.contrastText",
         px: 2,
         py: 1.5,
         borderRadius: 1,
@@ -26,7 +26,7 @@ export function PageHeader(props: PageHeaderProps) {
       >
         <Box>
           {props.overline ? (
-            <Typography variant="caption" sx={{ opacity: 0.85 }}>
+            <Typography variant="caption" sx={{ color: "primary.contrastText" }}>
               {props.overline}
             </Typography>
           ) : null}

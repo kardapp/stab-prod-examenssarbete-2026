@@ -257,7 +257,7 @@ const summaryGridSx = {
 };
 
 const accordionSx = {
-  border: "1px solid #d0d7de",
+  border: "1px solid var(--color-border)",
   borderRadius: 1,
   bgcolor: "var(--page-background)",
   boxShadow: "none",
@@ -279,7 +279,7 @@ const accordionSummarySx = {
 };
 
 const accordionDetailsSx = {
-  borderTop: "1px solid #d0d7de",
+  borderTop: "1px solid var(--color-border)",
   display: "grid",
   gap: 1.5,
   p: 1.5,
@@ -297,7 +297,7 @@ const rowHeaderGridSx = {
 };
 
 const roleCellSx = {
-  border: "1px solid #d0d7de",
+  border: "1px solid var(--color-border)",
   borderRadius: 1,
   bgcolor: "var(--section-background)",
   display: "grid",
@@ -322,7 +322,7 @@ const openCellSx = {
   alignItems: "center",
   bgcolor: "#005883",
   borderRadius: 1,
-  color: "white",
+  color: "primary.contrastText",
   display: "flex",
   fontWeight: 700,
   justifyContent: "center",
@@ -340,7 +340,7 @@ const detailsGridSx = {
 };
 
 const detailGroupSx = {
-  border: "1px solid #d0d7de",
+  border: "1px solid var(--color-border)",
   borderRadius: 1,
   bgcolor: "var(--section-background)",
   p: 1.5,
@@ -400,7 +400,7 @@ const smallOpenCellSx = {
 };
 
 const optionalDetailsSx = {
-  borderTop: "1px solid #d0d7de",
+  borderTop: "1px solid var(--color-border)",
   p: 1.5,
 };
 

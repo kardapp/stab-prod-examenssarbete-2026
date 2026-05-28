@@ -255,7 +255,7 @@ const baseResultRowSx = {
   display: "grid",
   gap: 1,
   alignItems: "center",
-  borderTop: "1px solid #d0d7de",
+  borderTop: "1px solid var(--color-border)",
   pt: 1,
 };
 
@@ -268,10 +268,10 @@ const comparisonGridSx = {
 };
 
 const metricSx = {
-  border: "1px solid #d0d7de",
+  border: "1px solid var(--color-border)",
   borderRadius: 1,
   p: 1.5,
-  bgcolor: "var(--page-background)",
+  bgcolor: "var(--section-background)",
 };
 
 const headerCellSx = {
