@@ -169,6 +169,22 @@ export function useOutpatientProductionForm() {
       return;
     }
 
+    const roleVisits = distributeCareEventsByRole(
+      formState.careEvents,
+      formState.roleDistributions
+    );
+    const roleRowsToSave = formState.roleDistributions
+      .map((role, index) => ({
+        role,
+        visits: roleVisits[index] ?? 0,
+      }))
+      .filter((row) => row.visits > 0);
+
+    if (roleRowsToSave.length === 0) {
+      setSaveMessage("");
+      return;
+    }
+
     const nextSavedPlan: OutpatientProductionSavedPlan = {
       id: `${selectedKombika.id}-${CURRENT_OUTPATIENT_PRODUCTION_PLAN_ID}`,
       kombika: selectedKombika,
@@ -191,12 +207,8 @@ export function useOutpatientProductionForm() {
         }
       });
 
-      const roleVisits = distributeCareEventsByRole(
-        formState.careEvents,
-        formState.roleDistributions
-      );
       const savedRows = await Promise.all(
-        formState.roleDistributions.map(async (role, index) => {
+        roleRowsToSave.map(async ({ role, visits }) => {
           const response = await fetch("/api/outpatient-production-rows", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -211,7 +223,7 @@ export function useOutpatientProductionForm() {
               period_type: ANNUAL_PERIOD_TYPE,
               care_type: "open_care",
               visit_type: formState.visitTime.visitType,
-              visits: roleVisits[index],
+              visits,
               primary_role_category: role.primaryRole,
               secondary_role_category: role.secondaryRole || undefined,
               sll_uulp: formState.sllPercentage > 50 ? "SLL" : "UULP",

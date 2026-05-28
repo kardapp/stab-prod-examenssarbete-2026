@@ -8,7 +8,19 @@ type SaveOoDistributionPayload = {
     careUnitId?: string;
     careUnit?: string;
     percentage?: string | number;
+    roleAllocations?: Array<{
+      primaryRoleCategory?: string;
+      secondaryRoleCategory?: string;
+      rolePercentage?: string | number;
+    }>;
   }>;
+};
+
+type SanitizedRoleAllocation = {
+  primaryRoleCategory: string;
+  secondaryRoleCategory?: string;
+  rolePercentage: number;
+  roleVisits: number;
 };
 
 type SanitizedDistributionRow = {
@@ -16,6 +28,7 @@ type SanitizedDistributionRow = {
   careUnit: string;
   percentage: number;
   visits: number;
+  roleAllocations: SanitizedRoleAllocation[];
 };
 
 export async function GET(request: Request) {
@@ -178,6 +191,32 @@ export async function PUT(request: Request) {
         ]
       );
 
+      const distributionId = result.rows[0].id;
+
+      if (distribution.roleAllocations && distribution.roleAllocations.length > 0) {
+        for (const role of distribution.roleAllocations) {
+          await client.query(
+            `
+              INSERT INTO outpatient_oo_distribution_role_allocations (
+                distribution_id,
+                primary_role_category,
+                secondary_role_category,
+                role_percentage,
+                role_visits
+              )
+              VALUES ($1, $2, $3, $4, $5)
+            `,
+            [
+              distributionId,
+              role.primaryRoleCategory,
+              role.secondaryRoleCategory || null,
+              role.rolePercentage,
+              role.roleVisits,
+            ]
+          );
+        }
+      }
+
       savedRows.push(result.rows[0]);
     }
 
@@ -233,6 +272,19 @@ async function ensureOoDistributionTable() {
     ALTER TABLE outpatient_oo_distributions
       ADD COLUMN IF NOT EXISTS care_unit_id TEXT
   `);
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS outpatient_oo_distribution_role_allocations (
+      id SERIAL PRIMARY KEY,
+      distribution_id INTEGER NOT NULL REFERENCES outpatient_oo_distributions(id) ON DELETE CASCADE,
+      primary_role_category TEXT NOT NULL,
+      secondary_role_category TEXT,
+      role_percentage NUMERIC(5,2) DEFAULT 0,
+      role_visits NUMERIC(12,2) DEFAULT 0,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
 }
 
 function sanitizeDistributions(
@@ -243,12 +295,29 @@ function sanitizeDistributions(
     .map((distribution) => {
       const percentage = toNumber(distribution.percentage);
       const careUnitId = distribution.careUnitId?.trim() ?? "";
+      const distributionVisits = (productionVisits * percentage) / 100;
+      const roleAllocations = (distribution.roleAllocations ?? [])
+        .map((role) => {
+          const rolePercentage = toNumber(role.rolePercentage);
+
+          return {
+            primaryRoleCategory: role.primaryRoleCategory?.trim() ?? "",
+            secondaryRoleCategory:
+              role.secondaryRoleCategory?.trim() || undefined,
+            rolePercentage,
+            roleVisits: (distributionVisits * rolePercentage) / 100,
+          };
+        })
+        .filter(
+          (role) => role.primaryRoleCategory && role.rolePercentage > 0
+        );
 
       return {
         careUnitId,
         careUnit: distribution.careUnit?.trim() ?? "",
         percentage,
-        visits: (productionVisits * percentage) / 100,
+        visits: distributionVisits,
+        roleAllocations,
       };
     })
     .filter(

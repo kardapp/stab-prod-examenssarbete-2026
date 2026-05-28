@@ -27,7 +27,7 @@ type CreateOutpatientProductionRowPayload = {
 
 export async function GET(request: Request) {
   try {
-    await ensureOutpatientComparisonColumns();
+    await ensureOutpatientProductionRowSchema();
 
     const { searchParams } = new URL(request.url);
     const conditions: string[] = [];
@@ -150,10 +150,15 @@ export async function GET(request: Request) {
   }
 }
 
-async function ensureOutpatientComparisonColumns() {
+async function ensureOutpatientProductionRowSchema() {
   await db.query(`
     ALTER TABLE outpatient_production_rows
       ALTER COLUMN period_type SET DEFAULT 'year'
+  `);
+
+  await db.query(`
+    ALTER TABLE outpatient_production_rows
+      ADD COLUMN IF NOT EXISTS oo_distribution_status TEXT DEFAULT 'Ej fördelad'
   `);
 
   await db.query(`
@@ -198,6 +203,8 @@ async function getProductionPlanYearForRow(
 
 export async function POST(request: Request) {
   try {
+    await ensureOutpatientProductionRowSchema();
+
     const body = (await request.json()) as CreateOutpatientProductionRowPayload;
 
     const productionPlanId = body.production_plan_id ?? 1;
@@ -351,6 +358,8 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
+    await ensureOutpatientProductionRowSchema();
+
     const body = (await request.json()) as CreateOutpatientProductionRowPayload;
 
     if (!body.id) {

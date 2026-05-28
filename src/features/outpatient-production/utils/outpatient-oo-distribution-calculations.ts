@@ -2,6 +2,7 @@ import type { OutpatientProductionRow } from "@/types/production";
 import type {
   CareUnitOption,
   OoDistributionDraftRow,
+  OoRoleAllocation,
   SavedOoDistributionRow,
 } from "../types/outpatient-oo-distribution.types";
 import { getAnnualVisits } from "./outpatient-production-calculations";
@@ -71,19 +72,55 @@ export function calculateDistributionSummary(
 }
 
 export function createEmptyDistributionRow(
-  percentage = "0"
+  percentage = "0",
+  productionRows?: OutpatientProductionRow[]
 ): OoDistributionDraftRow {
+  const roleAllocations: OoRoleAllocation[] = productionRows
+    ? productionRows.map((row) =>
+      createRoleAllocation(
+        row.primary_role_category || "Ej angiven",
+        row.secondary_role_category ?? undefined,
+        "0"
+      )
+    )
+    : [];
+
   return {
     id: `draft-${Date.now()}-${Math.random().toString(36).slice(2)}`,
     careUnitId: "",
     careUnit: "",
     percentage,
+    roleAllocations,
+  };
+}
+
+export function createRoleAllocation(
+  primaryRole: string,
+  secondaryRole?: string,
+  rolePercentage = "0"
+): OoRoleAllocation {
+  return {
+    id: `role-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    primaryRoleCategory: primaryRole,
+    secondaryRoleCategory: secondaryRole,
+    rolePercentage,
   };
 }
 
 export function mapSavedDistributionToDraft(
-  row: SavedOoDistributionRow
+  row: SavedOoDistributionRow,
+  productionRows?: OutpatientProductionRow[]
 ): OoDistributionDraftRow {
+  const roleAllocations: OoRoleAllocation[] = productionRows
+    ? productionRows.map((pRow) =>
+      createRoleAllocation(
+        pRow.primary_role_category || "Ej angiven",
+        pRow.secondary_role_category ?? undefined,
+        "0"
+      )
+    )
+    : [];
+
   return {
     id: `saved-${row.id}`,
     savedId: row.id,
@@ -91,9 +128,10 @@ export function mapSavedDistributionToDraft(
     careUnit: row.care_unit ?? "",
     percentage:
       row.distribution_percentage === null ||
-      row.distribution_percentage === undefined
+        row.distribution_percentage === undefined
         ? "0"
         : String(row.distribution_percentage),
+    roleAllocations,
   };
 }
 
@@ -130,6 +168,58 @@ export function validateOoDistribution(
 
   if (Math.abs(percentageTotal - 100) > 0.01) {
     return "Fördelningen måste summera till 100%.";
+  }
+
+  return "";
+}
+
+export function validateOoDistributionForAllRoles(
+  rows: OoDistributionDraftRow[],
+  productionRows: OutpatientProductionRow[]
+): string {
+  if (rows.length === 0) {
+    return "Lägg till minst en vårdande enhet.";
+  }
+
+  if (productionRows.length === 0) {
+    return "Inga yrkeskategorier valda.";
+  }
+
+  if (rows.some((row) => toNumber(row.percentage) < 0)) {
+    return "Andel kan inte vara negativ.";
+  }
+
+  if (
+    rows.some(
+      (row) =>
+        toNumber(row.percentage) > 0 &&
+        (!row.careUnitId.trim() || !row.careUnit.trim())
+    )
+  ) {
+    return "Ange vårdande enhet för alla rader med andel.";
+  }
+
+  const percentageTotal = rows.reduce(
+    (sum, row) => sum + toNumber(row.percentage),
+    0
+  );
+
+  if (Math.abs(percentageTotal - 100) > 0.01) {
+    return "Fördelningen måste summera till 100%.";
+  }
+
+  // Validate role allocations for each distribution row
+  for (const row of rows) {
+    if (toNumber(row.percentage) > 0 && row.roleAllocations.length > 0) {
+      const rolePercentageTotal = row.roleAllocations.reduce(
+        (sum, role) => sum + toNumber(role.rolePercentage),
+        0
+      );
+
+      if (Math.abs(rolePercentageTotal - 100) > 0.01) {
+        return `Yrkeskategori-fördelningen för ${row.careUnit} måste summera till 100%.`;
+      }
+    }
   }
 
   return "";

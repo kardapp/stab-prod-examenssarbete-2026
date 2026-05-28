@@ -13,7 +13,7 @@ import {
   createEmptyDistributionRow,
   mapSavedDistributionToDraft,
   toNumber,
-  validateOoDistribution,
+  validateOoDistributionForAllRoles,
 } from "../utils/outpatient-oo-distribution-calculations";
 import { getAnnualVisits } from "../utils/outpatient-production-calculations";
 import {
@@ -105,14 +105,16 @@ export function useOutpatientOoDistribution() {
     return () => controller.abort();
   }, []);
 
+  // Return ALL production rows, not just first one for role allocations display
   const selectedProductionRow = productionRows[0] ?? null;
   const summary = useMemo(
     () => calculateAggregateDistributionSummary(productionRows, draftRows),
     [draftRows, productionRows]
   );
+
   const validationMessage = useMemo(
-    () => validateOoDistribution(selectedProductionRow, draftRows),
-    [draftRows, selectedProductionRow]
+    () => validateOoDistributionForAllRoles(draftRows, productionRows),
+    [draftRows, productionRows]
   );
 
   function handleDistributionRowChange(
@@ -144,7 +146,7 @@ export function useOutpatientOoDistribution() {
     }
 
     setSaveMessage("");
-    setDraftRows((current) => [...current, createEmptyDistributionRow()]);
+    setDraftRows((current) => [...current, createEmptyDistributionRow("0", productionRows)]);
   }
 
   function removeDistributionRow(draftRowId: string) {
@@ -155,7 +157,7 @@ export function useOutpatientOoDistribution() {
     const nextRows = draftRows.filter((row) => row.id !== draftRowId);
 
     setSaveMessage("");
-    setDraftRows(nextRows.length ? nextRows : [createEmptyDistributionRow("100")]);
+    setDraftRows(nextRows.length ? nextRows : [createEmptyDistributionRow("100", productionRows)]);
   }
 
   async function saveDistribution() {
@@ -179,6 +181,11 @@ export function useOutpatientOoDistribution() {
             careUnitId: row.careUnitId,
             careUnit: row.careUnit,
             percentage: row.percentage,
+            roleAllocations: row.roleAllocations.map((role) => ({
+              primaryRoleCategory: role.primaryRoleCategory,
+              secondaryRoleCategory: role.secondaryRoleCategory,
+              rolePercentage: role.rolePercentage,
+            })),
           })),
         }),
       });
@@ -191,8 +198,10 @@ export function useOutpatientOoDistribution() {
 
       setDraftRows(
         saveResponse.distributions.length
-          ? saveResponse.distributions.map(mapSavedDistributionToDraft)
-          : [createEmptyDistributionRow("100")]
+          ? saveResponse.distributions.map((row) =>
+            mapSavedDistributionToDraft(row, productionRows)
+          )
+          : [createEmptyDistributionRow("100", productionRows)]
       );
       setProductionRows((current) =>
         current.map((row) =>
@@ -236,25 +245,34 @@ function createDraftRowsForCurrentProduction(
   savedRows: SavedOoDistributionRow[]
 ): OoDistributionDraftRow[] {
   if (productionRows.length === 0) {
-    return [];
+    return [createEmptyDistributionRow("100", productionRows)];
   }
 
+  // Group saved rows by production_row_id to get all distributions for the first production row
   const savedRowsByProductionRowId = savedRows.reduce<
     Record<number, SavedOoDistributionRow[]>
   >((rowsById, row) => {
     const currentRows = rowsById[row.production_row_id] ?? [];
-
     return {
       ...rowsById,
       [row.production_row_id]: [...currentRows, row],
     };
   }, {});
-  const firstSavedDistributionRows =
-    savedRowsByProductionRowId[productionRows[0].id] ?? [];
 
-  return firstSavedDistributionRows.length
-    ? firstSavedDistributionRows.map(mapSavedDistributionToDraft)
-    : [createEmptyDistributionRow("100")];
+  const firstProductionRowId = productionRows[0].id;
+  const firstSavedDistributionRows =
+    savedRowsByProductionRowId[firstProductionRowId] ?? [];
+
+  // If we have saved rows, use them - for now keep the old behavior for compatibility
+  // TODO: Migrate to aggregate by care_unit instead of by production_row
+  if (firstSavedDistributionRows.length > 0) {
+    return firstSavedDistributionRows.map((row) =>
+      mapSavedDistributionToDraft(row, productionRows)
+    );
+  }
+
+  // No saved rows, create empty with role allocations from all production rows
+  return [createEmptyDistributionRow("100", productionRows)];
 }
 
 function calculateAggregateDistributionSummary(

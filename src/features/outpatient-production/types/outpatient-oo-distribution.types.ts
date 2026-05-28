@@ -14,6 +14,15 @@ export type OoDistributionDraftRow = {
   careUnitId: string;
   careUnit: string;
   percentage: string;
+  roleAllocations: OoRoleAllocation[];
+};
+
+export type OoRoleAllocation = {
+  id: string;
+  primaryRoleCategory: string;
+  secondaryRoleCategory?: string;
+  rolePercentage: string;
+  roleVisits?: number;
 };
 
 export type OoDistributionSaveResponse = {

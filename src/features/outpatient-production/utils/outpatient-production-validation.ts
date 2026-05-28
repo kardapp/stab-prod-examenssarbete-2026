@@ -16,7 +16,7 @@ export function validateOutpatientProductionForm(
     errors.kombika = "Ekonomisk kombika måste vara vald.";
   }
 
-  if (toNumber(formState.careEvents) <= 0) {
+  if (Math.round(toNumber(formState.careEvents)) <= 0) {
     errors.volume = "Antal vårdtillfällen måste vara ett positivt tal.";
   }
 
@@ -46,14 +46,14 @@ export function validateOutpatientProductionForm(
   if (
     formState.roleDistributions.length === 0 ||
     formState.roleDistributions.some(
-      (role) => !role.primaryRole || hasNegativePercentage(role.percentage)
+      (role) => !role.primaryRole || !hasPositivePercentage(role.percentage)
     ) ||
     !isValidPercentageSum(
       formState.roleDistributions.map((role) => role.percentage)
     )
   ) {
     errors.roleDistribution =
-      "Yrkeskategoriernas andelar måste summera till 100 %.";
+      "Yrkeskategoriernas andelar måste vara större än 0 % och summera till 100 %.";
   }
 
   if (toNumber(formState.visitTime.averageMinutes) <= 0) {
@@ -87,4 +87,8 @@ function isValidPercentageSum(percentages: number[]): boolean {
 
 function hasNegativePercentage(percentage: number): boolean {
   return toNumber(percentage) < 0;
+}
+
+function hasPositivePercentage(percentage: number): boolean {
+  return toNumber(percentage) > 0;
 }

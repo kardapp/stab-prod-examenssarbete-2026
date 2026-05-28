@@ -83,6 +83,17 @@ CREATE TABLE outpatient_oo_distributions (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE outpatient_oo_distribution_role_allocations (
+  id SERIAL PRIMARY KEY,
+  distribution_id INTEGER NOT NULL REFERENCES outpatient_oo_distributions(id) ON DELETE CASCADE,
+  primary_role_category TEXT NOT NULL,
+  secondary_role_category TEXT,
+  role_percentage NUMERIC(5,2) DEFAULT 0,
+  role_visits NUMERIC(12,2) DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE dimensionering_me_opv_rows (
   id SERIAL PRIMARY KEY,
   production_plan_id INTEGER NOT NULL REFERENCES production_plans(id),
