@@ -5,6 +5,7 @@ import {
   comparisonValuesByKombikaId,
   initialFormState,
   kombikaOptions,
+  productionHistoryByKombikaId,
   roleCategoryOptions,
 } from "../constants/outpatient-production-options";
 import type {
@@ -65,6 +66,9 @@ export function useOutpatientProductionForm() {
   const comparisonValues = selectedKombika
     ? comparisonValuesByKombikaId[selectedKombika.id]
     : null;
+  const productionHistory = selectedKombika
+    ? productionHistoryByKombikaId[selectedKombika.id] ?? []
+    : [];
   const dimensioningHref = useMemo(() => {
     if (!selectedKombika) {
       return "/outpatient/dimensioning";
@@ -265,6 +269,7 @@ export function useOutpatientProductionForm() {
     selectedKombika,
     calculatedValues,
     comparisonValues,
+    productionHistory,
     validationErrors,
     showValidation: submitAttempted || hasValidationErrors(validationErrors),
     savedPlan,

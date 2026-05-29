@@ -67,6 +67,17 @@ export type ComparisonValues = {
   previousYearOutcome: number;
 };
 
+export type ProductionHistoryYear = {
+  year: number;
+  plannedCareEvents: number;
+  r12CareEvents: number;
+  drgAverage: number;
+  sllCareEvents: number;
+  uulpCareEvents: number;
+  acuteCareEvents: number;
+  electiveCareEvents: number;
+};
+
 export type OutpatientProductionValidationErrors = {
   kombika?: string;
   volume?: string;

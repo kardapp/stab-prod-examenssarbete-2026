@@ -8,6 +8,7 @@ import { DistributionSection } from "./distribution-section";
 import { DrgAverageSection } from "./drg-average-section";
 import { KombikaSelectorSection } from "./kombika-selector-section";
 import { ProductionActionsSection } from "./production-actions-section";
+import { ProductionHistorySection } from "./production-history-section";
 import { ProductionVolumeSection } from "./production-volume-section";
 import { VisitTimeSection } from "./visit-time-section";
 import { useOutpatientProductionForm } from "../hooks/use-outpatient-production-form";
@@ -79,6 +80,11 @@ export function OutpatientProductionView() {
 
               <CalculatedPreviewSection
                 calculatedValues={production.calculatedValues}
+              />
+
+              <ProductionHistorySection
+                selectedKombika={production.selectedKombika}
+                historyRows={production.productionHistory}
               />
 
               <ProductionActionsSection

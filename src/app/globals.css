@@ -10,7 +10,7 @@
     --color-text-muted: #333333;
     --color-text-on-dark: #FFFFFF;
     --color-link: #005883;
-    --color-border: color-mix(in srgb, var(--color-text-muted) 24%, var(--color-background));
+    --color-border: #CECECE;
 
     --page-background: var(--color-background);
     --section-background: var(--color-section-background);

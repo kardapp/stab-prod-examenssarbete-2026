@@ -8,7 +8,7 @@ export const appColors = {
   textMuted: "#333333",
   textOnDark: "#FFFFFF",
   link: "#005883",
-  border: "color-mix(in srgb, #333333 24%, #FFFFFF)",
+  border: "#CECECE",
 };
 
 export const appTheme = createTheme({
