@@ -186,6 +186,7 @@ export function useOutpatientOoDistribution() {
             careUnitId: row.careUnitId,
             careUnit: row.careUnit,
             percentage: row.percentage,
+            visits: row.visits,
             roleAllocations: row.roleAllocations.map((role) => ({
               primaryRoleCategory: role.primaryRoleCategory,
               secondaryRoleCategory: role.secondaryRoleCategory,
@@ -297,7 +298,7 @@ function calculateAggregateDistributionSummary(
       return sum;
     }
 
-    return sum + (getAnnualVisits(productionRow) * toNumber(row.percentage)) / 100;
+    return sum + toNumber(row.visits);
   }, 0);
   const totalPercentage = totalVisits
     ? (distributedVisits / totalVisits) * 100

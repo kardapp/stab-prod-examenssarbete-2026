@@ -27,7 +27,9 @@ import type {
   OoDistributionDraftRow,
 } from "../types/outpatient-oo-distribution.types";
 import {
+  calculateDistributionPercentage,
   calculateDistributedVisits,
+  formatDistributionInputNumber,
   toNumber,
 } from "../utils/outpatient-oo-distribution-calculations";
 import { getAnnualVisits } from "../utils/outpatient-production-calculations";
@@ -38,6 +40,14 @@ type OoDistributionSummary = {
   distributedVisits: number;
   remainingPercentage: number;
   remainingVisits: number;
+};
+
+type CareUnitTotalRow = {
+  id: string;
+  careUnit: string;
+  visits: number;
+  percentageOfTotal: number;
+  distributionRows: number;
 };
 
 export function OutpatientOoDistributionView() {
@@ -90,6 +100,12 @@ export function OutpatientOoDistributionView() {
                 onCareUnitChange={ooDistribution.handleCareUnitChange}
                 onRemoveRow={ooDistribution.removeDistributionRow}
                 onRowChange={ooDistribution.handleDistributionRowChange}
+              />
+
+              <CareUnitTotalsSection
+                productionRows={ooDistribution.productionRows}
+                rows={ooDistribution.selectedDraftRows}
+                totalVisits={ooDistribution.summary.totalVisits}
               />
 
               <OoActionsSection
@@ -179,7 +195,8 @@ function ProfessionalCategoriesSection(props: {
         {props.productionRows.map((row) => {
           const allocatedPercentage = getAllocatedPercentageForProductionRow(
             row.id,
-            props.distributionRows
+            props.distributionRows,
+            getAnnualVisits(row)
           );
 
           return (
@@ -291,10 +308,42 @@ function DistributionRow(props: {
   const selectedProductionRow =
     props.productionRows.find((row) => row.id === props.row.productionRowId) ??
     null;
-  const visits = calculateDistributedVisits(
-    selectedProductionRow ? getAnnualVisits(selectedProductionRow) : 0,
-    props.row.percentage
-  );
+  const totalVisits = selectedProductionRow
+    ? getAnnualVisits(selectedProductionRow)
+    : 0;
+
+  function handleProductionRowChange(productionRowId: number | null) {
+    const nextProductionRow =
+      props.productionRows.find((row) => row.id === productionRowId) ?? null;
+    const nextTotalVisits = nextProductionRow
+      ? getAnnualVisits(nextProductionRow)
+      : 0;
+
+    props.onRowChange(props.row.id, {
+      productionRowId,
+      visits: formatDistributionInputNumber(
+        calculateDistributedVisits(nextTotalVisits, props.row.percentage)
+      ),
+    });
+  }
+
+  function handlePercentageChange(percentage: string) {
+    props.onRowChange(props.row.id, {
+      percentage,
+      visits: formatDistributionInputNumber(
+        calculateDistributedVisits(totalVisits, percentage)
+      ),
+    });
+  }
+
+  function handleVisitsChange(visits: string) {
+    props.onRowChange(props.row.id, {
+      percentage: formatDistributionInputNumber(
+        calculateDistributionPercentage(totalVisits, visits)
+      ),
+      visits,
+    });
+  }
 
   return (
     <Box sx={distributionRowContainerSx}>
@@ -305,9 +354,7 @@ function DistributionRow(props: {
             size="small"
             value={props.row.productionRowId ?? ""}
             onChange={(event) =>
-              props.onRowChange(props.row.id, {
-                productionRowId: Number(event.target.value) || null,
-              })
+              handleProductionRowChange(Number(event.target.value) || null)
             }
             fullWidth
           >
@@ -346,11 +393,7 @@ function DistributionRow(props: {
             type="number"
             size="small"
             value={props.row.percentage}
-            onChange={(event) =>
-              props.onRowChange(props.row.id, {
-                percentage: event.target.value,
-              })
-            }
+            onChange={(event) => handlePercentageChange(event.target.value)}
             slotProps={{
               input: {
                 endAdornment: <InputAdornment position="end">%</InputAdornment>,
@@ -360,11 +403,21 @@ function DistributionRow(props: {
             fullWidth
           />
         </InputValue>
-        <ReadOnlyValue
-          label="Vårdtillfällen"
-          value={formatOneDecimal(visits)}
-          hideLabelOnDesktop
-        />
+        <InputValue label="Vårdtillfällen" hideLabelOnDesktop>
+          <TextField
+            type="number"
+            size="small"
+            value={props.row.visits}
+            onChange={(event) => handleVisitsChange(event.target.value)}
+            slotProps={{
+              input: {
+                endAdornment: <InputAdornment position="end">st</InputAdornment>,
+              },
+              htmlInput: { min: 0, max: totalVisits, step: 1 },
+            }}
+            fullWidth
+          />
+        </InputValue>
         <Box>
           <Typography
             variant="caption"
@@ -386,6 +439,90 @@ function DistributionRow(props: {
         </Box>
       </Box>
     </Box>
+  );
+}
+
+function CareUnitTotalsSection(props: {
+  productionRows: OutpatientProductionRow[];
+  rows: OoDistributionDraftRow[];
+  totalVisits: number;
+}) {
+  const careUnitRows = buildCareUnitTotalRows(
+    props.productionRows,
+    props.rows,
+    props.totalVisits
+  );
+  const totalDistributedVisits = careUnitRows.reduce(
+    (sum, row) => sum + row.visits,
+    0
+  );
+  const distributedPercentage = props.totalVisits
+    ? (totalDistributedVisits / props.totalVisits) * 100
+    : 0;
+
+  return (
+    <SectionCard>
+      <FormSection
+        overline="Summering"
+        title="Vårdtillfällen per vårdande enhet"
+        description="Summerar alla fördelningsrader över yrkeskategorierna."
+      />
+
+      {careUnitRows.length > 0 ? (
+        <Stack spacing={2}>
+          <Box sx={careUnitMetricGridSx}>
+            <MetricValue
+              label="Totalt till vårdande enheter"
+              value={formatOneDecimal(totalDistributedVisits)}
+            />
+            <MetricValue
+              label="Antal vårdande enheter"
+              value={formatWholeNumber(careUnitRows.length)}
+            />
+            <MetricValue
+              label="Andel av årsvolym"
+              value={`${formatOneDecimal(distributedPercentage)}%`}
+            />
+          </Box>
+
+          <Box sx={tableStackSx}>
+            <Box sx={careUnitTotalsHeaderSx}>
+              <HeaderCell>Vårdande enhet</HeaderCell>
+              <HeaderCell>Vårdtillfällen</HeaderCell>
+              <HeaderCell>Andel av årsvolym</HeaderCell>
+              <HeaderCell>Fördelningsrader</HeaderCell>
+            </Box>
+
+            {careUnitRows.map((row) => (
+              <Box key={row.id} sx={careUnitTotalsRowSx}>
+                <TableValue
+                  label="Vårdande enhet"
+                  value={row.careUnit}
+                  strong
+                />
+                <TableValue
+                  label="Vårdtillfällen"
+                  value={formatOneDecimal(row.visits)}
+                  strong
+                />
+                <TableValue
+                  label="Andel av årsvolym"
+                  value={`${formatOneDecimal(row.percentageOfTotal)}%`}
+                />
+                <TableValue
+                  label="Fördelningsrader"
+                  value={formatWholeNumber(row.distributionRows)}
+                />
+              </Box>
+            ))}
+          </Box>
+        </Stack>
+      ) : (
+        <Typography color="text.secondary">
+          Ingen vårdande enhet har fördelade vårdtillfällen ännu.
+        </Typography>
+      )}
+    </SectionCard>
   );
 }
 
@@ -463,13 +600,14 @@ function DistributionProgressSummary(props: {
   const isUnderAllocated = props.summary.remainingPercentage > 0.01;
   const isOverAllocated = props.summary.remainingPercentage < -0.01;
   const roleStatuses = props.productionRows.map((row) => {
+    const totalVisits = getAnnualVisits(row);
     const allocatedPercentage = getAllocatedPercentageForProductionRow(
       row.id,
-      props.rows
+      props.rows,
+      totalVisits
     );
     const remainingPercentage = 100 - allocatedPercentage;
     const boundedRolePercentage = Math.max(0, Math.min(100, allocatedPercentage));
-    const totalVisits = getAnnualVisits(row);
 
     return {
       allocatedPercentage,
@@ -708,31 +846,6 @@ function InputValue(props: {
   );
 }
 
-function ReadOnlyValue(props: {
-  hideLabelOnDesktop?: boolean;
-  label: string;
-  value: string;
-}) {
-  return (
-    <Box sx={{ minWidth: 0, textAlign: "left" }}>
-      <Typography
-        variant="caption"
-        color="text.secondary"
-        sx={{
-          display: {
-            xs: "block",
-            lg: props.hideLabelOnDesktop ? "none" : "block",
-          },
-          mb: 0.25,
-        }}
-      >
-        {props.label}
-      </Typography>
-      <Typography sx={readOnlySx}>{props.value}</Typography>
-    </Box>
-  );
-}
-
 function getDimensioningHref(row: OutpatientProductionRow | null): string {
   if (!row) {
     return "/outpatient/dimensioning/oo-opv";
@@ -786,16 +899,86 @@ function formatProductionYear(row: OutpatientProductionRow | undefined): string 
 
 function getAllocatedPercentageForProductionRow(
   productionRowId: number,
-  rows: OoDistributionDraftRow[]
+  rows: OoDistributionDraftRow[],
+  totalVisits?: number
 ): number {
-  return rows
+  const matchingRows = rows
     .filter(
       (row) =>
         row.productionRowId === productionRowId &&
         row.careUnitId.trim() &&
         row.careUnit.trim()
-    )
-    .reduce((sum, row) => sum + toNumber(row.percentage), 0);
+    );
+
+  if (totalVisits && totalVisits > 0) {
+    const distributedVisits = matchingRows.reduce(
+      (sum, row) => sum + toNumber(row.visits),
+      0
+    );
+
+    return (distributedVisits / totalVisits) * 100;
+  }
+
+  return matchingRows.reduce((sum, row) => sum + toNumber(row.percentage), 0);
+}
+
+function buildCareUnitTotalRows(
+  productionRows: OutpatientProductionRow[],
+  rows: OoDistributionDraftRow[],
+  totalVisits: number
+): CareUnitTotalRow[] {
+  const productionRowsById = new Map(
+    productionRows.map((row) => [row.id, row])
+  );
+  const rowsByCareUnit = new Map<string, CareUnitTotalRow>();
+
+  rows.forEach((row) => {
+    const careUnitId = row.careUnitId.trim();
+    const careUnit = row.careUnit.trim();
+    const productionRow = row.productionRowId
+      ? productionRowsById.get(row.productionRowId)
+      : undefined;
+
+    if (!careUnitId || !careUnit || !productionRow) {
+      return;
+    }
+
+    const visits = toNumber(row.visits);
+
+    if (Math.abs(visits) < 0.005) {
+      return;
+    }
+
+    const currentRow = rowsByCareUnit.get(careUnitId);
+
+    if (currentRow) {
+      rowsByCareUnit.set(careUnitId, {
+        ...currentRow,
+        visits: currentRow.visits + visits,
+        distributionRows: currentRow.distributionRows + 1,
+      });
+      return;
+    }
+
+    rowsByCareUnit.set(careUnitId, {
+      id: careUnitId,
+      careUnit,
+      visits,
+      percentageOfTotal: 0,
+      distributionRows: 1,
+    });
+  });
+
+  return Array.from(rowsByCareUnit.values())
+    .map((row) => ({
+      ...row,
+      percentageOfTotal: totalVisits ? (row.visits / totalVisits) * 100 : 0,
+    }))
+    .sort(
+      (first, second) =>
+        second.visits - first.visits ||
+        first.careUnit.localeCompare(second.careUnit, "sv")
+    );
 }
 
 function formatProductionRoleLabel(row: OutpatientProductionRow): string {
@@ -828,6 +1011,10 @@ const basisGridSx = {
     md: "repeat(2, minmax(0, 1fr))",
     xl: "repeat(4, minmax(0, 1fr))",
   },
+};
+
+const careUnitMetricGridSx = {
+  ...introGridSx,
 };
 
 const tableStackSx = {
@@ -956,6 +1143,29 @@ const professionalRowSx = {
   p: 1.5,
 };
 
+const careUnitTotalsGridSx = {
+  display: "grid",
+  gridTemplateColumns: {
+    xs: "1fr",
+    lg: "minmax(260px, 1.4fr) minmax(150px, 0.65fr) minmax(150px, 0.65fr) minmax(140px, 0.55fr)",
+  },
+  gap: 1,
+  alignItems: "center",
+};
+
+const careUnitTotalsHeaderSx = {
+  ...careUnitTotalsGridSx,
+  px: 1.5,
+};
+
+const careUnitTotalsRowSx = {
+  ...careUnitTotalsGridSx,
+  bgcolor: "background.default",
+  border: "1px solid var(--color-border)",
+  borderRadius: 1,
+  p: 1.5,
+};
+
 const distributionHeaderSx = {
   display: "grid",
   gridTemplateColumns: {
@@ -981,14 +1191,4 @@ const distributionRowContainerSx = {
   border: "1px solid var(--color-border)",
   borderRadius: 1,
   p: 1.5,
-};
-
-const readOnlySx = {
-  border: "1px solid var(--color-border)",
-  borderRadius: 1,
-  minHeight: 40,
-  px: 1.5,
-  py: 1,
-  bgcolor: "var(--page-background)",
-  fontWeight: 700,
 };

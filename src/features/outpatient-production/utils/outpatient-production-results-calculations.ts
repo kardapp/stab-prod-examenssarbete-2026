@@ -274,7 +274,7 @@ function createResultRow(
 ): ProductionPlanningResultRow {
   const productionVisits = getAnnualVisits(productionRow);
   const visits = distribution
-    ? (productionVisits * toNumber(distribution.distribution_percentage)) / 100
+    ? getDistributionVisits(productionVisits, distribution)
     : productionVisits;
   const averageMinutesPerVisit = toNumber(
     productionRow.average_minutes_per_visit
@@ -307,6 +307,19 @@ function createResultRow(
     drgPoints: calculateDrgPoints(visits, drgAverage),
     isOoDistributed: Boolean(distribution),
   };
+}
+
+function getDistributionVisits(
+  productionVisits: number,
+  distribution: SavedOoDistributionRow
+): number {
+  if (distribution.visits !== null && distribution.visits !== undefined) {
+    return toNumber(distribution.visits);
+  }
+
+  return (
+    (productionVisits * toNumber(distribution.distribution_percentage)) / 100
+  );
 }
 
 function groupDistributionsByProductionRowId(

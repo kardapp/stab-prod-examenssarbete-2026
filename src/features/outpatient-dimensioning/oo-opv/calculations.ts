@@ -317,7 +317,7 @@ function createOoProductionRow(
 ): OoDimensioningProductionRow {
   const annualVisits = getAnnualVisits(productionRow);
   const distributedVisits = distribution
-    ? (annualVisits * toNumber(distribution.distribution_percentage)) / 100
+    ? getDistributionVisits(annualVisits, distribution)
     : annualVisits;
   const averageMinutesPerVisit = toNumber(productionRow.average_minutes_per_visit);
   const weeklyVisits = distributedVisits / WEEKS_PER_YEAR;
@@ -349,6 +349,19 @@ function createOoProductionRow(
     saturdayVisits: 0,
     sundayVisits: 0,
   };
+}
+
+function getDistributionVisits(
+  annualVisits: number,
+  distribution: SavedOoDistributionRow
+): number {
+  if (distribution.visits !== null && distribution.visits !== undefined) {
+    return toNumber(distribution.visits);
+  }
+
+  return (
+    (annualVisits * toNumber(distribution.distribution_percentage)) / 100
+  );
 }
 
 function uniqueTexts(values: string[]) {

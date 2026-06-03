@@ -15,6 +15,7 @@ export type OoDistributionDraftRow = {
   careUnitId: string;
   careUnit: string;
   percentage: string;
+  visits: string;
   roleAllocations: OoRoleAllocation[];
 };
 

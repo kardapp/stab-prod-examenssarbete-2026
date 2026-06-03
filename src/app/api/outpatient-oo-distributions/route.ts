@@ -9,6 +9,7 @@ type SaveOoDistributionPayload = {
     careUnitId?: string;
     careUnit?: string;
     percentage?: string | number;
+    visits?: string | number;
     roleAllocations?: Array<{
       primaryRoleCategory?: string;
       secondaryRoleCategory?: string;
@@ -138,9 +139,23 @@ export async function PUT(request: Request) {
       );
     }
 
+    const negativeDistribution = (body.distributions ?? []).some(
+      (distribution) =>
+        toNumber(distribution.percentage) < 0 ||
+        toNumber(distribution.visits) < 0
+    );
+
+    if (negativeDistribution) {
+      return NextResponse.json(
+        { message: "OO distribution values cannot be negative." },
+        { status: 400 }
+      );
+    }
+
     const incompleteDistribution = (body.distributions ?? []).some(
       (distribution) =>
-        toNumber(distribution.percentage) > 0 &&
+        (toNumber(distribution.percentage) > 0 ||
+          toNumber(distribution.visits) > 0) &&
         (!Number(distribution.productionRowId ?? fallbackProductionRowId) ||
           !distribution.careUnitId?.trim() ||
           !distribution.careUnit?.trim())
@@ -333,7 +348,15 @@ function sanitizeDistributions(
       const productionRow = productionRowsById.get(productionRowId);
       const careUnitId = distribution.careUnitId?.trim() ?? "";
       const productionVisits = productionRow ? getAnnualVisits(productionRow) : 0;
-      const distributionVisits = (productionVisits * percentage) / 100;
+      const requestedVisits = toNumber(distribution.visits);
+      const hasVisitsInput =
+        distribution.visits !== null && distribution.visits !== undefined;
+      const distributionVisits = hasVisitsInput
+        ? requestedVisits
+        : (productionVisits * percentage) / 100;
+      const calculatedPercentage = hasVisitsInput
+        ? calculatePercentage(productionVisits, distributionVisits)
+        : percentage;
       const roleAllocations = (distribution.roleAllocations ?? [])
         .map((role) => {
           const rolePercentage = toNumber(role.rolePercentage);
@@ -354,7 +377,7 @@ function sanitizeDistributions(
         productionRowId,
         careUnitId,
         careUnit: distribution.careUnit?.trim() ?? "",
-        percentage,
+        percentage: calculatedPercentage,
         visits: distributionVisits,
         roleAllocations,
       };
@@ -372,6 +395,19 @@ function toNumber(value: string | number | null | undefined): number {
   const numericValue = Number(value ?? 0);
 
   return Number.isFinite(numericValue) ? numericValue : 0;
+}
+
+function calculatePercentage(
+  visits: string | number | null | undefined,
+  distributedVisits: string | number | null | undefined
+): number {
+  const totalVisits = toNumber(visits);
+
+  if (totalVisits <= 0) {
+    return 0;
+  }
+
+  return (toNumber(distributedVisits) / totalVisits) * 100;
 }
 
 function getAnnualVisits(row: {

@@ -48,19 +48,39 @@ export function calculateDistributedVisits(
   return (toNumber(visits) * toNumber(percentage)) / 100;
 }
 
+export function calculateDistributionPercentage(
+  visits: string | number | null | undefined,
+  distributedVisits: string | number | null | undefined
+): number {
+  const totalVisits = toNumber(visits);
+
+  if (totalVisits <= 0) {
+    return 0;
+  }
+
+  return (toNumber(distributedVisits) / totalVisits) * 100;
+}
+
+export function formatDistributionInputNumber(value: number): string {
+  if (!Number.isFinite(value)) {
+    return "0";
+  }
+
+  return String(Number(value.toFixed(6)));
+}
+
 export function calculateDistributionSummary(
   productionRow: OutpatientProductionRow | null,
   rows: OoDistributionDraftRow[]
 ) {
   const totalVisits = productionRow ? getAnnualVisits(productionRow) : 0;
-  const totalPercentage = rows.reduce(
-    (sum, row) => sum + toNumber(row.percentage),
+  const distributedVisits = rows.reduce(
+    (sum, row) => sum + toNumber(row.visits),
     0
   );
-  const distributedVisits = calculateDistributedVisits(
-    totalVisits,
-    totalPercentage
-  );
+  const totalPercentage = totalVisits
+    ? calculateDistributionPercentage(totalVisits, distributedVisits)
+    : 0;
 
   return {
     totalVisits,
@@ -76,12 +96,22 @@ export function createEmptyDistributionRow(
   productionRows?: OutpatientProductionRow[],
   productionRowId?: number
 ): OoDistributionDraftRow {
+  const selectedProductionRow =
+    productionRows?.find((row) => row.id === productionRowId) ??
+    (productionRowId ? undefined : productionRows?.[0]);
+  const annualVisits = selectedProductionRow
+    ? getAnnualVisits(selectedProductionRow)
+    : 0;
+
   return {
     id: `draft-${Date.now()}-${Math.random().toString(36).slice(2)}`,
     careUnitId: "",
     careUnit: "",
-    productionRowId: productionRowId ?? productionRows?.[0]?.id ?? null,
+    productionRowId: productionRowId ?? selectedProductionRow?.id ?? null,
     percentage,
+    visits: formatDistributionInputNumber(
+      calculateDistributedVisits(annualVisits, percentage)
+    ),
     roleAllocations: [],
   };
 }
@@ -103,6 +133,24 @@ export function mapSavedDistributionToDraft(
   row: SavedOoDistributionRow,
   productionRows?: OutpatientProductionRow[]
 ): OoDistributionDraftRow {
+  const selectedProductionRow = productionRows?.find(
+    (productionRow) => productionRow.id === row.production_row_id
+  );
+  const savedPercentage =
+    row.distribution_percentage === null ||
+    row.distribution_percentage === undefined
+      ? "0"
+      : String(row.distribution_percentage);
+  const savedVisits =
+    row.visits === null || row.visits === undefined
+      ? formatDistributionInputNumber(
+          calculateDistributedVisits(
+            selectedProductionRow ? getAnnualVisits(selectedProductionRow) : 0,
+            savedPercentage
+          )
+        )
+      : String(row.visits);
+
   return {
     id: `saved-${row.id}`,
     savedId: row.id,
@@ -112,11 +160,8 @@ export function mapSavedDistributionToDraft(
         : null,
     careUnitId: row.care_unit_id ?? getCareUnitOptionId(row.care_unit),
     careUnit: row.care_unit ?? "",
-    percentage:
-      row.distribution_percentage === null ||
-        row.distribution_percentage === undefined
-        ? "0"
-        : String(row.distribution_percentage),
+    percentage: savedPercentage,
+    visits: savedVisits,
     roleAllocations: [],
   };
 }
@@ -133,24 +178,32 @@ export function validateOoDistribution(
     return "Lägg till minst en vårdande enhet.";
   }
 
-  if (rows.some((row) => toNumber(row.percentage) < 0)) {
-    return "Andel kan inte vara negativ.";
+  if (
+    rows.some(
+      (row) => toNumber(row.percentage) < 0 || toNumber(row.visits) < 0
+    )
+  ) {
+    return "Andel eller vårdtillfällen kan inte vara negativt.";
   }
 
   if (
     rows.some(
       (row) =>
-        toNumber(row.percentage) > 0 &&
+        (toNumber(row.percentage) > 0 || toNumber(row.visits) > 0) &&
         (!row.careUnitId.trim() || !row.careUnit.trim())
     )
   ) {
     return "Ange vårdande enhet för alla rader med andel.";
   }
 
-  const percentageTotal = rows.reduce(
-    (sum, row) => sum + toNumber(row.percentage),
+  const totalVisits = getAnnualVisits(productionRow);
+  const distributedVisits = rows.reduce(
+    (sum, row) => sum + toNumber(row.visits),
     0
   );
+  const percentageTotal = totalVisits
+    ? calculateDistributionPercentage(totalVisits, distributedVisits)
+    : rows.reduce((sum, row) => sum + toNumber(row.percentage), 0);
 
   if (Math.abs(percentageTotal - 100) > 0.01) {
     return "Fördelningen måste summera till 100%.";
@@ -171,13 +224,19 @@ export function validateOoDistributionForAllRoles(
     return "Inga yrkeskategorier valda.";
   }
 
-  if (rows.some((row) => toNumber(row.percentage) < 0)) {
-    return "Andel kan inte vara negativ.";
+  if (
+    rows.some(
+      (row) => toNumber(row.percentage) < 0 || toNumber(row.visits) < 0
+    )
+  ) {
+    return "Andel eller vårdtillfällen kan inte vara negativt.";
   }
 
   if (
     rows.some(
-      (row) => toNumber(row.percentage) > 0 && !row.productionRowId
+      (row) =>
+        (toNumber(row.percentage) > 0 || toNumber(row.visits) > 0) &&
+        !row.productionRowId
     )
   ) {
     return "Välj yrkeskategori för alla rader med andel.";
@@ -186,7 +245,7 @@ export function validateOoDistributionForAllRoles(
   if (
     rows.some(
       (row) =>
-        toNumber(row.percentage) > 0 &&
+        (toNumber(row.percentage) > 0 || toNumber(row.visits) > 0) &&
         (!row.careUnitId.trim() || !row.careUnit.trim())
     )
   ) {
@@ -194,9 +253,17 @@ export function validateOoDistributionForAllRoles(
   }
 
   for (const productionRow of productionRows) {
-    const percentageTotal = rows
-      .filter((row) => row.productionRowId === productionRow.id)
-      .reduce((sum, row) => sum + toNumber(row.percentage), 0);
+    const matchingRows = rows.filter(
+      (row) => row.productionRowId === productionRow.id
+    );
+    const totalVisits = getAnnualVisits(productionRow);
+    const distributedVisits = matchingRows.reduce(
+      (sum, row) => sum + toNumber(row.visits),
+      0
+    );
+    const percentageTotal = totalVisits
+      ? calculateDistributionPercentage(totalVisits, distributedVisits)
+      : matchingRows.reduce((sum, row) => sum + toNumber(row.percentage), 0);
 
     if (Math.abs(percentageTotal - 100) > 0.01) {
       const primaryRole = productionRow.primary_role_category || "Ej angiven";
