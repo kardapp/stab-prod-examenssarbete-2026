@@ -14,7 +14,6 @@ import { PageHeader } from "@/shared/components/page-header";
 import { SectionCard } from "@/shared/components/section-card";
 import { formatOneDecimal } from "@/shared/utils/format-number";
 import { useOutpatientProductionResults } from "../hooks/use-outpatient-production-results";
-import { PeriodizationCurveSection } from "./periodization-curve-section";
 import type { ProductionPlanningComparisonRow } from "../types/outpatient-production-results.types";
 import { formatComparisonEconomicUnit } from "../utils/outpatient-production-results-calculations";
 
@@ -57,8 +56,6 @@ export function OutpatientProductionResultsView() {
                   <ComparisonSection rows={results.comparisonRows} />
                 </>
               )}
-
-              <PeriodizationCurveSection rows={results.annualRows} />
 
               <ActionsSection />
             </Stack>
