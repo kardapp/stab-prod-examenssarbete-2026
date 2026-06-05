@@ -21,7 +21,7 @@ export function CalculatedPresenceSection(
     <SectionCard>
       <FormSection
         overline="4. Beräknat resultat"
-        title="Timmar och produktionsnärvaro"
+        title="Timmar och närvaro"
         description="Total tid divideras med veckoarbetstid för att beräkna närvarobehov."
       />
 
@@ -66,8 +66,15 @@ export function CalculatedPresenceSection(
           value={`${formatTwoDecimals(props.summary.totalHours)} h/vecka`}
         />
         <OoDimensioningMetric
-          label="Beräknad produktionsnärvaro"
+          label="Produktionsnärvaro"
           value={formatTwoDecimals(props.summary.productionPresence)}
+          helperText={`${formatOneDecimal(
+            props.summary.productionHours
+          )} / ${formatOneDecimal(props.settings.weeklyWorkingHours)}`}
+        />
+        <OoDimensioningMetric
+          label="Total närvaro"
+          value={formatTwoDecimals(props.summary.totalPresence)}
           helperText={`${formatOneDecimal(
             props.summary.totalHours
           )} / ${formatOneDecimal(props.settings.weeklyWorkingHours)}`}

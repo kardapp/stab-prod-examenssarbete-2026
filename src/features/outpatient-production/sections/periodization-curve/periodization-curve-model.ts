@@ -6,6 +6,15 @@ import { WEEKLY_WORKING_MINUTES } from "../../utils/outpatient-production-calcul
 
 export type WeeklyImpactType = "semester" | "red-day" | "capacity" | "other";
 
+export type WeekdayKey =
+  | "monday"
+  | "tuesday"
+  | "wednesday"
+  | "thursday"
+  | "friday"
+  | "saturday"
+  | "sunday";
+
 export type WeeklyImpact = {
   id: string;
   type: WeeklyImpactType;
@@ -13,6 +22,7 @@ export type WeeklyImpact = {
   startWeek: number;
   endWeek: number;
   percentage: number;
+  weekdays: WeekdayKey[];
 };
 
 export type WeeklyImpactDraft = {
@@ -21,6 +31,7 @@ export type WeeklyImpactDraft = {
   startWeek: string;
   endWeek: string;
   percentage: string;
+  weekdays: WeekdayKey[];
 };
 
 export type WeeklyCurveSourceRow = {
@@ -44,7 +55,24 @@ export type WeeklyCurvePoint = {
   adjustedStaffingNeed: number;
   impactPercentage: number;
   impacts: WeeklyImpact[];
+  days: WeeklyCurveDay[];
   rows: WeeklyCurveBreakdownRow[];
+};
+
+export type WeeklyCurveDay = {
+  weekday: WeekdayKey;
+  label: string;
+  shortLabel: string;
+  baseVisits: number;
+  adjustedVisits: number;
+  baseVisitMinutes: number;
+  adjustedVisitMinutes: number;
+  baseDrgPoints: number;
+  adjustedDrgPoints: number;
+  baseStaffingNeed: number;
+  adjustedStaffingNeed: number;
+  impactPercentage: number;
+  impacts: WeeklyImpact[];
 };
 
 export type WeeklyCurveBreakdownRow = {
@@ -65,6 +93,21 @@ export type AnnualCurveSummary = {
 };
 
 export const WEEK_COUNT = 52;
+const DAYS_PER_WEEK = 7;
+
+export const weekdayOptions: Array<{
+  value: WeekdayKey;
+  label: string;
+  shortLabel: string;
+}> = [
+  { value: "monday", label: "Måndag", shortLabel: "Mån" },
+  { value: "tuesday", label: "Tisdag", shortLabel: "Tis" },
+  { value: "wednesday", label: "Onsdag", shortLabel: "Ons" },
+  { value: "thursday", label: "Torsdag", shortLabel: "Tor" },
+  { value: "friday", label: "Fredag", shortLabel: "Fre" },
+  { value: "saturday", label: "Lördag", shortLabel: "Lör" },
+  { value: "sunday", label: "Söndag", shortLabel: "Sön" },
+];
 
 export const impactTypeOptions: Array<{
   value: WeeklyImpactType;
@@ -72,31 +115,31 @@ export const impactTypeOptions: Array<{
   defaultName: string;
   defaultPercentage: string;
 }> = [
-    {
-      value: "semester",
-      label: "Semester",
-      defaultName: "Semesterperiod",
-      defaultPercentage: "-20",
-    },
-    {
-      value: "red-day",
-      label: "Röda dagar",
-      defaultName: "Röda dagar",
-      defaultPercentage: "-15",
-    },
-    {
-      value: "capacity",
-      label: "Kapacitet",
-      defaultName: "Extra kapacitet",
-      defaultPercentage: "10",
-    },
-    {
-      value: "other",
-      label: "Annat",
-      defaultName: "Annan påverkan",
-      defaultPercentage: "0",
-    },
-  ];
+  {
+    value: "semester",
+    label: "Semester",
+    defaultName: "Semesterperiod",
+    defaultPercentage: "-20",
+  },
+  {
+    value: "red-day",
+    label: "Röda dagar",
+    defaultName: "Röda dagar",
+    defaultPercentage: "-15",
+  },
+  {
+    value: "capacity",
+    label: "Kapacitet",
+    defaultName: "Extra kapacitet",
+    defaultPercentage: "10",
+  },
+  {
+    value: "other",
+    label: "Annat",
+    defaultName: "Annan påverkan",
+    defaultPercentage: "0",
+  },
+];
 
 export const initialImpactDraft: WeeklyImpactDraft = {
   type: "semester",
@@ -104,6 +147,7 @@ export const initialImpactDraft: WeeklyImpactDraft = {
   startWeek: "28",
   endWeek: "31",
   percentage: "-20",
+  weekdays: weekdayOptions.map((option) => option.value),
 };
 
 export function calculateAnnualCurveSummary(
@@ -132,23 +176,33 @@ export function buildWeeklyCurve(
   rows: WeeklyCurveSourceRow[],
   impacts: WeeklyImpact[]
 ): WeeklyCurvePoint[] {
+  const annualVisits = rows.reduce((sum, row) => sum + row.visits, 0);
+  const annualVisitMinutes = rows.reduce(
+    (sum, row) => sum + row.totalVisitMinutes,
+    0
+  );
+  const annualDrgPoints = rows.reduce(
+    (sum, row) => sum + (row.drgPoints ?? 0),
+    0
+  );
+
   return Array.from({ length: WEEK_COUNT }, (_, index) => {
     const week = index + 1;
     const weekImpacts = impacts.filter(
       (impact) => week >= impact.startWeek && week <= impact.endWeek
     );
-    const impactPercentage = weekImpacts.reduce(
-      (sum, impact) => sum + impact.percentage,
-      0
-    );
-    const impactFactor = Math.max(0, 1 + impactPercentage / 100);
+    const baseVisits = annualVisits / WEEK_COUNT;
+    const baseVisitMinutes = annualVisitMinutes / WEEK_COUNT;
+    const baseDrgPoints = annualDrgPoints / WEEK_COUNT;
+    const days = buildWeeklyDays({
+      baseVisits,
+      baseVisitMinutes,
+      baseDrgPoints,
+      impacts: weekImpacts,
+    });
+    const impactFactor = calculateAverageImpactFactor(days);
+    const impactPercentage = (impactFactor - 1) * 100;
     const weeklyRows = buildWeeklyBreakdownRows(rows, impactFactor);
-    const baseVisits =
-      rows.reduce((sum, row) => sum + row.visits, 0) / WEEK_COUNT;
-    const baseVisitMinutes =
-      rows.reduce((sum, row) => sum + row.totalVisitMinutes, 0) / WEEK_COUNT;
-    const baseDrgPoints =
-      rows.reduce((sum, row) => sum + (row.drgPoints ?? 0), 0) / WEEK_COUNT;
     const adjustedVisits = weeklyRows.reduce((sum, row) => sum + row.visits, 0);
     const adjustedVisitMinutes = weeklyRows.reduce(
       (sum, row) => sum + row.visitMinutes,
@@ -171,6 +225,7 @@ export function buildWeeklyCurve(
       adjustedStaffingNeed: calculateStaffingNeed(adjustedVisitMinutes),
       impactPercentage,
       impacts: weekImpacts,
+      days,
       rows: weeklyRows,
     };
   });
@@ -188,6 +243,34 @@ export function parseImpactType(value: string): WeeklyImpactType {
   return impactTypeOptions.some((option) => option.value === value)
     ? (value as WeeklyImpactType)
     : "other";
+}
+
+export function getImpactWeekdays(impact: {
+  weekdays?: WeekdayKey[];
+}): WeekdayKey[] {
+  if (impact.weekdays && impact.weekdays.length > 0) {
+    return impact.weekdays;
+  }
+
+  return weekdayOptions.map((option) => option.value);
+}
+
+export function formatImpactWeekdays(impact: {
+  weekdays?: WeekdayKey[];
+}): string {
+  const weekdays = getImpactWeekdays(impact);
+
+  if (weekdays.length === weekdayOptions.length) {
+    return "Alla dagar";
+  }
+
+  return weekdays
+    .map(
+      (weekday) =>
+        weekdayOptions.find((option) => option.value === weekday)?.shortLabel
+    )
+    .filter(Boolean)
+    .join(", ");
 }
 
 export function getCurveBarColor(point: WeeklyCurvePoint): string {
@@ -213,6 +296,58 @@ export function formatWeekTitle(point: WeeklyCurvePoint): string {
     `${formatOneDecimal(point.adjustedVisits)} vårdtillfällen`,
     `Påverkan ${formatSignedPercentage(point.impactPercentage)}`,
   ].join(" · ");
+}
+
+function buildWeeklyDays(params: {
+  baseVisits: number;
+  baseVisitMinutes: number;
+  baseDrgPoints: number;
+  impacts: WeeklyImpact[];
+}): WeeklyCurveDay[] {
+  const baseVisitsPerDay = params.baseVisits / DAYS_PER_WEEK;
+  const baseVisitMinutesPerDay = params.baseVisitMinutes / DAYS_PER_WEEK;
+  const baseDrgPointsPerDay = params.baseDrgPoints / DAYS_PER_WEEK;
+
+  return weekdayOptions.map((weekday) => {
+    const dayImpacts = params.impacts.filter((impact) =>
+      getImpactWeekdays(impact).includes(weekday.value)
+    );
+    const impactPercentage = dayImpacts.reduce(
+      (sum, impact) => sum + impact.percentage,
+      0
+    );
+    const impactFactor = Math.max(0, 1 + impactPercentage / 100);
+    const adjustedVisitMinutes = baseVisitMinutesPerDay * impactFactor;
+
+    return {
+      weekday: weekday.value,
+      label: weekday.label,
+      shortLabel: weekday.shortLabel,
+      baseVisits: baseVisitsPerDay,
+      adjustedVisits: baseVisitsPerDay * impactFactor,
+      baseVisitMinutes: baseVisitMinutesPerDay,
+      adjustedVisitMinutes,
+      baseDrgPoints: baseDrgPointsPerDay,
+      adjustedDrgPoints: baseDrgPointsPerDay * impactFactor,
+      baseStaffingNeed: calculateStaffingNeed(baseVisitMinutesPerDay),
+      adjustedStaffingNeed: calculateStaffingNeed(adjustedVisitMinutes),
+      impactPercentage,
+      impacts: dayImpacts,
+    };
+  });
+}
+
+function calculateAverageImpactFactor(days: WeeklyCurveDay[]): number {
+  if (days.length === 0) {
+    return 1;
+  }
+
+  return (
+    days.reduce(
+      (sum, day) => sum + Math.max(0, 1 + day.impactPercentage / 100),
+      0
+    ) / days.length
+  );
 }
 
 function buildWeeklyBreakdownRows(

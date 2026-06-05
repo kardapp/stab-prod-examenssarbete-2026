@@ -11,8 +11,9 @@ import {
   impactTypeOptions,
   initialImpactDraft,
   parseImpactType,
-  type WeeklyImpact,
+  type WeekdayKey,
   type WeeklyCurveSourceRow,
+  type WeeklyImpact,
   type WeeklyImpactDraft,
 } from "./periodization-curve/periodization-curve-model";
 import { PeriodizationSummaryCards } from "./periodization-curve/periodization-summary-cards";
@@ -31,7 +32,9 @@ export function PeriodizationCurveSection(props: {
 }) {
   const [impacts, setImpacts] = useState<WeeklyImpact[]>([]);
   const [draft, setDraft] = useState<WeeklyImpactDraft>(initialImpactDraft);
-  const [selectedWeek, setSelectedWeek] = useState(1);
+  const [selectedWeek, setSelectedWeek] = useState(() =>
+    clampWeek(Number(initialImpactDraft.startWeek))
+  );
   const [validationMessage, setValidationMessage] = useState("");
   const annualSummary = useMemo(
     () => calculateAnnualCurveSummary(props.rows),
@@ -42,16 +45,35 @@ export function PeriodizationCurveSection(props: {
     [props.rows, impacts]
   );
   const selectedPoint =
-    curvePoints.find((point) => point.week === selectedWeek) ??
-    curvePoints[0];
+    curvePoints.find((point) => point.week === selectedWeek) ?? curvePoints[0];
   const maxPresence = Math.max(
     0.01,
     ...curvePoints.map((point) => point.adjustedStaffingNeed)
   );
 
-  function handleDraftChange(field: keyof WeeklyImpactDraft, value: string) {
+  function handleDraftChange(
+    field: Exclude<keyof WeeklyImpactDraft, "weekdays">,
+    value: string
+  ) {
     setValidationMessage("");
     setDraft((current) => ({ ...current, [field]: value }));
+  }
+
+  function handleDraftWeekdaysChange(weekdays: WeekdayKey[]) {
+    setValidationMessage("");
+    setDraft((current) => ({ ...current, weekdays }));
+  }
+
+  function handleSelectWeek(week: number) {
+    const nextWeek = clampWeek(week);
+
+    setSelectedWeek(nextWeek);
+    setValidationMessage("");
+    setDraft((current) => ({
+      ...current,
+      startWeek: String(nextWeek),
+      endWeek: String(nextWeek),
+    }));
   }
 
   function handleTypeChange(value: string) {
@@ -84,7 +106,14 @@ export function PeriodizationCurveSection(props: {
     }
 
     if (startWeek > endWeek) {
-      setValidationMessage("Startvecka måste vara före eller samma som slutvecka.");
+      setValidationMessage(
+        "Startvecka måste vara före eller samma som slutvecka."
+      );
+      return;
+    }
+
+    if (draft.weekdays.length === 0) {
+      setValidationMessage("Välj minst en dag som påverkas.");
       return;
     }
 
@@ -95,6 +124,7 @@ export function PeriodizationCurveSection(props: {
       startWeek,
       endWeek,
       percentage,
+      weekdays: draft.weekdays,
     };
 
     setImpacts((current) => [...current, nextImpact]);
@@ -131,12 +161,12 @@ export function PeriodizationCurveSection(props: {
             showDrg={props.showDrg}
           />
 
-          <Box sx={curveLayoutSx}>
+          <Box sx={curveBlockSx}>
             <WeeklyCurveChart
               curvePoints={curvePoints}
               maxPresence={maxPresence}
               selectedWeek={selectedWeek}
-              onSelectWeek={setSelectedWeek}
+              onSelectWeek={handleSelectWeek}
             />
             <SelectedWeekPanel
               selectedPoint={selectedPoint}
@@ -152,9 +182,11 @@ export function PeriodizationCurveSection(props: {
           <WeeklyImpactControls
             draft={draft}
             impacts={impacts}
+            selectedWeek={selectedWeek}
             validationMessage={validationMessage}
             onAddImpact={addImpact}
             onDraftChange={handleDraftChange}
+            onDraftWeekdaysChange={handleDraftWeekdaysChange}
             onRemoveImpact={removeImpact}
             onTypeChange={handleTypeChange}
           />
@@ -164,12 +196,6 @@ export function PeriodizationCurveSection(props: {
   );
 }
 
-const curveLayoutSx = {
-  display: "grid",
-  gridTemplateColumns: {
-    xs: "1fr",
-    xl: "minmax(0, 1fr) minmax(280px, 0.35fr)",
-  },
-  gap: 2,
-  alignItems: "start",
+const curveBlockSx = {
+  minWidth: 0,
 };

@@ -104,9 +104,9 @@ export function calculateProductionPresence(
 
 export function calculateStaffingCost(
   salaryCostPerPresence: number,
-  productionPresence: number
+  presence: number
 ) {
-  return salaryCostPerPresence * productionPresence;
+  return salaryCostPerPresence * presence;
 }
 
 export function calculateOoDimensioningSummary(params: {
@@ -150,9 +150,14 @@ export function calculateOoDimensioningSummary(params: {
     competenceDevelopmentHours,
     otherHours,
   });
+  const weeklyWorkingHours = toNumber(params.settings.weeklyWorkingHours);
   const productionPresence = calculateProductionPresence(
+    productionHours,
+    weeklyWorkingHours
+  );
+  const totalPresence = calculateProductionPresence(
     totalHours,
-    toNumber(params.settings.weeklyWorkingHours)
+    weeklyWorkingHours
   );
 
   return {
@@ -166,9 +171,10 @@ export function calculateOoDimensioningSummary(params: {
     otherHours,
     totalHours,
     productionPresence,
+    totalPresence,
     staffingCost: calculateStaffingCost(
       toNumber(params.settings.salaryCostPerPresence),
-      productionPresence
+      totalPresence
     ),
   };
 }

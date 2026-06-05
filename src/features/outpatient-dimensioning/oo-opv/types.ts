@@ -57,6 +57,7 @@ export type OoDimensioningSummary = {
   otherHours: number;
   totalHours: number;
   productionPresence: number;
+  totalPresence: number;
   staffingCost: number;
 };
 

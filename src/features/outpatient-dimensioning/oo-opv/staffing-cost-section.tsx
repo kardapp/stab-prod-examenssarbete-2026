@@ -20,12 +20,12 @@ export function StaffingCostSection(props: StaffingCostSectionProps) {
       <FormSection
         overline="5. Kostnader"
         title="Bemanningskostnad"
-        description="Lönekostnad per närvaro hämtas från historik när det finns och kan justeras här."
+        description="Kostnaden beräknas som lönekostnad per närvaro från historik multiplicerat med total närvaro."
       />
 
       <Box sx={costGridSx}>
         <TextField
-          label="Lönekostnad per närvaro"
+          label="Lönekostnad/närvaro (historik)"
           type="number"
           size="small"
           value={props.settings.salaryCostPerPresence}
@@ -38,12 +38,15 @@ export function StaffingCostSection(props: StaffingCostSectionProps) {
           slotProps={{ htmlInput: { min: 0, step: 1000 } }}
         />
         <OoDimensioningMetric
-          label="Beräknad närvaro"
-          value={formatTwoDecimals(props.summary.productionPresence)}
+          label="Total närvaro"
+          value={formatTwoDecimals(props.summary.totalPresence)}
         />
         <OoDimensioningMetric
           label="Total bemanningskostnad"
           value={`${formatWholeNumber(props.summary.staffingCost)} kr`}
+          helperText={`${formatWholeNumber(
+            props.settings.salaryCostPerPresence
+          )} kr * ${formatTwoDecimals(props.summary.totalPresence)}`}
         />
       </Box>
     </SectionCard>
