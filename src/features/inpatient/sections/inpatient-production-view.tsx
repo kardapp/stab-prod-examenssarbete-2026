@@ -24,6 +24,7 @@ import {
 import {
   CURRENT_INPATIENT_PRODUCTION_PLAN_ID,
   inpatientKombikaOptions,
+  inpatientProductionHistoryByKombikaId,
   initialInpatientProductionFormState,
 } from "../constants/inpatient-options";
 import type { InpatientProductionFormState } from "../types/inpatient.types";
@@ -32,10 +33,11 @@ import {
   toNumber,
 } from "../utils/inpatient-calculations";
 import { saveCurrentInpatientProductionRow } from "../utils/current-inpatient-session";
+import { InpatientProductionHistorySection } from "./inpatient-production-history-section";
 
 type NumberField = Exclude<
   keyof InpatientProductionFormState,
-  "date" | "selectedKombikaId"
+  "selectedKombikaId"
 >;
 
 export function InpatientProductionView() {
@@ -57,6 +59,14 @@ export function InpatientProductionView() {
     () => calculateInpatientProductionValues(formState),
     [formState]
   );
+  const productionHistory = useMemo(
+    () =>
+      selectedKombika
+        ? inpatientProductionHistoryByKombikaId[selectedKombika.id] ?? []
+        : [],
+    [selectedKombika]
+  );
+  const latestHistoryRow = productionHistory.at(-1) ?? null;
   const validationMessage = getValidationMessage(formState);
 
   function updateFormState(
@@ -85,7 +95,6 @@ export function InpatientProductionView() {
       careArea: "inpatient",
       kombikaId: selectedKombika.id,
       economicKombika: `${selectedKombika.code} - ${selectedKombika.name}`,
-      date: formState.date,
       section: selectedKombika.section,
       costCenter: selectedKombika.costCenter,
       site: selectedKombika.site,
@@ -107,9 +116,9 @@ export function InpatientProductionView() {
       careDays: calculatedValues.careDays,
       averageCarePlaces: calculatedValues.averageCarePlaces,
       drgPoints: calculatedValues.drgPoints,
-      previousYearPlan: formState.previousYearPlan,
-      r12Outcome: formState.r12Outcome,
-      previousYearOutcome: formState.previousYearOutcome,
+      previousYearPlan: latestHistoryRow?.plannedCareEvents ?? 0,
+      r12Outcome: latestHistoryRow?.r12CareEvents ?? 0,
+      previousYearOutcome: latestHistoryRow?.previousYearOutcome ?? 0,
       savedAt: new Date().toISOString(),
     });
     setSaveSeverity("success");
@@ -128,10 +137,10 @@ export function InpatientProductionView() {
           <SectionCard>
             <FormSection
               overline="Steg 1"
-              title="Produktionsunderlag"
-              description="Slutenvård planeras från vårdtillfällen, medelvårdtid och DRG-snitt."
+              title="Välj ekonomisk kombika"
+              description="Vald ekonomisk kombika styr vilken slutenvårdsplan som fylls i och sparas."
             />
-            <Box sx={inputGridSx}>
+            <Stack spacing={2}>
               <TextField
                 select
                 label="Ekonomisk kombika"
@@ -140,203 +149,202 @@ export function InpatientProductionView() {
                 onChange={(event) =>
                   updateFormState({ selectedKombikaId: event.target.value })
                 }
-                fullWidth
+                sx={{ maxWidth: 420 }}
               >
+                <MenuItem value="">Välj kombika</MenuItem>
                 {inpatientKombikaOptions.map((option) => (
                   <MenuItem key={option.id} value={option.id}>
                     {option.code} - {option.name}
                   </MenuItem>
                 ))}
               </TextField>
-              <TextField
-                label="Datum/dag"
-                type="date"
-                size="small"
-                value={formState.date}
-                onChange={(event) => updateFormState({ date: event.target.value })}
-                fullWidth
-              />
-              <TextField
-                label="Antal vårdtillfällen"
-                type="number"
-                size="small"
-                value={formState.careEvents}
-                onChange={(event) =>
-                  handleNumberChange("careEvents", event.target.value)
-                }
-                fullWidth
-                slotProps={{ htmlInput: { min: 0, step: 1 } }}
-              />
-            </Box>
-          </SectionCard>
 
-          <SectionCard>
-            <FormSection
-              overline="Steg 2"
-              title="Fördelningar"
-              description="Akut/elektivt och SLL/UULP bryter ner samma antal vårdtillfällen."
-            />
-            <Box sx={pairGridSx}>
-              <PercentageGroup
-                title="Fördelning 1: akut/elektivt"
-                sum={formState.acutePercentage + formState.electivePercentage}
-                rows={[
-                  {
-                    label: "Akut",
-                    value: formState.acutePercentage,
-                    calculatedValue: calculatedValues.acuteCareEvents,
-                    onChange: (value) =>
-                      handleNumberChange("acutePercentage", value),
-                  },
-                  {
-                    label: "Elektivt",
-                    value: formState.electivePercentage,
-                    calculatedValue: calculatedValues.electiveCareEvents,
-                    onChange: (value) =>
-                      handleNumberChange("electivePercentage", value),
-                  },
-                ]}
-              />
-              <PercentageGroup
-                title="Fördelning 2: SLL/UULP"
-                sum={formState.sllPercentage + formState.uulpPercentage}
-                rows={[
-                  {
-                    label: "SLL",
-                    value: formState.sllPercentage,
-                    calculatedValue: calculatedValues.sllCareEvents,
-                    onChange: (value) =>
-                      handleNumberChange("sllPercentage", value),
-                  },
-                  {
-                    label: "UULP",
-                    value: formState.uulpPercentage,
-                    calculatedValue: calculatedValues.uulpCareEvents,
-                    onChange: (value) =>
-                      handleNumberChange("uulpPercentage", value),
-                  },
-                ]}
-              />
-            </Box>
-          </SectionCard>
-
-          <SectionCard>
-            <FormSection
-              overline="Steg 3"
-              title="Slutenvårdsantaganden"
-              description="Medelvårdtid räknar fram vårddygn och snitt antal vårdplatser."
-            />
-            <Box sx={inputGridSx}>
-              <TextField
-                label="Medelvårdtid"
-                type="number"
-                size="small"
-                value={formState.averageLengthOfStay}
-                onChange={(event) =>
-                  handleNumberChange("averageLengthOfStay", event.target.value)
-                }
-                fullWidth
-                slotProps={{ htmlInput: { min: 0, step: 0.1 } }}
-              />
-              <TextField
-                label="DRG-snitt"
-                type="number"
-                size="small"
-                value={formState.drgAverage}
-                onChange={(event) =>
-                  handleNumberChange("drgAverage", event.target.value)
-                }
-                fullWidth
-                slotProps={{ htmlInput: { min: 0, step: 0.1 } }}
-              />
-            </Box>
-          </SectionCard>
-
-          <SectionCard>
-            <FormSection
-              overline="Steg 4"
-              title="Jämförelsevärden"
-            />
-            <Box sx={inputGridSx}>
-              <TextField
-                label="Föregående års plan"
-                type="number"
-                size="small"
-                value={formState.previousYearPlan}
-                onChange={(event) =>
-                  handleNumberChange("previousYearPlan", event.target.value)
-                }
-                fullWidth
-              />
-              <TextField
-                label="Utfall R12"
-                type="number"
-                size="small"
-                value={formState.r12Outcome}
-                onChange={(event) =>
-                  handleNumberChange("r12Outcome", event.target.value)
-                }
-                fullWidth
-              />
-              <TextField
-                label="Föregående års utfall"
-                type="number"
-                size="small"
-                value={formState.previousYearOutcome}
-                onChange={(event) =>
-                  handleNumberChange("previousYearOutcome", event.target.value)
-                }
-                fullWidth
-              />
-            </Box>
-          </SectionCard>
-
-          <SectionCard>
-            <FormSection
-              overline="Förhandsvisning"
-              title="Beräknade slutenvårdsvärden"
-            />
-            <Box sx={metricGridSx}>
-              <PlanningMetricCard
-                label="Vårddygn"
-                value={formatWholeNumber(calculatedValues.careDays)}
-              />
-              <PlanningMetricCard
-                label="Snitt antal vårdplatser"
-                value={formatTwoDecimals(calculatedValues.averageCarePlaces)}
-              />
-              <PlanningMetricCard
-                label="DRG-poäng"
-                value={formatOneDecimal(calculatedValues.drgPoints)}
-              />
-              <PlanningMetricCard
-                label="Vårdtillfällen per dag"
-                value={formatOneDecimal(calculatedValues.careEventsPerDay)}
-              />
-            </Box>
-          </SectionCard>
-
-          <SectionCard>
-            <Stack spacing={2}>
-              {saveMessage ? (
-                <Alert severity={saveSeverity}>{saveMessage}</Alert>
+              {selectedKombika ? (
+                <Box sx={selectedKombikaSx}>
+                  <Typography variant="body2" color="text.secondary">
+                    Du planerar just nu för:
+                  </Typography>
+                  <Typography sx={{ fontWeight: 700 }}>
+                    {selectedKombika.code} - {selectedKombika.name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {selectedKombika.section} · {selectedKombika.costCenter} ·{" "}
+                    {selectedKombika.site}
+                  </Typography>
+                </Box>
               ) : null}
-              {validationMessage ? (
-                <Alert severity="warning">{validationMessage}</Alert>
-              ) : null}
-              <Box sx={actionRowSx}>
-                <Button variant="contained" onClick={saveProductionPlan}>
-                  Spara produktionsplan
-                </Button>
-                <Button variant="outlined" href={appRoutes.inpatientOoDistribution}>
-                  Fördela vårddygn till OO
-                </Button>
-                <Button variant="outlined" href={appRoutes.inpatientDimensioning}>
-                  Gå till dimensionering ME
-                </Button>
-              </Box>
             </Stack>
           </SectionCard>
+
+          {selectedKombika ? (
+            <>
+              <SectionCard>
+                <FormSection
+                  overline="Steg 2"
+                  title="Produktionsunderlag"
+                  description="Slutenvård planeras från vårdtillfällen, medelvårdtid och DRG-snitt."
+                />
+                <Box sx={inputGridSx}>
+                  <TextField
+                    label="Antal vårdtillfällen"
+                    type="number"
+                    size="small"
+                    value={formState.careEvents}
+                    onChange={(event) =>
+                      handleNumberChange("careEvents", event.target.value)
+                    }
+                    fullWidth
+                    slotProps={{ htmlInput: { min: 0, step: 1 } }}
+                  />
+                </Box>
+              </SectionCard>
+
+              <SectionCard>
+                <FormSection
+                  overline="Steg 3"
+                  title="Fördelningar"
+                  description="Akut/elektivt och SLL/UULP bryter ner samma antal vårdtillfällen."
+                />
+                <Box sx={pairGridSx}>
+                  <PercentageGroup
+                    title="Fördelning 1: akut/elektivt"
+                    sum={
+                      formState.acutePercentage + formState.electivePercentage
+                    }
+                    rows={[
+                      {
+                        label: "Akut",
+                        value: formState.acutePercentage,
+                        calculatedValue: calculatedValues.acuteCareEvents,
+                        onChange: (value) =>
+                          handleNumberChange("acutePercentage", value),
+                      },
+                      {
+                        label: "Elektivt",
+                        value: formState.electivePercentage,
+                        calculatedValue: calculatedValues.electiveCareEvents,
+                        onChange: (value) =>
+                          handleNumberChange("electivePercentage", value),
+                      },
+                    ]}
+                  />
+                  <PercentageGroup
+                    title="Fördelning 2: SLL/UULP"
+                    sum={formState.sllPercentage + formState.uulpPercentage}
+                    rows={[
+                      {
+                        label: "SLL",
+                        value: formState.sllPercentage,
+                        calculatedValue: calculatedValues.sllCareEvents,
+                        onChange: (value) =>
+                          handleNumberChange("sllPercentage", value),
+                      },
+                      {
+                        label: "UULP",
+                        value: formState.uulpPercentage,
+                        calculatedValue: calculatedValues.uulpCareEvents,
+                        onChange: (value) =>
+                          handleNumberChange("uulpPercentage", value),
+                      },
+                    ]}
+                  />
+                </Box>
+              </SectionCard>
+
+              <SectionCard>
+                <FormSection
+                  overline="Steg 4"
+                  title="Slutenvårdsantaganden"
+                  description="Medelvårdtid räknar fram vårddygn och snitt antal vårdplatser."
+                />
+                <Box sx={inputGridSx}>
+                  <TextField
+                    label="Medelvårdtid"
+                    type="number"
+                    size="small"
+                    value={formState.averageLengthOfStay}
+                    onChange={(event) =>
+                      handleNumberChange(
+                        "averageLengthOfStay",
+                        event.target.value
+                      )
+                    }
+                    fullWidth
+                    slotProps={{ htmlInput: { min: 0, step: 0.1 } }}
+                  />
+                  <TextField
+                    label="DRG-snitt"
+                    type="number"
+                    size="small"
+                    value={formState.drgAverage}
+                    onChange={(event) =>
+                      handleNumberChange("drgAverage", event.target.value)
+                    }
+                    fullWidth
+                    slotProps={{ htmlInput: { min: 0, step: 0.1 } }}
+                  />
+                </Box>
+              </SectionCard>
+
+              <SectionCard>
+                <FormSection
+                  overline="Förhandsvisning"
+                  title="Beräknade slutenvårdsvärden"
+                />
+                <Box sx={metricGridSx}>
+                  <PlanningMetricCard
+                    label="Vårddygn"
+                    value={formatWholeNumber(calculatedValues.careDays)}
+                  />
+                  <PlanningMetricCard
+                    label="Snitt antal vårdplatser"
+                    value={formatTwoDecimals(calculatedValues.averageCarePlaces)}
+                  />
+                  <PlanningMetricCard
+                    label="DRG-poäng"
+                    value={formatOneDecimal(calculatedValues.drgPoints)}
+                  />
+                  <PlanningMetricCard
+                    label="Vårdtillfällen per dag"
+                    value={formatOneDecimal(calculatedValues.careEventsPerDay)}
+                  />
+                </Box>
+              </SectionCard>
+
+              <InpatientProductionHistorySection
+                historyRows={productionHistory}
+                selectedKombika={selectedKombika}
+              />
+
+              <SectionCard>
+                <Stack spacing={2}>
+                  {saveMessage ? (
+                    <Alert severity={saveSeverity}>{saveMessage}</Alert>
+                  ) : null}
+                  {validationMessage ? (
+                    <Alert severity="warning">{validationMessage}</Alert>
+                  ) : null}
+                  <Box sx={actionRowSx}>
+                    <Button variant="contained" onClick={saveProductionPlan}>
+                      Spara produktionsplan
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      href={appRoutes.inpatientOoDistribution}
+                    >
+                      Fördela vårddygn till OO
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      href={appRoutes.inpatientDimensioning}
+                    >
+                      Gå till dimensionering ME
+                    </Button>
+                  </Box>
+                </Stack>
+              </SectionCard>
+            </>
+          ) : null}
         </Stack>
       </Container>
     </Box>
@@ -424,6 +432,13 @@ const pageSx = {
   bgcolor: "var(--page-background)",
   minHeight: "100vh",
   p: 2,
+};
+
+const selectedKombikaSx = {
+  bgcolor: "var(--section-background)",
+  border: "1px solid var(--color-border)",
+  borderRadius: 1,
+  p: 1.5,
 };
 
 const inputGridSx = {

@@ -6,7 +6,6 @@ export type BaseProductionRow = {
   id: string;
   planId: number;
   economicKombika: string;
-  date: string;
   careType: InpatientCareType;
   payerType: InpatientPayerType;
   plannedCareEvents: number;
@@ -24,7 +23,6 @@ export type InpatientKombikaOption = {
 
 export type InpatientProductionFormState = {
   selectedKombikaId: string;
-  date: string;
   careEvents: number;
   acutePercentage: number;
   electivePercentage: number;
@@ -32,9 +30,6 @@ export type InpatientProductionFormState = {
   uulpPercentage: number;
   averageLengthOfStay: number;
   drgAverage: number;
-  previousYearPlan: number;
-  r12Outcome: number;
-  previousYearOutcome: number;
 };
 
 export type InpatientCalculatedValues = {
@@ -69,6 +64,21 @@ export type InpatientProductionRow = BaseProductionRow & {
   r12Outcome: number;
   previousYearOutcome: number;
   savedAt: string;
+};
+
+export type InpatientProductionHistoryYear = {
+  year: number;
+  plannedCareEvents: number;
+  r12CareEvents: number;
+  previousYearOutcome: number;
+  averageLengthOfStay: number;
+  careDays: number;
+  averageCarePlaces: number;
+  drgAverage: number;
+  sllCareEvents: number;
+  uulpCareEvents: number;
+  acuteCareEvents: number;
+  electiveCareEvents: number;
 };
 
 export type InpatientOoDistributionRow = {
