@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import {
-  comparisonValuesByKombikaId,
   initialFormState,
   kombikaOptions,
   productionHistoryByKombikaId,
@@ -63,9 +62,6 @@ export function useOutpatientProductionForm() {
     [formState]
   );
 
-  const comparisonValues = selectedKombika
-    ? comparisonValuesByKombikaId[selectedKombika.id]
-    : null;
   const productionHistory = selectedKombika
     ? productionHistoryByKombikaId[selectedKombika.id] ?? []
     : [];
@@ -268,7 +264,6 @@ export function useOutpatientProductionForm() {
     formState,
     selectedKombika,
     calculatedValues,
-    comparisonValues,
     productionHistory,
     validationErrors,
     showValidation: submitAttempted || hasValidationErrors(validationErrors),

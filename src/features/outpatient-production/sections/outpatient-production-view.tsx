@@ -3,7 +3,6 @@
 import { Box, Container, Stack } from "@mui/material";
 import { PageHeader } from "@/shared/components/page-header";
 import { CalculatedPreviewSection } from "./calculated-preview-section";
-import { ComparisonValuesSection } from "./comparison-values-section";
 import { DistributionSection } from "./distribution-section";
 import { DrgAverageSection } from "./drg-average-section";
 import { KombikaSelectorSection } from "./kombika-selector-section";
@@ -71,11 +70,6 @@ export function OutpatientProductionView() {
                 drgAverage={production.formState.drgAverage}
                 validationMessage={getValidationMessage("drgAverage")}
                 onDrgAverageChange={production.handleDrgAverageChange}
-              />
-
-              <ComparisonValuesSection
-                selectedKombika={production.selectedKombika}
-                comparisonValues={production.comparisonValues}
               />
 
               <CalculatedPreviewSection
