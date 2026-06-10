@@ -17,6 +17,7 @@ import type { OutpatientProductionRow } from "@/types/production";
 import { FormSection } from "@/shared/components/form-section";
 import { PageHeader } from "@/shared/components/page-header";
 import { SectionCard } from "@/shared/components/section-card";
+import { appRoutes, withSearchParams } from "@/shared/routes";
 import {
   formatOneDecimal,
   formatWholeNumber,
@@ -551,7 +552,7 @@ function OoActionsSection(props: {
           <Button
             type="button"
             variant="outlined"
-            href="/outpatient/production/production-planning"
+            href={appRoutes.outpatientProductionPlanning}
           >
             Tillbaka till produktionsplanering
           </Button>
@@ -565,7 +566,7 @@ function OoActionsSection(props: {
           <Button
             type="button"
             variant="outlined"
-            href="/outpatient/production/results-production-planning"
+            href={appRoutes.outpatientProductionPlanningResults}
           >
             Gå till resultat
           </Button>
@@ -848,16 +849,14 @@ function InputValue(props: {
 
 function getDimensioningHref(row: OutpatientProductionRow | null): string {
   if (!row) {
-    return "/outpatient/dimensioning/oo-opv";
+    return appRoutes.outpatientOoDimensioning;
   }
 
-  const params = new URLSearchParams({
+  return withSearchParams(appRoutes.outpatientOoDimensioning, {
     productionPlanId: String(row.production_plan_id ?? 1),
     kombikaId: row.kombika_pf_id ?? "",
     careType: isDayCareRow(row) ? "dagvard" : "mottagning",
   });
-
-  return `/outpatient/dimensioning/oo-opv?${params.toString()}`;
 }
 
 function formatKombikaSummary(rows: OutpatientProductionRow[]): string {

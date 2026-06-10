@@ -1,6 +1,7 @@
 "use client";
 
 import { Alert, Box, Button, Stack } from "@mui/material";
+import { appRoutes } from "@/shared/routes";
 import { SectionCard } from "@/shared/components/section-card";
 
 type ProductionActionsSectionProps = {
@@ -24,7 +25,7 @@ export function ProductionActionsSection(props: ProductionActionsSectionProps) {
           </Button>
           <Button
             variant="outlined"
-            href="/outpatient/production/oo-distribution"
+            href={appRoutes.outpatientOoDistribution}
           >
             Fördela till OO
           </Button>

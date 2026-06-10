@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 import { BarChart } from "@mui/x-charts";
 import { productionHistoryByKombikaId } from "@/features/outpatient-production/constants/outpatient-production-options";
+import { appRoutes } from "@/shared/routes";
 import { formatWholeNumber } from "@/shared/utils/format-number";
 
 type DashboardHistoryRow = {
@@ -25,7 +26,7 @@ type DashboardHistoryRow = {
 const planningAreas = [
   {
     label: "ÖPV",
-    href: "/outpatient/production/production-planning",
+    href: appRoutes.outpatientProductionPlanning,
   },
   {
     label: "SLV",

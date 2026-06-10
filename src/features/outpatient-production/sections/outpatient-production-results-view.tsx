@@ -12,6 +12,7 @@ import {
 import { FormSection } from "@/shared/components/form-section";
 import { PageHeader } from "@/shared/components/page-header";
 import { SectionCard } from "@/shared/components/section-card";
+import { appRoutes } from "@/shared/routes";
 import { formatOneDecimal } from "@/shared/utils/format-number";
 import { useOutpatientProductionResults } from "../hooks/use-outpatient-production-results";
 import type { ProductionPlanningComparisonRow } from "../types/outpatient-production-results.types";
@@ -161,12 +162,12 @@ function ActionsSection() {
   return (
     <SectionCard>
       <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
-        <Button variant="outlined" href="/outpatient/production/oo-distribution">
+        <Button variant="outlined" href={appRoutes.outpatientOoDistribution}>
           Tillbaka till OO-fördelning
         </Button>
         <Button
           variant="outlined"
-          href="/outpatient/production/production-planning"
+          href={appRoutes.outpatientProductionPlanning}
         >
           Tillbaka till produktionsplanering
         </Button>

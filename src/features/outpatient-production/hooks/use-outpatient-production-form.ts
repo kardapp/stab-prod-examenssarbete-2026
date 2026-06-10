@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { appRoutes, withSearchParams } from "@/shared/routes";
 import {
   initialFormState,
   kombikaOptions,
@@ -67,19 +68,18 @@ export function useOutpatientProductionForm() {
     : [];
   const dimensioningHref = useMemo(() => {
     if (!selectedKombika) {
-      return "/outpatient/dimensioning";
+      return appRoutes.outpatientDimensioning;
     }
 
     const careType = selectedKombika.name.toLowerCase().includes("dagv")
       ? "dagvard"
       : "mottagning";
-    const params = new URLSearchParams({
+
+    return withSearchParams(appRoutes.outpatientDimensioning, {
       productionPlanId: String(CURRENT_OUTPATIENT_PRODUCTION_PLAN_ID),
       kombikaId: selectedKombika.id,
       careType,
     });
-
-    return `/outpatient/dimensioning?${params.toString()}`;
   }, [selectedKombika]);
 
   function updateFormState(

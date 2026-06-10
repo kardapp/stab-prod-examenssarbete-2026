@@ -10,6 +10,7 @@ import {
 } from "@mui/material";
 import { PageHeader } from "@/shared/components/page-header";
 import { SectionCard } from "@/shared/components/section-card";
+import { appRoutes } from "@/shared/routes";
 import { PeriodizationCurveSection } from "@/features/outpatient-production/sections/periodization-curve-section";
 import { AdminOtherTimeSection } from "./admin-other-time-section";
 import { CalculatedPresenceSection } from "./calculated-presence-section";
@@ -115,14 +116,14 @@ function ActionsSection(props: {
           <Button
             type="button"
             variant="outlined"
-            href="/outpatient/production/oo-distribution"
+            href={appRoutes.outpatientOoDistribution}
           >
             Tillbaka till OO-fördelning
           </Button>
           <Button
             type="button"
             variant="outlined"
-            href="/outpatient/dimensioning/results-dimensioning"
+            href={appRoutes.outpatientDimensioningResults}
           >
             Gå till resultat
           </Button>

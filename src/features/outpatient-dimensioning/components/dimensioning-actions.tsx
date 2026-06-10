@@ -1,6 +1,7 @@
 "use client";
 
 import { Alert, Box, Button, Stack } from "@mui/material";
+import { appRoutes } from "@/shared/routes";
 import { SectionCard } from "@/shared/components/section-card";
 
 type DimensioningActionsProps = {
@@ -30,13 +31,13 @@ export function DimensioningActions(props: DimensioningActionsProps) {
           </Button>
           <Button
             variant="outlined"
-            href="/outpatient/production/production-planning"
+            href={appRoutes.outpatientProductionPlanning}
           >
             Gå till produktionsplanering
           </Button>
           <Button
             variant="outlined"
-            href="/outpatient/dimensioning/results-dimensioning"
+            href={appRoutes.outpatientDimensioningResults}
           >
             Gå till resultat
           </Button>
