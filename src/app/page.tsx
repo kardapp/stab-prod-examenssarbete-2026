@@ -30,7 +30,7 @@ const planningAreas = [
   },
   {
     label: "SLV",
-    href: undefined,
+    href: appRoutes.inpatientProductionPlanning,
   },
   {
     label: "Ingrepp",

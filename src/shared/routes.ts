@@ -6,6 +6,12 @@ export const appRoutes = {
   outpatientDimensioning: "/outpatient/dimensioning",
   outpatientOoDimensioning: "/outpatient/dimensioning/oo",
   outpatientDimensioningResults: "/outpatient/dimensioning/results",
+  inpatientProductionPlanning: "/inpatient/productionplanning",
+  inpatientOoDistribution: "/inpatient/productionplanning/oodistribution",
+  inpatientProductionPlanningResults: "/inpatient/productionplanning/results",
+  inpatientDimensioning: "/inpatient/dimensioning",
+  inpatientOoDimensioning: "/inpatient/dimensioning/oo",
+  inpatientDimensioningResults: "/inpatient/dimensioning/results",
 } as const;
 
 type SearchParamValue =
