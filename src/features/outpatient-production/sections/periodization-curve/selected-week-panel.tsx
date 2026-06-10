@@ -45,7 +45,7 @@ export function SelectedWeekPanel(props: SelectedWeekPanelProps) {
 
       <Box sx={summaryGridSx}>
         <SummaryValue
-          label="Vårdtillfällen"
+          label="Vårdhändelser"
           value={formatOneDecimal(props.selectedPoint.adjustedVisits)}
         />
         <SummaryValue

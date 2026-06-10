@@ -55,7 +55,7 @@ export function PercentageInputRow(props: PercentageInputRowProps) {
           color: "primary.main",
         }}
       >
-        {formatOneDecimal(props.calculatedCareEvents)} vårdtillfällen
+        {formatOneDecimal(props.calculatedCareEvents)} vårdhändelser
       </Typography>
     </Box>
   );

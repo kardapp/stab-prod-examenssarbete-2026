@@ -62,7 +62,7 @@ export function OutpatientOoDistributionView() {
         <Stack spacing={2}>
           <PageHeader
             overline="Produktionsplanering öppenvård"
-            title="Fördelning av vårdtillfällen till OO"
+            title="Fördelning av vårdhändelser till OO"
           />
 
           {ooDistribution.isLoading ? (
@@ -127,7 +127,7 @@ function OoIntroSection() {
     <SectionCard>
       <FormSection
         overline="Steg 2"
-        title="Årets vårdtillfällen fördelas till vårdande enhet"
+        title="Årets vårdhändelser fördelas till vårdande enhet"
         description="Efter överenskommelse matas årets OO-fördelning in för hela volymen från produktionsplaneringen."
       />
       <Box sx={introGridSx}>
@@ -147,13 +147,13 @@ function ProductionBasisSection(props: {
     <SectionCard>
       <FormSection
         overline="Produktionsunderlag"
-        title="Vårdtillfällen från produktionsplaneringen"
+        title="Vårdhändelser från produktionsplaneringen"
         description="Det här är totalen du skrev in i produktionsplaneringen, summerad över yrkeskategorierna."
       />
 
       <Box sx={basisGridSx}>
         <MetricValue
-          label="Vårdtillfällen att fördela"
+          label="Vårdhändelser att fördela"
           value={formatWholeNumber(props.totalVisits)}
         />
         <MetricValue
@@ -188,7 +188,7 @@ function ProfessionalCategoriesSection(props: {
         <Box sx={professionalHeaderSx}>
           <HeaderCell>Primär yrkeskategori</HeaderCell>
           <HeaderCell>Sekundär yrkeskategori</HeaderCell>
-          <HeaderCell>Totala vårdtillfällen</HeaderCell>
+          <HeaderCell>Totala vårdhändelser</HeaderCell>
           <HeaderCell>Fördelat</HeaderCell>
         </Box>
 
@@ -210,7 +210,7 @@ function ProfessionalCategoriesSection(props: {
                 value={row.secondary_role_category || "Ej angiven"}
               />
               <TableValue
-                label="Totala vårdtillfällen"
+                label="Totala vårdhändelser"
                 value={formatWholeNumber(getAnnualVisits(row))}
                 strong
               />
@@ -266,7 +266,7 @@ function DistributionEditorSection(props: {
           <HeaderCell>Yrkeskategori</HeaderCell>
           <HeaderCell>Vårdande enhet</HeaderCell>
           <HeaderCell>Andel</HeaderCell>
-          <HeaderCell>Vårdtillfällen</HeaderCell>
+          <HeaderCell>Vårdhändelser</HeaderCell>
           <HeaderCell>Åtgärd</HeaderCell>
         </Box>
 
@@ -403,7 +403,7 @@ function DistributionRow(props: {
             fullWidth
           />
         </InputValue>
-        <InputValue label="Vårdtillfällen" hideLabelOnDesktop>
+        <InputValue label="Vårdhändelser" hideLabelOnDesktop>
           <TextField
             type="number"
             size="small"
@@ -464,7 +464,7 @@ function CareUnitTotalsSection(props: {
     <SectionCard>
       <FormSection
         overline="Summering"
-        title="Vårdtillfällen per vårdande enhet"
+        title="Vårdhändelser per vårdande enhet"
         description="Summerar alla fördelningsrader över yrkeskategorierna."
       />
 
@@ -488,7 +488,7 @@ function CareUnitTotalsSection(props: {
           <Box sx={tableStackSx}>
             <Box sx={careUnitTotalsHeaderSx}>
               <HeaderCell>Vårdande enhet</HeaderCell>
-              <HeaderCell>Vårdtillfällen</HeaderCell>
+              <HeaderCell>Vårdhändelser</HeaderCell>
               <HeaderCell>Andel av årsvolym</HeaderCell>
               <HeaderCell>Fördelningsrader</HeaderCell>
             </Box>
@@ -501,7 +501,7 @@ function CareUnitTotalsSection(props: {
                   strong
                 />
                 <TableValue
-                  label="Vårdtillfällen"
+                  label="Vårdhändelser"
                   value={formatOneDecimal(row.visits)}
                   strong
                 />
@@ -519,7 +519,7 @@ function CareUnitTotalsSection(props: {
         </Stack>
       ) : (
         <Typography color="text.secondary">
-          Ingen vårdande enhet har fördelade vårdtillfällen ännu.
+          Ingen vårdande enhet har fördelade vårdhändelser ännu.
         </Typography>
       )}
     </SectionCard>
@@ -675,7 +675,7 @@ function DistributionProgressSummary(props: {
           value={`${formatOneDecimal(props.summary.totalPercentage)}%`}
         />
         <ProgressMetric
-          label="Fördelade vårdtillfällen"
+          label="Fördelade vårdhändelser"
           value={formatOneDecimal(props.summary.distributedVisits)}
         />
         <ProgressMetric
@@ -696,7 +696,7 @@ function DistributionProgressSummary(props: {
             <HeaderCell>Yrkeskategori</HeaderCell>
             <HeaderCell>Total volym</HeaderCell>
             <HeaderCell>Fördelad andel</HeaderCell>
-            <HeaderCell>Vårdtillfällen</HeaderCell>
+            <HeaderCell>Vårdhändelser</HeaderCell>
             <HeaderCell>Avvikelse</HeaderCell>
           </Box>
 
@@ -756,7 +756,7 @@ function DistributionProgressSummary(props: {
                   </Box>
                 </Box>
                 <TableValue
-                  label="Fördelade vårdtillfällen"
+                  label="Fördelade vårdhändelser"
                   value={formatOneDecimal(status.distributedVisits)}
                 />
                 <TableValue label="Avvikelse" value={roleStatusLabel} strong />
@@ -992,7 +992,7 @@ function formatProductionRoleLabel(row: OutpatientProductionRow): string {
 function formatProductionRowOption(row: OutpatientProductionRow): string {
   return `${formatProductionRoleLabel(row)} · ${formatWholeNumber(
     getAnnualVisits(row)
-  )} totala vårdtillfällen`;
+  )} totala vårdhändelser`;
 }
 
 const introGridSx = {

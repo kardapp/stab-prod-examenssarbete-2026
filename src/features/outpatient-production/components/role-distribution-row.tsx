@@ -102,7 +102,7 @@ export function RoleDistributionRow(props: RoleDistributionRowProps) {
         variant="body2"
         sx={{ minWidth: 128, textAlign: { xs: "left", md: "right" } }}
       >
-        {formatOneDecimal(props.calculatedCareEvents)} vårdtillfällen
+        {formatOneDecimal(props.calculatedCareEvents)} vårdhändelser
       </Typography>
 
       <Button

@@ -183,7 +183,7 @@ export function validateOoDistribution(
       (row) => toNumber(row.percentage) < 0 || toNumber(row.visits) < 0
     )
   ) {
-    return "Andel eller vårdtillfällen kan inte vara negativt.";
+    return "Andel eller vårdhändelser kan inte vara negativt.";
   }
 
   if (
@@ -229,7 +229,7 @@ export function validateOoDistributionForAllRoles(
       (row) => toNumber(row.percentage) < 0 || toNumber(row.visits) < 0
     )
   ) {
-    return "Andel eller vårdtillfällen kan inte vara negativt.";
+    return "Andel eller vårdhändelser kan inte vara negativt.";
   }
 
   if (

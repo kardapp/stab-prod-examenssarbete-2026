@@ -19,7 +19,7 @@ export function PeriodizationSummaryCards(
   return (
     <Box sx={annualSummarySx}>
       <PeriodizationMetricValue
-        label="Årets vårdtillfällen"
+        label="Årets vårdhändelser"
         value={formatOneDecimal(props.summary.visits)}
       />
       <PeriodizationMetricValue

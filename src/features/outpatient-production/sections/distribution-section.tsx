@@ -49,7 +49,7 @@ export function DistributionSection(props: DistributionSectionProps) {
     <SectionCard>
       <FormSection
         overline="Steg 3"
-        title="Procentuell fördelning av vårdtillfällen"
+        title="Procentuell fördelning av vårdhändelser"
         description="SLL/UULP, akut/elektivt och yrkeskategorier bryter ner samma årsvolym."
       />
 

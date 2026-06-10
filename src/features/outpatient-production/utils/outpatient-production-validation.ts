@@ -17,7 +17,7 @@ export function validateOutpatientProductionForm(
   }
 
   if (Math.round(toNumber(formState.careEvents)) <= 0) {
-    errors.volume = "Antal vårdtillfällen måste vara ett positivt tal.";
+    errors.volume = "Antal vårdhändelser måste vara ett positivt tal.";
   }
 
   if (

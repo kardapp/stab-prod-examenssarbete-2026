@@ -36,14 +36,14 @@ export function CalculatedPreviewSection(
           value={`${formatOneDecimal(
             props.calculatedValues.sllCareEvents
           )} / ${formatOneDecimal(props.calculatedValues.uulpCareEvents)}`}
-          helperText="vårdtillfällen"
+          helperText="vårdhändelser"
         />
         <SummaryValueCard
           label="Akut / elektivt"
           value={`${formatOneDecimal(
             props.calculatedValues.acuteCareEvents
           )} / ${formatOneDecimal(props.calculatedValues.electiveCareEvents)}`}
-          helperText="vårdtillfällen"
+          helperText="vårdhändelser"
         />
         <SummaryValueCard
           label="DRG SLL"

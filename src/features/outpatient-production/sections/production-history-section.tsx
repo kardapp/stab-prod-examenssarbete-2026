@@ -81,7 +81,7 @@ export function ProductionHistorySection(
       <FormSection
         overline="Historik"
         title="Jämförelse mot tidigare år"
-        description={`Mockad femårshistorik för ${props.selectedKombika.code}: föregående års plan, vårdtillfällen, DRG-snitt och fördelningar.`}
+        description={`Mockad femårshistorik för ${props.selectedKombika.code}: föregående års plan, vårdhändelser, DRG-snitt och fördelningar.`}
       />
 
       {props.historyRows.length > 0 && latestRow ? (
@@ -124,12 +124,12 @@ export function ProductionHistorySection(
             <SummaryValueCard
               label="Plan föregående år"
               value={formatWholeNumber(latestRow.plannedCareEvents)}
-              helperText={`${latestRow.year}, vårdtillfällen`}
+              helperText={`${latestRow.year}, vårdhändelser`}
             />
             <SummaryValueCard
-              label="Vårdtillfällen"
+              label="Vårdhändelser"
               value={formatWholeNumber(latestRow.r12CareEvents)}
-              helperText={`${latestRow.year}, vårdtillfällen`}
+              helperText={`${latestRow.year}, vårdhändelser`}
             />
             <SummaryValueCard
               label="DRG-snitt"
@@ -139,7 +139,7 @@ export function ProductionHistorySection(
           </Box>
 
           <Box sx={chartGridSx}>
-            <ChartPanel title="Plan och vårdtillfällen">
+            <ChartPanel title="Plan och vårdhändelser">
               <ChartFrame>
                 <BarChart
                   height={280}
@@ -155,7 +155,7 @@ export function ProductionHistorySection(
                     },
                     {
                       data: selectedRows.map((row) => row.r12CareEvents),
-                      label: "Vårdtillfällen",
+                      label: "Vårdhändelser",
                       color: colors.careEvents,
                     },
                   ]}
@@ -242,7 +242,7 @@ export function ProductionHistorySection(
                 <TableRow>
                   <TableCell>År</TableCell>
                   <TableCell align="right">Plan föreg. år</TableCell>
-                  <TableCell align="right">Vårdtillfällen</TableCell>
+                  <TableCell align="right">Vårdhändelser</TableCell>
                   <TableCell align="right">DRG-snitt</TableCell>
                   <TableCell align="right">SLL / UULP</TableCell>
                   <TableCell align="right">Akut / elektivt</TableCell>

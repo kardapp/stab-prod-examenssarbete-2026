@@ -293,7 +293,7 @@ export function formatWeekTitle(point: WeeklyCurvePoint): string {
   return [
     `Vecka ${point.week}`,
     `Personalbehov ${formatTwoDecimals(point.adjustedStaffingNeed)} heltid`,
-    `${formatOneDecimal(point.adjustedVisits)} vårdtillfällen`,
+    `${formatOneDecimal(point.adjustedVisits)} vårdhändelser`,
     `Påverkan ${formatSignedPercentage(point.impactPercentage)}`,
   ].join(" · ");
 }

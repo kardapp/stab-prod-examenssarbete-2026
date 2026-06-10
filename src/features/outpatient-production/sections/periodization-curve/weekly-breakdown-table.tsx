@@ -54,7 +54,7 @@ export function WeeklyBreakdownTable(props: WeeklyBreakdownTableProps) {
               <TableRow>
                 <HeaderCell>Vårdande enhet</HeaderCell>
                 <HeaderCell>Yrkeskategori</HeaderCell>
-                <HeaderCell align="right">Vårdtillfällen</HeaderCell>
+                <HeaderCell align="right">Vårdhändelser</HeaderCell>
                 <HeaderCell align="right">Besökstid</HeaderCell>
                 {props.showDrg !== false ? (
                   <HeaderCell align="right">DRG</HeaderCell>
@@ -77,7 +77,7 @@ export function WeeklyBreakdownTable(props: WeeklyBreakdownTableProps) {
                   />
                   <BreakdownCell
                     align="right"
-                    label="Vårdtillfällen"
+                    label="Vårdhändelser"
                     value={formatOneDecimal(row.visits)}
                   />
                   <BreakdownCell

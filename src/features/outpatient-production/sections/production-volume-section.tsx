@@ -23,13 +23,13 @@ export function ProductionVolumeSection(props: ProductionVolumeSectionProps) {
     <SectionCard>
       <FormSection
         overline="Steg 2"
-        title="Antal vårdtillfällen"
-        description="Antal vårdtillfällen är huvudvolymen för vald kombika under året."
+        title="Antal vårdhändelser"
+        description="Antal vårdhändelser är huvudvolymen för vald kombika under året."
       />
 
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
         <TextField
-          label="Antal vårdtillfällen per år"
+          label="Antal vårdhändelser per år"
           type="number"
           value={props.careEvents}
           onChange={handleCareEventsChange}

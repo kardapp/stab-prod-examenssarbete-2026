@@ -7,8 +7,8 @@ huvudvolym med procentuella fördelningar.
 ## Flöde
 
 1. Välj ekonomisk kombika.
-2. Ange dag/datum och antal vårdtillfällen.
-3. Fördela vårdtillfällen procentuellt på SLL/UULP, akut/elektivt och yrkeskategorier.
+2. Ange dag/datum och antal vårdhändelser.
+3. Fördela vårdhändelser procentuellt på SLL/UULP, akut/elektivt och yrkeskategorier.
 4. Ange snitt-tid per besök.
 5. Ange DRG-snitt för SLL och UULP.
 6. Visa jämförelsevärden som stöddata.
@@ -17,7 +17,7 @@ huvudvolym med procentuella fördelningar.
 
 ## Huvudregel
 
-Antal vårdtillfällen är huvudvolymen. SLL/UULP, akut/elektivt och
+Antal vårdhändelser är huvudvolymen. SLL/UULP, akut/elektivt och
 yrkeskategorier är procentuella nedbrytningar av samma volym. Snitt-tid per
 besök och DRG-snitt är egna planeringsvärden.
 

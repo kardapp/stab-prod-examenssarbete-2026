@@ -56,7 +56,7 @@ export function DimensioningProductionBasis(
           value={props.productionBasis.sections.join(", ") || "Saknas"}
         />
         <SupportValue
-          label="Antal besök/vårdtillfällen per år"
+          label="Antal besök/vårdhändelser per år"
           value={formatWholeNumber(props.productionBasis.totalVisits)}
         />
         <SupportValue
