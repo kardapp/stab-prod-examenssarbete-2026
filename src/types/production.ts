@@ -24,6 +24,7 @@ export type OutpatientProductionRow = {
   sll_uulp: string | null;
   acute_elective: string | null;
   average_minutes_per_visit: number | null;
+  visit_time_comment: string | null;
   drg_average: string | null;
 
   annual_volume: number | null;

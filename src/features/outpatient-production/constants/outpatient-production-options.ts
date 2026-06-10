@@ -293,7 +293,7 @@ export const productionHistoryByKombikaId: Record<
 
 export const initialFormState: OutpatientProductionFormState = {
   selectedKombikaId: "",
-  careEvents: 5200,
+  careEvents: 55200,
   sllPercentage: 80,
   uulpPercentage: 20,
   acutePercentage: 30,
@@ -321,6 +321,7 @@ export const initialFormState: OutpatientProductionFormState = {
   visitTime: {
     visitType: "Nybesök",
     averageMinutes: 45,
+    comment: "",
   },
   drgAverage: {
     sll: 1.2,

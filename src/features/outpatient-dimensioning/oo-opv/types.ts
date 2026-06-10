@@ -18,6 +18,7 @@ export type OoDimensioningProductionRow = {
   supportVisitsForOtherRoles: number;
   averageMinutesPerVisit: number;
   sourceAverageMinutesPerVisit: number;
+  visitTimeComment: string;
   mondayVisits: number;
   tuesdayVisits: number;
   wednesdayVisits: number;
@@ -69,4 +70,5 @@ export type OoDimensioningBasis = {
   totalAnnualVisits: number;
   totalWeeklyVisits: number;
   averageMinutesPerVisit: number;
+  visitTimeComments: string[];
 };

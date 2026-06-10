@@ -44,6 +44,7 @@ CREATE TABLE outpatient_production_rows (
   sll_uulp TEXT,
   acute_elective TEXT,
   average_minutes_per_visit INTEGER,
+  visit_time_comment TEXT,
   drg_average NUMERIC(8,2),
 
   annual_volume INTEGER,

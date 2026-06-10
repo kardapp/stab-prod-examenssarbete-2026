@@ -230,6 +230,7 @@ export function useOutpatientProductionForm() {
               acute_elective:
                 formState.acutePercentage > 50 ? "Akut" : "Elektivt",
               average_minutes_per_visit: formState.visitTime.averageMinutes,
+              visit_time_comment: formState.visitTime.comment || undefined,
               drg_average:
                 formState.sllPercentage > 50
                   ? formState.drgAverage.sll

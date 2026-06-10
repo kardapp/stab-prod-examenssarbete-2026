@@ -4,12 +4,11 @@ import { Box, Container, Stack } from "@mui/material";
 import { PageHeader } from "@/shared/components/page-header";
 import { CalculatedPreviewSection } from "./calculated-preview-section";
 import { DistributionSection } from "./distribution-section";
-import { DrgAverageSection } from "./drg-average-section";
 import { KombikaSelectorSection } from "./kombika-selector-section";
+import { ProductionAssumptionsSection } from "./production-assumptions-section";
 import { ProductionActionsSection } from "./production-actions-section";
 import { ProductionHistorySection } from "./production-history-section";
 import { ProductionVolumeSection } from "./production-volume-section";
-import { VisitTimeSection } from "./visit-time-section";
 import { useOutpatientProductionForm } from "../hooks/use-outpatient-production-form";
 
 export function OutpatientProductionView() {
@@ -60,20 +59,20 @@ export function OutpatientProductionView() {
                 onRemoveRoleDistribution={production.removeRoleDistribution}
               />
 
-              <VisitTimeSection
-                visitTime={production.formState.visitTime}
-                validationMessage={getValidationMessage("visitTime")}
-                onVisitTimeChange={production.handleVisitTimeChange}
-              />
-
-              <DrgAverageSection
+              <ProductionAssumptionsSection
                 drgAverage={production.formState.drgAverage}
-                validationMessage={getValidationMessage("drgAverage")}
+                drgAverageValidationMessage={getValidationMessage(
+                  "drgAverage"
+                )}
+                visitTime={production.formState.visitTime}
+                visitTimeValidationMessage={getValidationMessage("visitTime")}
                 onDrgAverageChange={production.handleDrgAverageChange}
+                onVisitTimeChange={production.handleVisitTimeChange}
               />
 
               <CalculatedPreviewSection
                 calculatedValues={production.calculatedValues}
+                visitTimeComment={production.formState.visitTime.comment}
               />
 
               <ProductionHistorySection

@@ -18,6 +18,7 @@ export type RoleDistribution = {
 export type VisitTimeInput = {
   visitType: string;
   averageMinutes: number;
+  comment: string;
 };
 
 export type DrgAverageInput = {

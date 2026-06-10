@@ -22,6 +22,7 @@ type CreateOutpatientProductionRowPayload = {
   sll_uulp?: string;
   acute_elective?: string;
   average_minutes_per_visit?: number;
+  visit_time_comment?: string;
   drg_average?: number;
 };
 
@@ -100,6 +101,7 @@ export async function GET(request: Request) {
         rows.sll_uulp,
         rows.acute_elective,
         rows.average_minutes_per_visit,
+        rows.visit_time_comment,
         rows.drg_average,
         rows.annual_volume,
         rows.acute_percentage,
@@ -159,6 +161,11 @@ async function ensureOutpatientProductionRowSchema() {
   await db.query(`
     ALTER TABLE outpatient_production_rows
       ADD COLUMN IF NOT EXISTS oo_distribution_status TEXT DEFAULT 'Ej fördelad'
+  `);
+
+  await db.query(`
+    ALTER TABLE outpatient_production_rows
+      ADD COLUMN IF NOT EXISTS visit_time_comment TEXT
   `);
 
   await db.query(`
@@ -275,6 +282,7 @@ export async function POST(request: Request) {
           sll_uulp,
           acute_elective,
           average_minutes_per_visit,
+          visit_time_comment,
           drg_average,
           annual_volume,
           acute_percentage,
@@ -291,7 +299,7 @@ export async function POST(request: Request) {
           $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
           $11, $12, $13, $14, $15, $16, $17, $18,
           $19, $20, $21, $22, $23, $24, $25, $26,
-          $27, $28, $29
+          $27, $28, $29, $30
         )
         RETURNING
           id,
@@ -309,6 +317,7 @@ export async function POST(request: Request) {
           sll_uulp,
           acute_elective,
           average_minutes_per_visit,
+          visit_time_comment,
           drg_average,
           annual_volume
       `,
@@ -331,6 +340,7 @@ export async function POST(request: Request) {
         body.sll_uulp,
         body.acute_elective,
         averageMinutesPerVisit,
+        body.visit_time_comment?.trim() || null,
         drgAverage,
         annualVolume,
         acutePercentage,
@@ -425,16 +435,17 @@ export async function PATCH(request: Request) {
           sll_uulp = $14,
           acute_elective = $15,
           average_minutes_per_visit = $16,
-          drg_average = $17,
-          annual_volume = $18,
-          acute_percentage = $19,
-          elective_percentage = $20,
-          sll_percentage = $21,
-          uulp_percentage = $22,
-          drg_average_sll = $23,
-          drg_average_uulp = $24,
+          visit_time_comment = $17,
+          drg_average = $18,
+          annual_volume = $19,
+          acute_percentage = $20,
+          elective_percentage = $21,
+          sll_percentage = $22,
+          uulp_percentage = $23,
+          drg_average_sll = $24,
+          drg_average_uulp = $25,
           updated_at = CURRENT_TIMESTAMP
-        WHERE id = $25
+        WHERE id = $26
         RETURNING id
       `,
       [
@@ -454,6 +465,7 @@ export async function PATCH(request: Request) {
         body.sll_uulp,
         body.acute_elective,
         averageMinutesPerVisit,
+        body.visit_time_comment?.trim() || null,
         drgAverage,
         annualVolume,
         acutePercentage,

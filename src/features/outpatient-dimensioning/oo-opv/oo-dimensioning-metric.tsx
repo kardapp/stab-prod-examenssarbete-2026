@@ -12,7 +12,13 @@ export function OoDimensioningMetric(props: OoDimensioningMetricProps) {
       <Typography variant="caption" color="text.secondary">
         {props.label}
       </Typography>
-      <Typography sx={{ color: "#005883", fontWeight: 700 }}>
+      <Typography
+        sx={{
+          color: "#005883",
+          fontWeight: 700,
+          overflowWrap: "anywhere",
+        }}
+      >
         {props.value}
       </Typography>
       {props.helperText ? (

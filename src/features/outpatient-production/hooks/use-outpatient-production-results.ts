@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { OutpatientProductionRow } from "@/types/production";
+import type { ProductionPlanningVisitTimeComment } from "../types/outpatient-production-results.types";
 import type { SavedOoDistributionRow } from "../types/outpatient-oo-distribution.types";
 import { comparisonValuesByKombikaId } from "../constants/outpatient-production-options";
 import {
@@ -113,6 +114,11 @@ export function useOutpatientProductionResults() {
     [periodizedRows]
   );
 
+  const visitTimeComments = useMemo(
+    () => buildVisitTimeComments(productionRows),
+    [productionRows]
+  );
+
   return {
     annualRows: resultRows,
     comparisonRows,
@@ -120,5 +126,52 @@ export function useOutpatientProductionResults() {
     isLoading,
     resultRows,
     summary,
+    visitTimeComments,
   };
+}
+
+function buildVisitTimeComments(
+  productionRows: OutpatientProductionRow[]
+): ProductionPlanningVisitTimeComment[] {
+  const commentsByKey = new Map<string, ProductionPlanningVisitTimeComment>();
+
+  productionRows.forEach((row) => {
+    const comment = row.visit_time_comment?.trim();
+
+    if (!comment) {
+      return;
+    }
+
+    const economicKombika =
+      [row.kombika_pf_id, row.kombika_pf].filter(Boolean).join(" - ") ||
+      "Saknas";
+    const visitType = row.visit_type ?? "Saknas";
+    const averageMinutesPerVisit = Number(row.average_minutes_per_visit ?? 0);
+    const key = [
+      economicKombika,
+      visitType,
+      averageMinutesPerVisit,
+      comment,
+    ].join("|");
+    const current = commentsByKey.get(key);
+
+    if (current) {
+      commentsByKey.set(key, {
+        ...current,
+        rowLabels: [...current.rowLabels, row.row_label],
+      });
+      return;
+    }
+
+    commentsByKey.set(key, {
+      id: key,
+      averageMinutesPerVisit,
+      comment,
+      economicKombika,
+      rowLabels: [row.row_label],
+      visitType,
+    });
+  });
+
+  return Array.from(commentsByKey.values());
 }

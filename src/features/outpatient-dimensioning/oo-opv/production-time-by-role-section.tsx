@@ -75,6 +75,12 @@ export function ProductionTimeByRoleSection(
           label="Snitt-tid från plan"
           value={`${formatTwoDecimals(props.basis.averageMinutesPerVisit)} min`}
         />
+        {props.basis.visitTimeComments.length > 0 ? (
+          <OoDimensioningMetric
+            label="Kommentar besökstid"
+            value={props.basis.visitTimeComments.join(" · ")}
+          />
+        ) : null}
       </Box>
 
       <Typography variant="subtitle2" sx={subheadingSx}>
@@ -149,6 +155,12 @@ export function ProductionTimeByRoleSection(
                           row.sourceAverageMinutesPerVisit
                         )} min`}
                       />
+                      {row.visitTimeComment ? (
+                        <OoDimensioningMetric
+                          label="Kommentar besökstid"
+                          value={row.visitTimeComment}
+                        />
+                      ) : null}
                     </Box>
                   </Box>
 

@@ -15,7 +15,10 @@ import { SectionCard } from "@/shared/components/section-card";
 import { appRoutes } from "@/shared/routes";
 import { formatOneDecimal } from "@/shared/utils/format-number";
 import { useOutpatientProductionResults } from "../hooks/use-outpatient-production-results";
-import type { ProductionPlanningComparisonRow } from "../types/outpatient-production-results.types";
+import type {
+  ProductionPlanningComparisonRow,
+  ProductionPlanningVisitTimeComment,
+} from "../types/outpatient-production-results.types";
 import { formatComparisonEconomicUnit } from "../utils/outpatient-production-results-calculations";
 
 export function OutpatientProductionResultsView() {
@@ -54,6 +57,10 @@ export function OutpatientProductionResultsView() {
                     </Alert>
                   ) : null}
 
+                  <VisitTimeCommentsSection
+                    comments={results.visitTimeComments}
+                  />
+
                   <ComparisonSection rows={results.comparisonRows} />
                 </>
               )}
@@ -64,6 +71,41 @@ export function OutpatientProductionResultsView() {
         </Stack>
       </Container>
     </Box>
+  );
+}
+
+function VisitTimeCommentsSection(props: {
+  comments: ProductionPlanningVisitTimeComment[];
+}) {
+  if (props.comments.length === 0) {
+    return null;
+  }
+
+  return (
+    <SectionCard>
+      <FormSection
+        overline="Kommentar"
+        title="Kommentarer om besökstid"
+        description="Kommentarer som sparades tillsammans med snitt-tiden i produktionsplaneringen."
+      />
+
+      <Box sx={commentListSx}>
+        {props.comments.map((comment) => (
+          <Box key={comment.id} sx={commentItemSx}>
+            <Typography variant="caption" color="text.secondary">
+              {comment.economicKombika} · {comment.visitType} ·{" "}
+              {formatOneDecimal(comment.averageMinutesPerVisit)} min
+            </Typography>
+            <Typography sx={{ overflowWrap: "anywhere" }}>
+              {comment.comment}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {comment.rowLabels.join(", ")}
+            </Typography>
+          </Box>
+        ))}
+      </Box>
+    </SectionCard>
   );
 }
 
@@ -247,6 +289,20 @@ const comparisonSummaryGridSx = {
   },
   gap: 1.5,
   mb: 2,
+};
+
+const commentListSx = {
+  display: "grid",
+  gap: 1,
+};
+
+const commentItemSx = {
+  bgcolor: "var(--section-background)",
+  border: "1px solid var(--color-border)",
+  borderRadius: 1,
+  display: "grid",
+  gap: 0.35,
+  p: 1.5,
 };
 
 const baseResultRowSx = {

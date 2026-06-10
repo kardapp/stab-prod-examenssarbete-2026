@@ -7,6 +7,7 @@ import type { OutpatientProductionCalculatedValues } from "../types/outpatient-p
 
 type CalculatedPreviewSectionProps = {
   calculatedValues: OutpatientProductionCalculatedValues;
+  visitTimeComment: string;
 };
 
 export function CalculatedPreviewSection(
@@ -55,6 +56,17 @@ export function CalculatedPreviewSection(
         />
       </Box>
 
+      {props.visitTimeComment.trim() ? (
+        <Box sx={commentSx}>
+          <Typography variant="caption" color="text.secondary">
+            Kommentar besökstid
+          </Typography>
+          <Typography sx={{ overflowWrap: "anywhere" }}>
+            {props.visitTimeComment}
+          </Typography>
+        </Box>
+      ) : null}
+
       <Stack spacing={1} sx={{ mt: 2 }}>
         <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
           Fördelat antal per yrkeskategori
@@ -89,4 +101,14 @@ const summaryGridSx = {
     md: "repeat(3, minmax(0, 1fr))",
   },
   gap: 1.5,
+};
+
+const commentSx = {
+  bgcolor: "var(--section-background)",
+  border: "1px solid var(--color-border)",
+  borderRadius: 1,
+  display: "grid",
+  gap: 0.25,
+  mt: 1.5,
+  p: 1.5,
 };

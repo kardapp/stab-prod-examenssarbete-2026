@@ -29,6 +29,9 @@ type DimensioningProductionBasisProps = {
 export function DimensioningProductionBasis(
   props: DimensioningProductionBasisProps
 ) {
+  const visitTimeComments = getUniqueVisitTimeComments(props.rows);
+  const hasVisitTimeComments = visitTimeComments.length > 0;
+
   return (
     <SectionCard>
       <Stack
@@ -65,6 +68,12 @@ export function DimensioningProductionBasis(
             props.productionBasis.averageMinutesPerVisit
           )} min`}
         />
+        {hasVisitTimeComments ? (
+          <SupportValue
+            label="Kommentar besökstid"
+            value={visitTimeComments.join(" · ")}
+          />
+        ) : null}
         <SupportValue
           label="Typ av besök"
           value={props.productionBasis.visitTypes.join(", ") || "Saknas"}
@@ -112,6 +121,11 @@ export function DimensioningProductionBasis(
                 <TableCell sx={headerCellSx} align="right">
                   Snitt-tid
                 </TableCell>
+                {hasVisitTimeComments ? (
+                  <TableCell sx={headerCellSx}>
+                    Kommentar besökstid
+                  </TableCell>
+                ) : null}
                 <TableCell sx={headerCellSx}>Primär roll</TableCell>
                 <TableCell sx={headerCellSx}>Sekundär roll</TableCell>
               </TableRow>
@@ -130,6 +144,9 @@ export function DimensioningProductionBasis(
                   <TableCell align="right">
                     {formatWholeNumber(row.average_minutes_per_visit ?? 0)} min
                   </TableCell>
+                  {hasVisitTimeComments ? (
+                    <TableCell>{row.visit_time_comment ?? "-"}</TableCell>
+                  ) : null}
                   <TableCell>{row.primary_role_category}</TableCell>
                   <TableCell>{row.secondary_role_category ?? "-"}</TableCell>
                 </TableRow>
@@ -142,13 +159,29 @@ export function DimensioningProductionBasis(
   );
 }
 
+function getUniqueVisitTimeComments(rows: OutpatientProductionRow[]): string[] {
+  return Array.from(
+    new Set(
+      rows
+        .map((row) => row.visit_time_comment?.trim())
+        .filter((comment): comment is string => Boolean(comment))
+    )
+  );
+}
+
 function SupportValue(props: { label: string; value: string }) {
   return (
     <Stack spacing={0.25}>
       <Typography variant="caption" color="text.secondary">
         {props.label}
       </Typography>
-      <Typography sx={{ color: "#005883", fontWeight: 700 }}>
+      <Typography
+        sx={{
+          color: "#005883",
+          fontWeight: 700,
+          overflowWrap: "anywhere",
+        }}
+      >
         {props.value}
       </Typography>
     </Stack>

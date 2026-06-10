@@ -207,6 +207,7 @@ export function calculateOoDimensioningBasis(
     totalWeeklyVisits,
     averageMinutesPerVisit:
       totalAnnualVisits > 0 ? weightedMinutes / totalAnnualVisits : 0,
+    visitTimeComments: uniqueTexts(rows.map((row) => row.visitTimeComment)),
   };
 }
 
@@ -347,6 +348,7 @@ function createOoProductionRow(
     supportVisitsForOtherRoles: 0,
     averageMinutesPerVisit,
     sourceAverageMinutesPerVisit: averageMinutesPerVisit,
+    visitTimeComment: productionRow.visit_time_comment?.trim() ?? "",
     mondayVisits: weekdayVisitShare,
     tuesdayVisits: weekdayVisitShare,
     wednesdayVisits: weekdayVisitShare,

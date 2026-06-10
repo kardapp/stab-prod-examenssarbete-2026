@@ -34,6 +34,15 @@ export type ProductionPlanningResultSummary = {
   undistributedRows: number;
 };
 
+export type ProductionPlanningVisitTimeComment = {
+  id: string;
+  averageMinutesPerVisit: number;
+  comment: string;
+  economicKombika: string;
+  rowLabels: string[];
+  visitType: string;
+};
+
 export type ProductionPlanningComparisonRow = {
   id: string;
   economicKombikaId: string;
