@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { type ReactNode, useMemo, useSyncExternalStore } from "react";
 import {
   Alert,
   Box,
@@ -11,6 +11,7 @@ import {
   TableCell,
   TableHead,
   TableRow,
+  Typography,
 } from "@mui/material";
 import { FormSection } from "@/shared/components/form-section";
 import { PageHeader } from "@/shared/components/page-header";
@@ -22,10 +23,6 @@ import {
 } from "@/shared/utils/format-number";
 import type {
   InpatientDimensioningResultRow,
-  InpatientMeDimensioningRow,
-  InpatientOoDimensioningRow,
-  InpatientOoDimensioningSettings,
-  InpatientOoDistributionRow,
   InpatientProductionRow,
 } from "../types/inpatient.types";
 import {
@@ -41,33 +38,62 @@ import {
   readCurrentInpatientProductionRow,
 } from "../utils/current-inpatient-session";
 
+const MONTHS_PER_YEAR = 12;
+
+type AggregatedResultRow = {
+  id: string;
+  label: string;
+  secondaryLabel?: string;
+  presence: number;
+  staffingCost: number;
+};
+
+type ResultTableCell = {
+  align?: "left" | "right";
+  value: string;
+};
+
 export function InpatientDimensioningResultsView() {
-  const [productionRow] = useState<InpatientProductionRow | null>(() =>
-    readCurrentInpatientProductionRow()
+  const hasLoadedSession = useSyncExternalStore(
+    subscribeToClientHydration,
+    getClientHydrationSnapshot,
+    getServerHydrationSnapshot
   );
-  const [distributions] = useState<InpatientOoDistributionRow[]>(() =>
-    readCurrentInpatientOoDistributions()
-  );
-  const [meRows] = useState<InpatientMeDimensioningRow[]>(() =>
-    readCurrentInpatientMeDimensioningRows()
-  );
-  const [ooRows] = useState<InpatientOoDimensioningRow[]>(() =>
-    readCurrentInpatientOoDimensioningRows()
-  );
-  const [ooSettings] = useState<InpatientOoDimensioningSettings>(() =>
-    readCurrentInpatientOoDimensioningSettings()
-  );
+  const session = useMemo(() => {
+    if (!hasLoadedSession) {
+      return {
+        distributions: [],
+        meRows: [],
+        ooRows: [],
+        ooSettings: null,
+        productionRow: null,
+      };
+    }
+
+    return {
+      distributions: readCurrentInpatientOoDistributions(),
+      meRows: readCurrentInpatientMeDimensioningRows(),
+      ooRows: readCurrentInpatientOoDimensioningRows(),
+      ooSettings: readCurrentInpatientOoDimensioningSettings(),
+      productionRow: readCurrentInpatientProductionRow(),
+    };
+  }, [hasLoadedSession]);
 
   const annualRows = useMemo(
-    () =>
-      buildInpatientDimensioningResultRows({
-        productionRow,
-        distributions,
-        meRows,
-        ooRows,
-        ooSettings,
-      }),
-    [distributions, meRows, ooRows, ooSettings, productionRow]
+    () => {
+      if (!session.ooSettings) {
+        return [];
+      }
+
+      return buildInpatientDimensioningResultRows({
+        productionRow: session.productionRow,
+        distributions: session.distributions,
+        meRows: session.meRows,
+        ooRows: session.ooRows,
+        ooSettings: session.ooSettings,
+      });
+    },
+    [session]
   );
   const monthlyRows = useMemo(
     () => buildMonthlyDimensioningRows(annualRows),
@@ -88,66 +114,35 @@ export function InpatientDimensioningResultsView() {
             title="Resultat dimensionering slutenvård"
           />
 
-          {!productionRow ? (
+          {!hasLoadedSession ? (
+            <SectionCard>
+              <Typography variant="body2" color="text.secondary">
+                Laddar resultat...
+              </Typography>
+            </SectionCard>
+          ) : !session.productionRow ? (
             <Alert severity="info">
               Spara en produktionsplan för slutenvård innan resultat visas.
             </Alert>
           ) : (
             <>
-              <SectionCard>
-                <FormSection
-                  overline="1. Sammanfattning"
-                  title="Närvaro och bemanningskostnader"
-                />
-                <Box sx={metricGridSx}>
-                  <PlanningMetricCard
-                    label="Total närvaro"
-                    value={formatTwoDecimals(totalPresence)}
-                  />
-                  <PlanningMetricCard
-                    label="Bemanningskostnad"
-                    value={`${formatWholeNumber(totalStaffingCost)} kr`}
-                  />
-                  <PlanningMetricCard
-                    label="Kostnad per DRG"
-                    value={`${formatWholeNumber(
-                      calculateCostPerValue(
-                        totalStaffingCost,
-                        productionRow.drgPoints
-                      )
-                    )} kr`}
-                  />
-                  <PlanningMetricCard
-                    label="Kostnad per vårddygn"
-                    value={`${formatWholeNumber(
-                      calculateCostPerValue(
-                        totalStaffingCost,
-                        productionRow.careDays
-                      )
-                    )} kr`}
-                  />
-                  <PlanningMetricCard
-                    label="Kostnad per vårdplats"
-                    value={`${formatWholeNumber(
-                      calculateCostPerValue(
-                        totalStaffingCost,
-                        productionRow.averageCarePlaces
-                      )
-                    )} kr`}
-                  />
-                </Box>
-              </SectionCard>
-
-              <ResultTable
-                overline="2. Närvaro"
-                title="Närvaro per område"
-                rows={annualRows}
+              <PresenceSection
+                annualRows={annualRows}
+                monthlyRows={monthlyRows}
+                totalPresence={totalPresence}
               />
 
-              <ResultTable
-                overline="3. Månad"
-                title="Periodisering per månad"
-                rows={monthlyRows}
+              <StaffingCostSection
+                annualRows={annualRows}
+                monthlyRows={monthlyRows}
+                totalStaffingCost={totalStaffingCost}
+              />
+
+              <CostPerProductionSection
+                annualRows={annualRows}
+                monthlyRows={monthlyRows}
+                productionRow={session.productionRow}
+                totalStaffingCost={totalStaffingCost}
               />
             </>
           )}
@@ -157,56 +152,544 @@ export function InpatientDimensioningResultsView() {
   );
 }
 
-function ResultTable(props: {
-  overline: string;
-  rows: InpatientDimensioningResultRow[];
+function subscribeToClientHydration() {
+  return () => undefined;
+}
+
+function getClientHydrationSnapshot() {
+  return true;
+}
+
+function getServerHydrationSnapshot() {
+  return false;
+}
+
+function PresenceSection(props: {
+  annualRows: InpatientDimensioningResultRow[];
+  monthlyRows: InpatientDimensioningResultRow[];
+  totalPresence: number;
+}) {
+  const categoryRows = groupRows(
+    props.annualRows,
+    (row) => row.category,
+    (row) => ({ label: row.category })
+  );
+  const sectionRows = groupRows(
+    props.annualRows,
+    (row) => `${row.section}|${row.careProvidingUnit}`,
+    (row) => ({
+      label: row.section,
+      secondaryLabel: row.careProvidingUnit,
+    })
+  );
+  const monthRows = groupRows(
+    props.monthlyRows,
+    (row) => row.month,
+    (row) => ({ label: row.month })
+  );
+  const areaRows = groupRows(
+    props.annualRows,
+    (row) => formatArea(row),
+    (row) => ({ label: formatArea(row) })
+  );
+
+  return (
+    <SectionCard>
+      <FormSection
+        overline="1. Närvaro"
+        title="Närvaro"
+        description="Dimensionerad närvaro summerad på de nivåer användaren jämför mot."
+      />
+      <Box sx={metricGridSx}>
+        <PlanningMetricCard
+          label="Total närvaro"
+          value={formatTwoDecimals(props.totalPresence)}
+        />
+      </Box>
+
+      <Stack spacing={2.5}>
+        <ResultSubSection title="Per yrkeskategori">
+          <ResultTable
+            emptyText="Det finns inga närvarorader ännu."
+            headers={["Yrkeskategori", "Närvaro"]}
+            rows={categoryRows.map((row) => ({
+              id: `presence-category-${row.id}`,
+              cells: [
+                { value: row.label },
+                { value: formatTwoDecimals(row.presence), align: "right" },
+              ],
+            }))}
+          />
+        </ResultSubSection>
+
+        <ResultSubSection title="Per ekonomisk sektion samt vårdande kostnadsställe">
+          <ResultTable
+            emptyText="Det finns inga sektionsrader ännu."
+            headers={[
+              "Ekonomisk sektion",
+              "Vårdande kostnadsställe",
+              "Närvaro",
+            ]}
+            rows={sectionRows.map((row) => ({
+              id: `presence-section-${row.id}`,
+              cells: [
+                { value: row.label },
+                { value: row.secondaryLabel ?? "" },
+                { value: formatTwoDecimals(row.presence), align: "right" },
+              ],
+            }))}
+          />
+        </ResultSubSection>
+
+        <ResultSubSection
+          title="Per månad"
+          description="ProdN och lönekostnad finns på månadsnivå, därför visas månad som egen sammanställning."
+        >
+          <ResultTable
+            emptyText="Det finns inga månadsrader ännu."
+            headers={["Månad", "Närvaro"]}
+            rows={monthRows.map((row) => ({
+              id: `presence-month-${row.id}`,
+              cells: [
+                { value: row.label },
+                { value: formatTwoDecimals(row.presence), align: "right" },
+              ],
+            }))}
+          />
+        </ResultSubSection>
+
+        <ResultSubSection title="Per område">
+          <ResultTable
+            emptyText="Det finns inga områdesrader ännu."
+            headers={["Område", "Närvaro"]}
+            rows={areaRows.map((row) => ({
+              id: `presence-area-${row.id}`,
+              cells: [
+                { value: row.label },
+                { value: formatTwoDecimals(row.presence), align: "right" },
+              ],
+            }))}
+          />
+        </ResultSubSection>
+      </Stack>
+    </SectionCard>
+  );
+}
+
+function StaffingCostSection(props: {
+  annualRows: InpatientDimensioningResultRow[];
+  monthlyRows: InpatientDimensioningResultRow[];
+  totalStaffingCost: number;
+}) {
+  const categoryRows = groupRows(
+    props.annualRows,
+    (row) => row.category,
+    (row) => ({ label: row.category })
+  );
+  const sectionRows = groupRows(
+    props.annualRows,
+    (row) => `${row.section}|${row.careProvidingUnit}`,
+    (row) => ({
+      label: row.section,
+      secondaryLabel: row.careProvidingUnit,
+    })
+  );
+  const monthRows = groupRows(
+    props.monthlyRows,
+    (row) => row.month,
+    (row) => ({ label: row.month })
+  );
+  const areaRows = groupRows(
+    props.annualRows,
+    (row) => formatArea(row),
+    (row) => ({ label: formatArea(row) })
+  );
+
+  return (
+    <SectionCard>
+      <FormSection
+        overline="2. Bemanningskostnader"
+        title="Bemanningskostnader"
+        description="Bemanningskostnad summerad på samma nivåer som närvaron."
+      />
+      <Box sx={metricGridSx}>
+        <PlanningMetricCard
+          label="Total bemanningskostnad"
+          value={formatCurrency(props.totalStaffingCost)}
+        />
+      </Box>
+
+      <Stack spacing={2.5}>
+        <ResultSubSection title="Per yrkeskategori">
+          <ResultTable
+            emptyText="Det finns inga kostnadsrader ännu."
+            headers={["Yrkeskategori", "Närvaro", "Bemanningskostnad"]}
+            rows={categoryRows.map((row) => ({
+              id: `staffing-category-${row.id}`,
+              cells: [
+                { value: row.label },
+                { value: formatTwoDecimals(row.presence), align: "right" },
+                { value: formatCurrency(row.staffingCost), align: "right" },
+              ],
+            }))}
+          />
+        </ResultSubSection>
+
+        <ResultSubSection title="Per ekonomisk sektion samt vårdande kostnadsställe">
+          <ResultTable
+            emptyText="Det finns inga sektionsrader ännu."
+            headers={[
+              "Ekonomisk sektion",
+              "Vårdande kostnadsställe",
+              "Bemanningskostnad",
+            ]}
+            rows={sectionRows.map((row) => ({
+              id: `staffing-section-${row.id}`,
+              cells: [
+                { value: row.label },
+                { value: row.secondaryLabel ?? "" },
+                { value: formatCurrency(row.staffingCost), align: "right" },
+              ],
+            }))}
+          />
+        </ResultSubSection>
+
+        <ResultSubSection title="Per månad">
+          <ResultTable
+            emptyText="Det finns inga månadsrader ännu."
+            headers={["Månad", "Bemanningskostnad"]}
+            rows={monthRows.map((row) => ({
+              id: `staffing-month-${row.id}`,
+              cells: [
+                { value: row.label },
+                { value: formatCurrency(row.staffingCost), align: "right" },
+              ],
+            }))}
+          />
+        </ResultSubSection>
+
+        <ResultSubSection title="Per område">
+          <ResultTable
+            emptyText="Det finns inga områdesrader ännu."
+            headers={["Område", "Bemanningskostnad"]}
+            rows={areaRows.map((row) => ({
+              id: `staffing-area-${row.id}`,
+              cells: [
+                { value: row.label },
+                { value: formatCurrency(row.staffingCost), align: "right" },
+              ],
+            }))}
+          />
+        </ResultSubSection>
+      </Stack>
+    </SectionCard>
+  );
+}
+
+function CostPerProductionSection(props: {
+  annualRows: InpatientDimensioningResultRow[];
+  monthlyRows: InpatientDimensioningResultRow[];
+  productionRow: InpatientProductionRow;
+  totalStaffingCost: number;
+}) {
+  const monthlyDrgPoints = props.productionRow.drgPoints / MONTHS_PER_YEAR;
+  const monthlyCareDays = props.productionRow.careDays / MONTHS_PER_YEAR;
+  const categoryRows = groupRows(
+    props.annualRows,
+    (row) => row.category,
+    (row) => ({ label: row.category })
+  );
+  const sectionRows = groupRows(
+    props.annualRows,
+    (row) => `${row.section}|${row.careProvidingUnit}`,
+    (row) => ({
+      label: row.section,
+      secondaryLabel: row.careProvidingUnit,
+    })
+  );
+  const monthRows = groupRows(
+    props.monthlyRows,
+    (row) => row.month,
+    (row) => ({ label: row.month })
+  );
+
+  return (
+    <SectionCard>
+      <FormSection
+        overline="3. Bemanningskostnader per DRG/vårddygn/vårdplats"
+        title="Bemanningskostnader per DRG/vårddygn/vårdplats"
+        description="Nyckeltal som jämför bemanningskostnad mot slutenvårdens produktionsmått."
+      />
+      <Box sx={metricGridSx}>
+        <PlanningMetricCard
+          label="Kostnad per DRG"
+          value={formatCurrency(
+            calculateCostPerValue(
+              props.totalStaffingCost,
+              props.productionRow.drgPoints
+            )
+          )}
+        />
+        <PlanningMetricCard
+          label="Kostnad per vårddygn"
+          value={formatCurrency(
+            calculateCostPerValue(
+              props.totalStaffingCost,
+              props.productionRow.careDays
+            )
+          )}
+        />
+        <PlanningMetricCard
+          label="Kostnad per vårdplats"
+          value={formatCurrency(
+            calculateCostPerValue(
+              props.totalStaffingCost,
+              props.productionRow.averageCarePlaces
+            )
+          )}
+        />
+      </Box>
+
+      <Stack spacing={2.5}>
+        <ResultSubSection title="Per yrkeskategori">
+          <ProductionCostTable
+            rows={categoryRows}
+            drgPoints={props.productionRow.drgPoints}
+            careDays={props.productionRow.careDays}
+            averageCarePlaces={props.productionRow.averageCarePlaces}
+            firstHeader="Yrkeskategori"
+            rowIdPrefix="production-cost-category"
+          />
+        </ResultSubSection>
+
+        <ResultSubSection title="Per ekonomisk sektion samt vårdande kostnadsställe">
+          <ProductionCostTable
+            rows={sectionRows}
+            drgPoints={props.productionRow.drgPoints}
+            careDays={props.productionRow.careDays}
+            averageCarePlaces={props.productionRow.averageCarePlaces}
+            firstHeader="Ekonomisk sektion"
+            includeSecondaryLabel
+            rowIdPrefix="production-cost-section"
+          />
+        </ResultSubSection>
+
+        <ResultSubSection title="Per månad">
+          <ProductionCostTable
+            rows={monthRows}
+            drgPoints={monthlyDrgPoints}
+            careDays={monthlyCareDays}
+            averageCarePlaces={props.productionRow.averageCarePlaces}
+            firstHeader="Månad"
+            includeProductionVolumes
+            rowIdPrefix="production-cost-month"
+          />
+        </ResultSubSection>
+      </Stack>
+    </SectionCard>
+  );
+}
+
+function ProductionCostTable(props: {
+  averageCarePlaces: number;
+  careDays: number;
+  drgPoints: number;
+  firstHeader: string;
+  includeProductionVolumes?: boolean;
+  includeSecondaryLabel?: boolean;
+  rowIdPrefix: string;
+  rows: AggregatedResultRow[];
+}) {
+  const headers = [
+    props.firstHeader,
+    ...(props.includeSecondaryLabel ? ["Vårdande kostnadsställe"] : []),
+    "Bemanningskostnad",
+    ...(props.includeProductionVolumes ? ["DRG"] : []),
+    "Kostnad per DRG",
+    ...(props.includeProductionVolumes ? ["Vårddygn"] : []),
+    "Kostnad per vårddygn",
+    ...(props.includeProductionVolumes ? ["Vårdplats"] : []),
+    "Kostnad per vårdplats",
+  ];
+
+  return (
+    <ResultTable
+      emptyText="Det finns inga nyckeltalsrader ännu."
+      headers={headers}
+      rows={props.rows.map((row) => {
+        const cells: ResultTableCell[] = [
+          textCell(row.label),
+          ...(props.includeSecondaryLabel
+            ? [textCell(row.secondaryLabel ?? "")]
+            : []),
+          rightCell(formatCurrency(row.staffingCost)),
+          ...(props.includeProductionVolumes
+            ? [rightCell(formatTwoDecimals(props.drgPoints))]
+            : []),
+          rightCell(
+            formatCurrency(
+              calculateCostPerValue(row.staffingCost, props.drgPoints)
+            )
+          ),
+          ...(props.includeProductionVolumes
+            ? [rightCell(formatTwoDecimals(props.careDays))]
+            : []),
+          rightCell(
+            formatCurrency(
+              calculateCostPerValue(row.staffingCost, props.careDays)
+            )
+          ),
+          ...(props.includeProductionVolumes
+            ? [rightCell(formatTwoDecimals(props.averageCarePlaces))]
+            : []),
+          rightCell(
+            formatCurrency(
+              calculateCostPerValue(
+                row.staffingCost,
+                props.averageCarePlaces
+              )
+            )
+          ),
+        ];
+
+        return {
+          id: `${props.rowIdPrefix}-${row.id}`,
+          cells,
+        };
+      })}
+    />
+  );
+}
+
+function textCell(value: string): ResultTableCell {
+  return { value };
+}
+
+function rightCell(value: string): ResultTableCell {
+  return { value, align: "right" };
+}
+
+function ResultSubSection(props: {
+  children: ReactNode;
+  description?: string;
   title: string;
 }) {
   return (
-    <SectionCard>
-      <FormSection overline={props.overline} title={props.title} />
-      {props.rows.length === 0 ? (
-        <Alert severity="info">Det finns inga dimensioneringsrader ännu.</Alert>
-      ) : (
-        <Box sx={{ overflowX: "auto" }}>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell sx={headerCellSx}>Område</TableCell>
-                <TableCell sx={headerCellSx}>Kategori</TableCell>
-                <TableCell sx={headerCellSx}>Ekonomisk sektion</TableCell>
-                <TableCell sx={headerCellSx}>Vårdande kostnadsställe</TableCell>
-                <TableCell sx={headerCellSx}>Period</TableCell>
-                <TableCell sx={headerCellSx} align="right">
-                  Närvaro
-                </TableCell>
-                <TableCell sx={headerCellSx} align="right">
-                  Bemanningskostnad
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {props.rows.map((row) => (
-                <TableRow key={row.id}>
-                  <TableCell>{row.source}</TableCell>
-                  <TableCell>{row.category}</TableCell>
-                  <TableCell>{row.section}</TableCell>
-                  <TableCell>{row.careProvidingUnit}</TableCell>
-                  <TableCell>{row.month}</TableCell>
-                  <TableCell align="right">
-                    {formatTwoDecimals(row.presence)}
-                  </TableCell>
-                  <TableCell align="right">
-                    {formatWholeNumber(row.staffingCost)} kr
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Box>
-      )}
-    </SectionCard>
+    <Box sx={subSectionSx}>
+      <Typography variant="subtitle2" sx={subSectionTitleSx}>
+        {props.title}
+      </Typography>
+      {props.description ? (
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+          {props.description}
+        </Typography>
+      ) : null}
+      {props.children}
+    </Box>
   );
+}
+
+function ResultTable(props: {
+  emptyText: string;
+  headers: string[];
+  rows: Array<{
+    id: string;
+    cells: ResultTableCell[];
+  }>;
+}) {
+  return props.rows.length === 0 ? (
+    <Alert severity="info">{props.emptyText}</Alert>
+  ) : (
+    <Box sx={tableWrapSx}>
+      <Table size="small">
+        <TableHead>
+          <TableRow>
+            {props.headers.map((header) => (
+              <TableCell
+                key={header}
+                sx={headerCellSx}
+                align={isNumericHeader(header) ? "right" : "left"}
+              >
+                {header}
+              </TableCell>
+            ))}
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {props.rows.map((row) => (
+            <TableRow key={row.id}>
+              {row.cells.map((cell, index) => (
+                <TableCell
+                  key={`${row.id}-${props.headers[index]}`}
+                  align={cell.align ?? "left"}
+                  sx={bodyCellSx}
+                >
+                  {cell.value}
+                </TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </Box>
+  );
+}
+
+function groupRows(
+  rows: InpatientDimensioningResultRow[],
+  getKey: (row: InpatientDimensioningResultRow) => string,
+  getLabels: (row: InpatientDimensioningResultRow) => {
+    label: string;
+    secondaryLabel?: string;
+  }
+): AggregatedResultRow[] {
+  const groupedRows = new Map<string, AggregatedResultRow>();
+
+  for (const row of rows) {
+    const key = getKey(row);
+    const existingRow = groupedRows.get(key);
+
+    if (existingRow) {
+      existingRow.presence += row.presence;
+      existingRow.staffingCost += row.staffingCost;
+    } else {
+      groupedRows.set(key, {
+        id: key,
+        ...getLabels(row),
+        presence: row.presence,
+        staffingCost: row.staffingCost,
+      });
+    }
+  }
+
+  return Array.from(groupedRows.values());
+}
+
+function formatArea(row: InpatientDimensioningResultRow): string {
+  const category = row.category.toLocaleLowerCase("sv-SE");
+
+  if (category.includes("admin") || category.includes("stöd")) {
+    return "Admin";
+  }
+
+  return "SLV";
+}
+
+function formatCurrency(value: number): string {
+  return `${formatWholeNumber(value)} kr`;
+}
+
+function isNumericHeader(header: string): boolean {
+  return [
+    "Närvaro",
+    "Bemanningskostnad",
+    "DRG",
+    "Kostnad per DRG",
+    "Vårddygn",
+    "Kostnad per vårddygn",
+    "Vårdplats",
+    "Kostnad per vårdplats",
+  ].includes(header);
 }
 
 const pageSx = {
@@ -221,12 +704,33 @@ const metricGridSx = {
   gridTemplateColumns: {
     xs: "1fr",
     md: "repeat(2, minmax(0, 1fr))",
-    xl: "repeat(5, minmax(0, 1fr))",
+    xl: "repeat(3, minmax(0, 1fr))",
   },
+  mb: 2,
+};
+
+const subSectionSx = {
+  borderTop: "1px solid var(--color-border)",
+  pt: 1.5,
+};
+
+const subSectionTitleSx = {
+  color: "#005883",
+  fontWeight: 700,
+  mb: 1,
+};
+
+const tableWrapSx = {
+  overflowX: "auto",
 };
 
 const headerCellSx = {
   color: "#005883",
   fontWeight: 700,
+  whiteSpace: "nowrap",
+};
+
+const bodyCellSx = {
+  verticalAlign: "top",
   whiteSpace: "nowrap",
 };
