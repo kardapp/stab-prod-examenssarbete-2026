@@ -57,7 +57,7 @@ export function DimensioningCompetenceLevels(
           <FormSection
             overline="Hämtat, ifyllt och beräknat"
             title="Produktionsdrivet behov"
-            description="Besök och snitt-tid kommer från produktionsplanen. Andel och veckoarbetstid fylls i här."
+            description="Vårdhändelser och snitt-tid kommer från produktionsplanen. Andel och veckoarbetstid fylls i här."
           />
           <Box sx={shareSumSx(hasInvalidShare)}>
             <Typography variant="caption" color="text.secondary">
@@ -87,7 +87,7 @@ export function DimensioningCompetenceLevels(
             <HeaderCell>Kompetensnivå</HeaderCell>
             <HeaderCell>Vårdtyp</HeaderCell>
             <HeaderCell align="right">Andel %</HeaderCell>
-            <HeaderCell align="right">Besök från plan</HeaderCell>
+            <HeaderCell align="right">Vårdhändelser från plan</HeaderCell>
             <HeaderCell align="right">Snitt-tid</HeaderCell>
             <HeaderCell align="right">Veckoarbetstid</HeaderCell>
             <HeaderCell align="right">Beräknad närvaro</HeaderCell>
@@ -122,7 +122,7 @@ export function DimensioningCompetenceLevels(
                   />
                 </InputValue>
                 <ReadOnlyValue
-                  label="Besök från plan"
+                  label="Vårdhändelser från plan"
                   value={formatWholeNumber(calculation.visitsFromProductionPlan)}
                   align="right"
                   muted

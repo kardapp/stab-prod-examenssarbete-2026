@@ -20,7 +20,7 @@ export function CareSupportSection(props: CareSupportSectionProps) {
       <FormSection
         overline="2. Vårdnära stöd"
         title="Stödresurser nära vården"
-        description="Timmar per vecka för stöd som inte är egna besök men som ska räknas in i bemanningen."
+        description="Timmar per vecka för stöd som inte är egna vårdhändelser men som ska räknas in i bemanningen."
       />
 
       <Box sx={supportGridSx}>

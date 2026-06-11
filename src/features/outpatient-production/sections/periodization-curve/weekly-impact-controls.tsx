@@ -4,7 +4,6 @@ import {
   formatSignedPercentage,
   impactTypeOptions,
   weekdayOptions,
-  WEEK_COUNT,
   type WeekdayKey,
   type WeeklyImpact,
   type WeeklyImpactDraft,
@@ -38,14 +37,14 @@ export function WeeklyImpactControls(props: WeeklyImpactControlsProps) {
   }
 
   return (
-    <>
+    <Box sx={impactPanelSx}>
       <Box sx={impactHeaderSx}>
         <Box sx={{ minWidth: 0 }}>
           <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-            Lägg till påverkan
+            Lägg till påverkan för vecka {props.selectedWeek}
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            Vald vecka {props.selectedWeek}
+            Gäller vald vecka
           </Typography>
         </Box>
         <Typography variant="caption" sx={selectedDaysBadgeSx}>
@@ -75,28 +74,6 @@ export function WeeklyImpactControls(props: WeeklyImpactControlsProps) {
           onChange={(event) =>
             props.onDraftChange("name", event.target.value)
           }
-          sx={fieldSx}
-        />
-        <TextField
-          label="Startvecka"
-          type="number"
-          size="small"
-          value={props.draft.startWeek}
-          onChange={(event) =>
-            props.onDraftChange("startWeek", event.target.value)
-          }
-          slotProps={{ htmlInput: { min: 1, max: WEEK_COUNT, step: 1 } }}
-          sx={fieldSx}
-        />
-        <TextField
-          label="Slutvecka"
-          type="number"
-          size="small"
-          value={props.draft.endWeek}
-          onChange={(event) =>
-            props.onDraftChange("endWeek", event.target.value)
-          }
-          slotProps={{ htmlInput: { min: 1, max: WEEK_COUNT, step: 1 } }}
           sx={fieldSx}
         />
         <TextField
@@ -163,6 +140,9 @@ export function WeeklyImpactControls(props: WeeklyImpactControlsProps) {
 
       {props.impacts.length > 0 ? (
         <Box sx={impactListSx}>
+          <Typography variant="subtitle2" sx={impactListTitleSx}>
+            Påverkan i vecka {props.selectedWeek}
+          </Typography>
           {props.impacts.map((impact) => (
             <Box key={impact.id} sx={impactRowSx}>
               <Box sx={{ minWidth: 0 }}>
@@ -185,7 +165,7 @@ export function WeeklyImpactControls(props: WeeklyImpactControlsProps) {
           ))}
         </Box>
       ) : null}
-    </>
+    </Box>
   );
 }
 
@@ -200,12 +180,18 @@ const fieldSx = {
   width: "100%",
 };
 
+const impactPanelSx = {
+  border: "1px solid var(--color-border)",
+  borderRadius: 1,
+  bgcolor: "background.paper",
+  p: 1.5,
+};
+
 const impactHeaderSx = {
   alignItems: "flex-start",
   display: "flex",
   gap: 1,
   justifyContent: "space-between",
-  mt: 2,
 };
 
 const selectedDaysBadgeSx = {
@@ -224,7 +210,7 @@ const impactFormSx = {
   gridTemplateColumns: {
     xs: "1fr",
     md: "repeat(2, minmax(0, 1fr))",
-    xl: "repeat(6, minmax(0, 1fr))",
+    xl: "repeat(4, minmax(0, 1fr))",
   },
   gap: 1.5,
   mt: 1,
@@ -237,7 +223,7 @@ const dayPickerSx = {
   gridColumn: {
     xs: "1",
     md: "1 / -1",
-    xl: "span 5",
+    xl: "span 3",
   },
   p: 1,
 };
@@ -280,10 +266,16 @@ const impactListSx = {
   mt: 1.5,
 };
 
+const impactListTitleSx = {
+  color: "#005883",
+  fontWeight: 700,
+};
+
 const impactRowSx = {
   alignItems: "center",
   border: "1px solid var(--color-border)",
   borderRadius: 1,
+  bgcolor: "var(--page-background)",
   display: "grid",
   gap: 1,
   gridTemplateColumns: {

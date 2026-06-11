@@ -1,22 +1,21 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Alert, Box } from "@mui/material";
+import { Alert, Box, Button, Collapse, Stack, Typography } from "@mui/material";
 import { FormSection } from "@/shared/components/form-section";
 import { SectionCard } from "@/shared/components/section-card";
 import {
   buildWeeklyCurve,
-  calculateAnnualCurveSummary,
   clampWeek,
   impactTypeOptions,
   initialImpactDraft,
   parseImpactType,
   type WeekdayKey,
+  type WeeklyCurvePoint,
   type WeeklyCurveSourceRow,
   type WeeklyImpact,
   type WeeklyImpactDraft,
 } from "./periodization-curve/periodization-curve-model";
-import { PeriodizationSummaryCards } from "./periodization-curve/periodization-summary-cards";
 import { SelectedWeekPanel } from "./periodization-curve/selected-week-panel";
 import { WeeklyBreakdownTable } from "./periodization-curve/weekly-breakdown-table";
 import { WeeklyCurveChart } from "./periodization-curve/weekly-curve-chart";
@@ -32,20 +31,15 @@ export function PeriodizationCurveSection(props: {
 }) {
   const [impacts, setImpacts] = useState<WeeklyImpact[]>([]);
   const [draft, setDraft] = useState<WeeklyImpactDraft>(initialImpactDraft);
-  const [selectedWeek, setSelectedWeek] = useState(() =>
-    clampWeek(Number(initialImpactDraft.startWeek))
-  );
+  const [selectedWeek, setSelectedWeek] = useState<number | null>(null);
   const [validationMessage, setValidationMessage] = useState("");
-  const annualSummary = useMemo(
-    () => calculateAnnualCurveSummary(props.rows),
-    [props.rows]
-  );
   const curvePoints = useMemo(
     () => buildWeeklyCurve(props.rows, impacts),
     [props.rows, impacts]
   );
-  const selectedPoint =
-    curvePoints.find((point) => point.week === selectedWeek) ?? curvePoints[0];
+  const selectedPoint = selectedWeek
+    ? curvePoints.find((point) => point.week === selectedWeek)
+    : null;
   const maxPresence = Math.max(
     0.01,
     ...curvePoints.map((point) => point.adjustedStaffingNeed)
@@ -67,13 +61,20 @@ export function PeriodizationCurveSection(props: {
   function handleSelectWeek(week: number) {
     const nextWeek = clampWeek(week);
 
-    setSelectedWeek(nextWeek);
+    setSelectedWeek((currentWeek) =>
+      currentWeek === nextWeek ? null : nextWeek
+    );
     setValidationMessage("");
     setDraft((current) => ({
       ...current,
       startWeek: String(nextWeek),
       endWeek: String(nextWeek),
     }));
+  }
+
+  function handleCloseWeek() {
+    setSelectedWeek(null);
+    setValidationMessage("");
   }
 
   function handleTypeChange(value: string) {
@@ -90,8 +91,7 @@ export function PeriodizationCurveSection(props: {
   }
 
   function addImpact() {
-    const startWeek = clampWeek(Number(draft.startWeek));
-    const endWeek = clampWeek(Number(draft.endWeek));
+    const activeWeek = selectedWeek ?? clampWeek(Number(draft.startWeek));
     const percentage = Number(draft.percentage);
     const name = draft.name.trim();
 
@@ -105,13 +105,6 @@ export function PeriodizationCurveSection(props: {
       return;
     }
 
-    if (startWeek > endWeek) {
-      setValidationMessage(
-        "Startvecka måste vara före eller samma som slutvecka."
-      );
-      return;
-    }
-
     if (draft.weekdays.length === 0) {
       setValidationMessage("Välj minst en dag som påverkas.");
       return;
@@ -121,14 +114,14 @@ export function PeriodizationCurveSection(props: {
       id: `impact-${Date.now()}`,
       type: draft.type,
       name,
-      startWeek,
-      endWeek,
+      startWeek: activeWeek,
+      endWeek: activeWeek,
       percentage,
       weekdays: draft.weekdays,
     };
 
     setImpacts((current) => [...current, nextImpact]);
-    setSelectedWeek(startWeek);
+    setSelectedWeek(activeWeek);
     setValidationMessage("");
   }
 
@@ -155,47 +148,139 @@ export function PeriodizationCurveSection(props: {
             "Periodiseringskurvan visas när det finns en sparad årsplan att räkna på."}
         </Alert>
       ) : (
-        <>
-          <PeriodizationSummaryCards
-            summary={annualSummary}
-            showDrg={props.showDrg}
-          />
-
-          <Box sx={curveBlockSx}>
-            <WeeklyCurveChart
-              curvePoints={curvePoints}
-              maxPresence={maxPresence}
-              selectedWeek={selectedWeek}
-              onSelectWeek={handleSelectWeek}
-            />
-            <SelectedWeekPanel
-              selectedPoint={selectedPoint}
-              showDrg={props.showDrg}
-            />
-          </Box>
-
-          <WeeklyBreakdownTable
-            selectedPoint={selectedPoint}
-            showDrg={props.showDrg}
-          />
-
-          <WeeklyImpactControls
-            draft={draft}
-            impacts={impacts}
+        <Stack spacing={1.5}>
+          <WeeklyCurveChart
+            curvePoints={curvePoints}
+            maxPresence={maxPresence}
             selectedWeek={selectedWeek}
-            validationMessage={validationMessage}
-            onAddImpact={addImpact}
-            onDraftChange={handleDraftChange}
-            onDraftWeekdaysChange={handleDraftWeekdaysChange}
-            onRemoveImpact={removeImpact}
-            onTypeChange={handleTypeChange}
+            onSelectWeek={handleSelectWeek}
           />
-        </>
+
+          <Collapse in={Boolean(selectedPoint)} timeout={220} unmountOnExit>
+            {selectedPoint ? (
+              <FocusedWeekAccordion
+                draft={draft}
+                impacts={selectedPoint.impacts}
+                selectedPoint={selectedPoint}
+                showDrg={props.showDrg}
+                validationMessage={validationMessage}
+                onAddImpact={addImpact}
+                onClose={handleCloseWeek}
+                onDraftChange={handleDraftChange}
+                onDraftWeekdaysChange={handleDraftWeekdaysChange}
+                onRemoveImpact={removeImpact}
+                onTypeChange={handleTypeChange}
+              />
+            ) : null}
+          </Collapse>
+        </Stack>
       )}
     </SectionCard>
   );
 }
 
-const curveBlockSx = {
-  minWidth: 0,
+function FocusedWeekAccordion(props: {
+  draft: WeeklyImpactDraft;
+  impacts: WeeklyImpact[];
+  selectedPoint: WeeklyCurvePoint;
+  showDrg?: boolean;
+  validationMessage: string;
+  onAddImpact: () => void;
+  onClose: () => void;
+  onDraftChange: (
+    field: Exclude<keyof WeeklyImpactDraft, "weekdays">,
+    value: string
+  ) => void;
+  onDraftWeekdaysChange: (weekdays: WeekdayKey[]) => void;
+  onRemoveImpact: (impactId: string) => void;
+  onTypeChange: (value: string) => void;
+}) {
+  return (
+    <Box sx={accordionSx}>
+      <Box sx={accordionHeaderSx}>
+        <Box sx={{ minWidth: 0 }}>
+          <Typography variant="caption" sx={accordionOverlineSx}>
+            Veckodetalj
+          </Typography>
+          <Typography variant="h6" sx={accordionTitleSx}>
+            Vecka {props.selectedPoint.week}
+          </Typography>
+        </Box>
+        <Button type="button" variant="outlined" onClick={props.onClose}>
+          Stäng
+        </Button>
+      </Box>
+
+      <Box sx={accordionContentSx}>
+        <SelectedWeekPanel
+          selectedPoint={props.selectedPoint}
+          showDrg={props.showDrg}
+        />
+
+        <WeeklyImpactControls
+          draft={props.draft}
+          impacts={props.impacts}
+          selectedWeek={props.selectedPoint.week}
+          validationMessage={props.validationMessage}
+          onAddImpact={props.onAddImpact}
+          onDraftChange={props.onDraftChange}
+          onDraftWeekdaysChange={props.onDraftWeekdaysChange}
+          onRemoveImpact={props.onRemoveImpact}
+          onTypeChange={props.onTypeChange}
+        />
+      </Box>
+
+      <Box sx={breakdownWrapSx}>
+        <WeeklyBreakdownTable
+          selectedPoint={props.selectedPoint}
+          showDrg={props.showDrg}
+        />
+      </Box>
+    </Box>
+  );
+}
+
+const accordionSx = {
+  bgcolor: "var(--page-background)",
+  border: "1px solid var(--color-border)",
+  borderRadius: 1,
+  overflow: "hidden",
+};
+
+const accordionHeaderSx = {
+  alignItems: { xs: "flex-start", sm: "center" },
+  bgcolor: "background.paper",
+  borderBottom: "1px solid var(--color-border)",
+  display: "flex",
+  gap: 1.5,
+  justifyContent: "space-between",
+  p: 1.5,
+};
+
+const accordionOverlineSx = {
+  color: "primary.main",
+  display: "block",
+  fontWeight: 700,
+  letterSpacing: 0,
+  lineHeight: 1.2,
+  textTransform: "uppercase",
+};
+
+const accordionTitleSx = {
+  fontWeight: 700,
+};
+
+const accordionContentSx = {
+  display: "grid",
+  gap: 1.5,
+  gridTemplateColumns: {
+    xs: "1fr",
+    xl: "minmax(0, 1fr) minmax(360px, 0.9fr)",
+  },
+  p: 1.5,
+};
+
+const breakdownWrapSx = {
+  px: 1.5,
+  pb: 1.5,
 };

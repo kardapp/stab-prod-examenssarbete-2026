@@ -57,7 +57,8 @@ export function validateOutpatientProductionForm(
   }
 
   if (toNumber(formState.visitTime.averageMinutes) <= 0) {
-    errors.visitTime = "Snitt-tid per besök måste vara ett positivt tal.";
+    errors.visitTime =
+      "Snitt-tid per vårdhändelse måste vara ett positivt tal.";
   }
 
   if (

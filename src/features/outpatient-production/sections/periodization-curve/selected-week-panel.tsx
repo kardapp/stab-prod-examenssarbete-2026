@@ -32,7 +32,7 @@ export function SelectedWeekPanel(props: SelectedWeekPanelProps) {
       <Box sx={panelHeaderSx}>
         <Box sx={{ minWidth: 0 }}>
           <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-            Vecka {props.selectedPoint.week}
+            Veckosammanställning
           </Typography>
           <Typography variant="caption" color="text.secondary">
             {impactedDayCount} av 7 dagar påverkade
@@ -49,7 +49,7 @@ export function SelectedWeekPanel(props: SelectedWeekPanelProps) {
           value={formatOneDecimal(props.selectedPoint.adjustedVisits)}
         />
         <SummaryValue
-          label="Besökstid"
+          label="Tid"
           value={`${formatWholeNumber(
             props.selectedPoint.adjustedVisitMinutes
           )} min`}
@@ -82,13 +82,16 @@ export function SelectedWeekPanel(props: SelectedWeekPanelProps) {
         </Box>
       </Box>
 
-      <Stack spacing={0.75} sx={{ mt: 1.5 }}>
+      <Stack spacing={0.75} sx={impactListSx}>
         {props.selectedPoint.impacts.length > 0 ? (
           props.selectedPoint.impacts.map((impact) => (
-            <Typography key={impact.id} variant="body2">
-              {impact.name}: {formatSignedPercentage(impact.percentage)} ·{" "}
-              {formatImpactWeekdays(impact)}
-            </Typography>
+            <Box key={impact.id} sx={impactRowSx}>
+              <Typography sx={impactNameSx}>{impact.name}</Typography>
+              <Typography variant="body2" color="text.secondary">
+                {formatSignedPercentage(impact.percentage)} ·{" "}
+                {formatImpactWeekdays(impact)}
+              </Typography>
+            </Box>
           ))
         ) : (
           <Typography variant="body2" color="text.secondary">
@@ -169,8 +172,7 @@ function formatDayTitle(day: WeeklyCurveDay): string {
 const selectedWeekSx = {
   border: "1px solid var(--color-border)",
   borderRadius: 1,
-  bgcolor: "var(--page-background)",
-  mt: 1.5,
+  bgcolor: "background.paper",
   p: 1.5,
 };
 
@@ -184,6 +186,7 @@ const panelHeaderSx = {
 const impactBadgeSx = {
   border: "1px solid var(--color-border)",
   borderRadius: 1,
+  bgcolor: "var(--section-background)",
   color: "#005883",
   flexShrink: 0,
   fontWeight: 800,
@@ -206,7 +209,7 @@ const summaryGridSx = {
 const summaryValueSx = {
   border: "1px solid var(--color-border)",
   borderRadius: 1,
-  bgcolor: "var(--section-background)",
+  bgcolor: "var(--page-background)",
   minWidth: 0,
   p: 1,
 };
@@ -218,7 +221,7 @@ const dailyCurveScrollerSx = {
 const dailyCurveSx = {
   border: "1px solid var(--color-border)",
   borderRadius: 1,
-  bgcolor: "var(--section-background)",
+  bgcolor: "var(--page-background)",
   display: "grid",
   gridTemplateColumns: "repeat(7, minmax(0, 1fr))",
   gap: 1,
@@ -242,6 +245,7 @@ const dayBarAreaSx = {
 const dayBarSx = {
   borderRadius: "4px 4px 0 0",
   minHeight: 4,
+  boxShadow: "inset 0 -1px 0 rgba(255, 255, 255, 0.24)",
   transition: "background-color 120ms ease, height 120ms ease",
   width: "100%",
 };
@@ -266,3 +270,25 @@ function dayImpactSx(isImpacted: boolean) {
     textAlign: "center",
   };
 }
+
+const impactListSx = {
+  mt: 1.5,
+};
+
+const impactRowSx = {
+  alignItems: { xs: "flex-start", sm: "center" },
+  bgcolor: "var(--page-background)",
+  border: "1px solid var(--color-border)",
+  borderRadius: 1,
+  display: "flex",
+  flexWrap: "wrap",
+  gap: 0.75,
+  justifyContent: "space-between",
+  px: 1,
+  py: 0.75,
+};
+
+const impactNameSx = {
+  fontWeight: 700,
+  minWidth: 0,
+};

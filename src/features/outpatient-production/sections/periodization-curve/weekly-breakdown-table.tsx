@@ -55,7 +55,7 @@ export function WeeklyBreakdownTable(props: WeeklyBreakdownTableProps) {
                 <HeaderCell>Vårdande enhet</HeaderCell>
                 <HeaderCell>Yrkeskategori</HeaderCell>
                 <HeaderCell align="right">Vårdhändelser</HeaderCell>
-                <HeaderCell align="right">Besökstid</HeaderCell>
+                <HeaderCell align="right">Tid</HeaderCell>
                 {props.showDrg !== false ? (
                   <HeaderCell align="right">DRG</HeaderCell>
                 ) : null}
@@ -82,7 +82,7 @@ export function WeeklyBreakdownTable(props: WeeklyBreakdownTableProps) {
                   />
                   <BreakdownCell
                     align="right"
-                    label="Besökstid"
+                    label="Tid"
                     value={`${formatWholeNumber(row.visitMinutes)} min`}
                   />
                   {props.showDrg !== false ? (
@@ -148,7 +148,7 @@ function BreakdownCell(props: {
 }
 
 const breakdownSectionSx = {
-  mt: 2,
+  mt: 0,
 };
 
 const breakdownTitleRowSx = {

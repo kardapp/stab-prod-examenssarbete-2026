@@ -85,7 +85,7 @@ function VisitTimeCommentsSection(props: {
     <SectionCard>
       <FormSection
         overline="Kommentar"
-        title="Kommentarer om besökstid"
+        title="Kommentarer om tid per vårdhändelse"
         description="Kommentarer som sparades tillsammans med snitt-tiden i produktionsplaneringen."
       />
 

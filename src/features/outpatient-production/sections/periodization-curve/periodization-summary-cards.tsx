@@ -23,7 +23,7 @@ export function PeriodizationSummaryCards(
         value={formatOneDecimal(props.summary.visits)}
       />
       <PeriodizationMetricValue
-        label="Årets besökstid"
+        label="Årets tid för vårdhändelser"
         value={`${formatWholeNumber(props.summary.visitMinutes)} min`}
       />
       {props.showDrg !== false ? (

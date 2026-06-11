@@ -59,23 +59,23 @@ export function DimensioningProductionBasis(
           value={props.productionBasis.sections.join(", ") || "Saknas"}
         />
         <SupportValue
-          label="Antal besök/vårdhändelser per år"
+          label="Antal vårdhändelser per år"
           value={formatWholeNumber(props.productionBasis.totalVisits)}
         />
         <SupportValue
-          label="Snitt-tid per besök"
+          label="Snitt-tid per vårdhändelse"
           value={`${formatTwoDecimals(
             props.productionBasis.averageMinutesPerVisit
           )} min`}
         />
         {hasVisitTimeComments ? (
           <SupportValue
-            label="Kommentar besökstid"
+            label="Kommentar tid per vårdhändelse"
             value={visitTimeComments.join(" · ")}
           />
         ) : null}
         <SupportValue
-          label="Typ av besök"
+          label="Typ av vårdhändelse"
           value={props.productionBasis.visitTypes.join(", ") || "Saknas"}
         />
         <SupportValue
@@ -116,14 +116,14 @@ export function DimensioningProductionBasis(
                 <TableCell sx={headerCellSx}>Sektion</TableCell>
                 <TableCell sx={headerCellSx}>Typ</TableCell>
                 <TableCell sx={headerCellSx} align="right">
-                  Besök
+                  Vårdhändelser
                 </TableCell>
                 <TableCell sx={headerCellSx} align="right">
                   Snitt-tid
                 </TableCell>
                 {hasVisitTimeComments ? (
                   <TableCell sx={headerCellSx}>
-                    Kommentar besökstid
+                    Kommentar tid per vårdhändelse
                   </TableCell>
                 ) : null}
                 <TableCell sx={headerCellSx}>Primär roll</TableCell>

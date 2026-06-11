@@ -68,7 +68,7 @@ export function ProductionTimeByRoleSection(
           value={props.basis.careUnits.join(", ") || "Saknas"}
         />
         <OoDimensioningMetric
-          label="Årsbesök från plan"
+          label="Årets vårdhändelser från plan"
           value={formatWholeNumber(props.basis.totalAnnualVisits)}
         />
         <OoDimensioningMetric
@@ -77,7 +77,7 @@ export function ProductionTimeByRoleSection(
         />
         {props.basis.visitTimeComments.length > 0 ? (
           <OoDimensioningMetric
-            label="Kommentar besökstid"
+            label="Kommentar tid per vårdhändelse"
             value={props.basis.visitTimeComments.join(" · ")}
           />
         ) : null}
@@ -115,11 +115,11 @@ export function ProductionTimeByRoleSection(
                     </Typography>
                   </Box>
                   <OoDimensioningMetric
-                    label="Årsbesök"
+                    label="Årets vårdhändelser"
                     value={formatWholeNumber(row.visitsFromProductionPlan)}
                   />
                   <OoDimensioningMetric
-                    label="Veckobesök"
+                    label="Vårdhändelser/vecka"
                     value={formatOneDecimal(calculateWeeklyVisits(row))}
                   />
                   <OoDimensioningMetric
@@ -146,7 +146,7 @@ export function ProductionTimeByRoleSection(
                     </Typography>
                     <Box sx={detailMetricGridSx}>
                       <OoDimensioningMetric
-                        label="Årsbesök"
+                        label="Årets vårdhändelser"
                         value={formatWholeNumber(row.visitsFromProductionPlan)}
                       />
                       <OoDimensioningMetric
@@ -157,7 +157,7 @@ export function ProductionTimeByRoleSection(
                       />
                       {row.visitTimeComment ? (
                         <OoDimensioningMetric
-                          label="Kommentar besökstid"
+                          label="Kommentar tid per vårdhändelse"
                           value={row.visitTimeComment}
                         />
                       ) : null}
@@ -167,7 +167,7 @@ export function ProductionTimeByRoleSection(
                   <OptionalInputGroup title="Visa fält för justering">
                     <Box sx={inputGridSx}>
                       <TextField
-                        label="Stödbesök för andra roller/vecka"
+                        label="Stödvolym för andra roller/vecka"
                         type="number"
                         size="small"
                         value={row.supportVisitsForOtherRoles}

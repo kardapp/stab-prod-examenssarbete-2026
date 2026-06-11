@@ -82,7 +82,7 @@ export function ProductionAssumptionsSection(
       <Box sx={assumptionPairGridSx}>
         <Box sx={[assumptionSubSectionSx, visitTimeSubSectionSx]}>
           <AssumptionSubSectionHeader
-            title="Beräkning 1: besökstid"
+            title="Beräkning 1: tid per vårdhändelse"
             action={
               <Button
                 type="button"
@@ -102,7 +102,7 @@ export function ProductionAssumptionsSection(
           <Box sx={subSectionGridSx}>
             <TextField
               select
-              label="Typ av besök"
+              label="Typ av vårdhändelse"
               value={props.visitTime.visitType}
               onChange={handleVisitTypeChange}
               size="small"
@@ -116,7 +116,7 @@ export function ProductionAssumptionsSection(
             </TextField>
 
             <TextField
-              label="Snitt-tid per besök"
+              label="Snitt-tid per vårdhändelse"
               type="number"
               value={props.visitTime.averageMinutes}
               onChange={handleAverageMinutesChange}

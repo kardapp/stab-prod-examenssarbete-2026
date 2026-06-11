@@ -23,7 +23,7 @@ export function CalculatedPreviewSection(
 
       <Box sx={summaryGridSx}>
         <SummaryValueCard
-          label="Total besökstid"
+          label="Total tid för vårdhändelser"
           value={`${formatWholeNumber(
             props.calculatedValues.totalVisitMinutes
           )} min`}
@@ -59,7 +59,7 @@ export function CalculatedPreviewSection(
       {props.visitTimeComment.trim() ? (
         <Box sx={commentSx}>
           <Typography variant="caption" color="text.secondary">
-            Kommentar besökstid
+            Kommentar tid per vårdhändelse
           </Typography>
           <Typography sx={{ overflowWrap: "anywhere" }}>
             {props.visitTimeComment}
@@ -69,7 +69,7 @@ export function CalculatedPreviewSection(
 
       <Stack spacing={1} sx={{ mt: 2 }}>
         <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-          Fördelat antal per yrkeskategori
+          Fördelade vårdhändelser per yrkeskategori
         </Typography>
         {props.calculatedValues.roleDistributionResults.map((role) => (
           <Stack

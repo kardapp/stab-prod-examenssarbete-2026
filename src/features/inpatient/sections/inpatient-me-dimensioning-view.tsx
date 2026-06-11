@@ -134,7 +134,7 @@ export function InpatientMeDimensioningView() {
                 <FormSection
                   overline="1. Kompetensnivåer"
                   title="Läkarnärvaro per kompetensnivå"
-                  description="Närvaron räknas från antal inskrivna per dag, inte från besökstid."
+                  description="Närvaron räknas från antal inskrivna per dag, inte från öppenvårdens tidsantaganden."
                 />
                 <Box sx={{ overflowX: "auto" }}>
                   <Table size="small">
