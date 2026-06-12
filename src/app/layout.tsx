@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { Button } from "@mui/material";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
+import { appRoutes } from "@/shared/routes";
 import { AppThemeProvider } from "./theme-provider";
 import "./globals.css";
 
@@ -18,9 +20,26 @@ export default function RootLayout({
     <html lang="sv">
       <body>
         <AppRouterCacheProvider>
-          <AppThemeProvider>{children}</AppThemeProvider>
+          <AppThemeProvider>
+            {children}
+            <Button
+              href={appRoutes.firstPage}
+              sx={startPageButtonSx}
+              variant="contained"
+            >
+              Till startsidan
+            </Button>
+          </AppThemeProvider>
         </AppRouterCacheProvider>
       </body>
     </html>
   );
 }
+
+const startPageButtonSx = {
+  bottom: 16,
+  boxShadow: 3,
+  position: "fixed",
+  right: 16,
+  zIndex: 1200,
+};

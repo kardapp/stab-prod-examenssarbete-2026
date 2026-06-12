@@ -86,10 +86,10 @@ export function OutpatientProductionResultsView() {
                   <ComparisonSection rows={results.comparisonRows} />
                 </>
               )}
-
-              <ActionsSection />
             </Stack>
           )}
+
+          <ActionsSection />
         </Stack>
       </Container>
     </Box>
