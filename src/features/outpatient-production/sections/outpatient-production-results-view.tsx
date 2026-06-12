@@ -101,7 +101,7 @@ function VisitCountSection(props: { rows: ProductionPlanningResultRow[] }) {
   const totalVisits = sumResultRows(props.rows, "visits");
   const dailyVisits = sumResultRows(dailyRows, "visits");
   const economicCareRows = groupRowsByEconomicCareUnit(props.rows);
-  const dailyEconomicCareRows = groupRowsByEconomicCareUnit(dailyRows);
+  const dailyEconomicRows = groupRowsByEconomicUnit(dailyRows);
   const roleRows = groupRowsByRole(props.rows);
 
   return (
@@ -131,20 +131,15 @@ function VisitCountSection(props: { rows: ProductionPlanningResultRow[] }) {
         <ResultSubSection title="Per ekonomisk kombika och vårdande enhet">
           <ResultTable
             emptyText="Det finns inga vårdhändelser per ekonomisk kombika och vårdande enhet."
-            headers={[
-              "Ekonomisk kombika",
-              "Vårdande enhet",
-              "År",
-              "Vårdhändelser",
-            ]}
+            columns={annualVisitColumns}
             rows={economicCareRows.map((row) => ({
               id: row.id,
-              cells: [
-                textCell(row.label),
-                textCell(row.secondaryLabel ?? "Saknas"),
-                textCell(row.year),
-                rightCell(formatOneDecimal(row.visits)),
-              ],
+              cells: {
+                primary: textCell(row.label),
+                careUnit: textCell(row.secondaryLabel ?? "Saknas"),
+                year: textCell(row.year),
+                metric: rightCell(formatOneDecimal(row.visits)),
+              },
             }))}
           />
         </ResultSubSection>
@@ -152,18 +147,14 @@ function VisitCountSection(props: { rows: ProductionPlanningResultRow[] }) {
         <ResultSubSection title="Per dag">
           <ResultTable
             emptyText="Det finns inga dagvärden för vårdhändelser."
-            headers={[
-              "Ekonomisk kombika",
-              "Vårdande enhet",
-              "Vårdhändelser per dag",
-            ]}
-            rows={dailyEconomicCareRows.map((row) => ({
+            columns={dailyVisitColumns}
+            rows={dailyEconomicRows.map((row) => ({
               id: row.id,
-              cells: [
-                textCell(row.label),
-                textCell(row.secondaryLabel ?? "Saknas"),
-                rightCell(formatOneDecimal(row.visits)),
-              ],
+              cells: {
+                primary: textCell(row.label),
+                year: textCell(row.year),
+                metric: rightCell(formatOneDecimal(row.visits)),
+              },
             }))}
           />
         </ResultSubSection>
@@ -171,14 +162,14 @@ function VisitCountSection(props: { rows: ProductionPlanningResultRow[] }) {
         <ResultSubSection title="Per yrkeskategori">
           <ResultTable
             emptyText="Det finns inga vårdhändelser per yrkeskategori."
-            headers={["Yrkeskategori", "År", "Vårdhändelser"]}
+            columns={roleVisitColumns}
             rows={roleRows.map((row) => ({
               id: row.id,
-              cells: [
-                textCell(row.label),
-                textCell(row.year),
-                rightCell(formatOneDecimal(row.visits)),
-              ],
+              cells: {
+                primary: textCell(row.label),
+                year: textCell(row.year),
+                metric: rightCell(formatOneDecimal(row.visits)),
+              },
             }))}
           />
         </ResultSubSection>
@@ -196,7 +187,7 @@ function VisitTimeSection(props: { rows: ProductionPlanningResultRow[] }) {
     sumResultRows(props.rows, "visits")
   );
   const economicCareRows = groupRowsByEconomicCareUnit(props.rows);
-  const dailyEconomicCareRows = groupRowsByEconomicCareUnit(dailyRows);
+  const dailyEconomicRows = groupRowsByEconomicUnit(dailyRows);
   const roleRows = groupRowsByRole(props.rows);
 
   return (
@@ -226,22 +217,16 @@ function VisitTimeSection(props: { rows: ProductionPlanningResultRow[] }) {
         <ResultSubSection title="Per ekonomisk kombika och vårdande enhet">
           <ResultTable
             emptyText="Det finns ingen besökstid per ekonomisk kombika och vårdande enhet."
-            headers={[
-              "Ekonomisk kombika",
-              "Vårdande enhet",
-              "År",
-              "Besökstid",
-              "Min per vårdhändelse",
-            ]}
+            columns={annualVisitTimeColumns}
             rows={economicCareRows.map((row) => ({
               id: row.id,
-              cells: [
-                textCell(row.label),
-                textCell(row.secondaryLabel ?? "Saknas"),
-                textCell(row.year),
-                rightCell(formatMinutes(row.totalVisitMinutes)),
-                rightCell(formatAverageMinutes(row)),
-              ],
+              cells: {
+                primary: textCell(row.label),
+                careUnit: textCell(row.secondaryLabel ?? "Saknas"),
+                year: textCell(row.year),
+                metric: rightCell(formatMinutes(row.totalVisitMinutes)),
+                secondaryMetric: rightCell(formatAverageMinutes(row)),
+              },
             }))}
           />
         </ResultSubSection>
@@ -249,14 +234,15 @@ function VisitTimeSection(props: { rows: ProductionPlanningResultRow[] }) {
         <ResultSubSection title="Per dag">
           <ResultTable
             emptyText="Det finns inga dagvärden för besökstid."
-            headers={["Ekonomisk kombika", "Vårdande enhet", "Besökstid per dag"]}
-            rows={dailyEconomicCareRows.map((row) => ({
+            columns={dailyVisitTimeColumns}
+            rows={dailyEconomicRows.map((row) => ({
               id: row.id,
-              cells: [
-                textCell(row.label),
-                textCell(row.secondaryLabel ?? "Saknas"),
-                rightCell(formatMinutes(row.totalVisitMinutes)),
-              ],
+              cells: {
+                primary: textCell(row.label),
+                year: textCell(row.year),
+                metric: rightCell(formatMinutes(row.totalVisitMinutes)),
+                secondaryMetric: rightCell(formatAverageMinutes(row)),
+              },
             }))}
           />
         </ResultSubSection>
@@ -264,20 +250,15 @@ function VisitTimeSection(props: { rows: ProductionPlanningResultRow[] }) {
         <ResultSubSection title="Per yrkeskategori">
           <ResultTable
             emptyText="Det finns ingen besökstid per yrkeskategori."
-            headers={[
-              "Yrkeskategori",
-              "År",
-              "Besökstid",
-              "Min per vårdhändelse",
-            ]}
+            columns={roleVisitTimeColumns}
             rows={roleRows.map((row) => ({
               id: row.id,
-              cells: [
-                textCell(row.label),
-                textCell(row.year),
-                rightCell(formatMinutes(row.totalVisitMinutes)),
-                rightCell(formatAverageMinutes(row)),
-              ],
+              cells: {
+                primary: textCell(row.label),
+                year: textCell(row.year),
+                metric: rightCell(formatMinutes(row.totalVisitMinutes)),
+                secondaryMetric: rightCell(formatAverageMinutes(row)),
+              },
             }))}
           />
         </ResultSubSection>
@@ -311,15 +292,17 @@ function DrgSection(props: { rows: ProductionPlanningResultRow[] }) {
         <ResultSubSection title="Per ekonomisk enhet (kombika)">
           <ResultTable
             emptyText="Det finns inga DRG-värden per ekonomisk enhet."
-            headers={["Ekonomisk kombika", "År", "Antal DRG", "DRG-snitt"]}
+            columns={annualDrgColumns}
             rows={annualRows.map((row) => ({
               id: row.id,
-              cells: [
-                textCell(formatDrgEconomicUnit(row)),
-                textCell(row.year),
-                rightCell(formatOneDecimal(row.drgPoints)),
-                rightCell(formatOneDecimal(safeDivide(row.drgPoints, row.visits))),
-              ],
+              cells: {
+                primary: textCell(formatDrgEconomicUnit(row)),
+                year: textCell(row.year),
+                metric: rightCell(formatOneDecimal(row.drgPoints)),
+                secondaryMetric: rightCell(
+                  formatOneDecimal(safeDivide(row.drgPoints, row.visits))
+                ),
+              },
             }))}
           />
         </ResultSubSection>
@@ -327,14 +310,14 @@ function DrgSection(props: { rows: ProductionPlanningResultRow[] }) {
         <ResultSubSection title="Per dag">
           <ResultTable
             emptyText="Det finns inga dagvärden för DRG."
-            headers={["Ekonomisk kombika", "År", "DRG per dag"]}
+            columns={dailyDrgColumns}
             rows={dailyRows.map((row) => ({
               id: row.id,
-              cells: [
-                textCell(formatDrgEconomicUnit(row)),
-                textCell(row.year),
-                rightCell(formatOneDecimal(row.drgPoints)),
-              ],
+              cells: {
+                primary: textCell(formatDrgEconomicUnit(row)),
+                year: textCell(row.year),
+                metric: rightCell(formatOneDecimal(row.drgPoints)),
+              },
             }))}
           />
         </ResultSubSection>
@@ -540,6 +523,19 @@ type ResultTableCell = {
   value: string;
 };
 
+type ResultTableColumn = {
+  align?: "left" | "right";
+  header: string;
+  isSpacer?: boolean;
+  key: string;
+  width: string;
+};
+
+type ResultTableRow = {
+  cells: Partial<Record<string, ResultTableCell>>;
+  id: string;
+};
+
 type AggregatedProductionResultRow = {
   id: string;
   label: string;
@@ -571,27 +567,39 @@ function ResultSubSection(props: {
 }
 
 function ResultTable(props: {
+  columns: ResultTableColumn[];
   emptyText: string;
-  headers: string[];
-  rows: Array<{
-    cells: ResultTableCell[];
-    id: string;
-  }>;
+  rows: ResultTableRow[];
 }) {
   return props.rows.length === 0 ? (
     <Alert severity="info">{props.emptyText}</Alert>
   ) : (
     <Box sx={tableWrapSx}>
-      <Table size="small">
+      <Table
+        size="small"
+        sx={{
+          minWidth: props.columns.length > 4 ? 920 : 760,
+          tableLayout: "fixed",
+        }}
+      >
+        <colgroup>
+          {props.columns.map((column) => (
+            <col key={column.key} style={{ width: column.width }} />
+          ))}
+        </colgroup>
         <TableHead>
           <TableRow>
-            {props.headers.map((header) => (
+            {props.columns.map((column) => (
               <TableCell
-                key={header}
-                align={isNumericHeader(header) ? "right" : "left"}
-                sx={tableHeaderCellSx}
+                key={column.key}
+                align={column.align ?? "left"}
+                aria-hidden={column.isSpacer ? true : undefined}
+                sx={{
+                  ...tableHeaderCellSx,
+                  ...(column.isSpacer ? tableSpacerCellSx : {}),
+                }}
               >
-                {header}
+                {column.isSpacer ? null : column.header}
               </TableCell>
             ))}
           </TableRow>
@@ -599,15 +607,25 @@ function ResultTable(props: {
         <TableBody>
           {props.rows.map((row) => (
             <TableRow key={row.id}>
-              {row.cells.map((cell, index) => (
-                <TableCell
-                  key={`${row.id}-${props.headers[index]}`}
-                  align={cell.align ?? "left"}
-                  sx={tableBodyCellSx}
-                >
-                  {cell.value}
-                </TableCell>
-              ))}
+              {props.columns.map((column) => {
+                const cell = row.cells[column.key] ?? textCell("");
+                const align = cell.align ?? column.align ?? "left";
+
+                return (
+                  <TableCell
+                    key={`${row.id}-${column.key}`}
+                    align={align}
+                    aria-hidden={column.isSpacer ? true : undefined}
+                    sx={{
+                      ...tableBodyCellSx,
+                      ...(align === "right" ? tableNumericCellSx : {}),
+                      ...(column.isSpacer ? tableSpacerCellSx : {}),
+                    }}
+                  >
+                    {cell.value}
+                  </TableCell>
+                );
+              })}
             </TableRow>
           ))}
         </TableBody>
@@ -633,6 +651,19 @@ function groupRowsByEconomicCareUnit(
     (row) => ({
       label: formatEconomicUnit(row),
       secondaryLabel: formatCareUnit(row),
+      year: row.year,
+    })
+  );
+}
+
+function groupRowsByEconomicUnit(
+  rows: ProductionPlanningResultRow[]
+): AggregatedProductionResultRow[] {
+  return groupResultRows(
+    rows,
+    (row) => [formatEconomicUnit(row), row.year].join("|"),
+    (row) => ({
+      label: formatEconomicUnit(row),
       year: row.year,
     })
   );
@@ -740,18 +771,117 @@ function formatPercentageDifference(value: number | null): string {
   return `${formatSignedNumber(value)}%`;
 }
 
-function isNumericHeader(header: string): boolean {
+function createEconomicCareColumns(
+  primaryHeader: string,
+  metricHeader: string
+): ResultTableColumn[] {
   return [
-    "Antal DRG",
-    "Besökstid",
-    "Besökstid per dag",
-    "DRG per dag",
-    "DRG-snitt",
-    "Min per vårdhändelse",
-    "Vårdhändelser",
-    "Vårdhändelser per dag",
-  ].includes(header);
+    { key: "primary", header: primaryHeader, width: "34%" },
+    { key: "careUnit", header: "Vårdande enhet", width: "28%" },
+    { key: "year", header: "År", width: "12%" },
+    { key: "metric", header: metricHeader, align: "right", width: "26%" },
+  ];
 }
+
+function createEconomicCareColumnsWithSecondaryMetric(
+  primaryHeader: string,
+  metricHeader: string,
+  secondaryMetricHeader: string
+): ResultTableColumn[] {
+  return [
+    { key: "primary", header: primaryHeader, width: "30%" },
+    { key: "careUnit", header: "Vårdande enhet", width: "24%" },
+    { key: "year", header: "År", width: "10%" },
+    { key: "metric", header: metricHeader, align: "right", width: "18%" },
+    {
+      key: "secondaryMetric",
+      header: secondaryMetricHeader,
+      align: "right",
+      width: "18%",
+    },
+  ];
+}
+
+function createGroupedColumns(
+  primaryHeader: string,
+  metricHeader: string
+): ResultTableColumn[] {
+  return [
+    { key: "primary", header: primaryHeader, width: "34%" },
+    { key: "careUnitSpacer", header: "", isSpacer: true, width: "28%" },
+    { key: "year", header: "År", width: "12%" },
+    { key: "metric", header: metricHeader, align: "right", width: "26%" },
+  ];
+}
+
+function createGroupedColumnsWithSecondaryMetric(
+  primaryHeader: string,
+  metricHeader: string,
+  secondaryMetricHeader: string
+): ResultTableColumn[] {
+  return [
+    { key: "primary", header: primaryHeader, width: "30%" },
+    { key: "careUnitSpacer", header: "", isSpacer: true, width: "24%" },
+    { key: "year", header: "År", width: "10%" },
+    { key: "metric", header: metricHeader, align: "right", width: "18%" },
+    {
+      key: "secondaryMetric",
+      header: secondaryMetricHeader,
+      align: "right",
+      width: "18%",
+    },
+  ];
+}
+
+function createGroupedColumnsWithReservedSecondaryMetric(
+  primaryHeader: string,
+  metricHeader: string
+): ResultTableColumn[] {
+  return [
+    { key: "primary", header: primaryHeader, width: "30%" },
+    { key: "careUnitSpacer", header: "", isSpacer: true, width: "24%" },
+    { key: "year", header: "År", width: "10%" },
+    { key: "metric", header: metricHeader, align: "right", width: "18%" },
+    { key: "secondaryMetricSpacer", header: "", isSpacer: true, width: "18%" },
+  ];
+}
+
+const annualVisitColumns = createEconomicCareColumns(
+  "Ekonomisk kombika",
+  "Vårdhändelser"
+);
+const dailyVisitColumns = createGroupedColumns(
+  "Ekonomisk kombika",
+  "Vårdhändelser per dag"
+);
+const roleVisitColumns = createGroupedColumns(
+  "Yrkeskategori",
+  "Vårdhändelser"
+);
+const annualVisitTimeColumns = createEconomicCareColumnsWithSecondaryMetric(
+  "Ekonomisk kombika",
+  "Besökstid",
+  "Min per vårdhändelse"
+);
+const dailyVisitTimeColumns = createGroupedColumnsWithSecondaryMetric(
+  "Ekonomisk kombika",
+  "Besökstid per dag",
+  "Min per vårdhändelse"
+);
+const roleVisitTimeColumns = createGroupedColumnsWithSecondaryMetric(
+  "Yrkeskategori",
+  "Besökstid",
+  "Min per vårdhändelse"
+);
+const annualDrgColumns = createGroupedColumnsWithSecondaryMetric(
+  "Ekonomisk kombika",
+  "Antal DRG",
+  "DRG-snitt"
+);
+const dailyDrgColumns = createGroupedColumnsWithReservedSecondaryMetric(
+  "Ekonomisk kombika",
+  "DRG per dag"
+);
 
 const comparisonSummaryGridSx = {
   display: "grid",
@@ -787,18 +917,37 @@ const subSectionTitleSx = {
 };
 
 const tableWrapSx = {
+  border: "1px solid var(--color-border)",
+  borderRadius: 1,
   overflowX: "auto",
+  "& .MuiTableCell-root": {
+    borderColor: "var(--color-border)",
+  },
+  "& .MuiTableRow-root:last-of-type .MuiTableCell-root": {
+    borderBottom: 0,
+  },
 };
 
 const tableHeaderCellSx = {
+  bgcolor: "var(--section-background)",
   color: "#005883",
   fontWeight: 700,
-  whiteSpace: "nowrap",
+  lineHeight: 1.25,
 };
 
 const tableBodyCellSx = {
+  overflowWrap: "anywhere",
   verticalAlign: "top",
+  whiteSpace: "normal",
+};
+
+const tableNumericCellSx = {
+  overflowWrap: "normal",
   whiteSpace: "nowrap",
+};
+
+const tableSpacerCellSx = {
+  p: 0,
 };
 
 const commentListSx = {
