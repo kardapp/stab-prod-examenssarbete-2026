@@ -187,7 +187,6 @@ function LoadedInpatientMeDimensioningView() {
                 <FormSection
                   overline="1. Kompetensnivåer"
                   title="Läkarnärvaro per kompetensnivå"
-                  description="Antal inskrivna per dag hämtas från produktionen och används som underlag när läkarnärvaro fylls i per kompetensnivå."
                 />
                 <Box sx={{ overflowX: "auto" }}>
                   <Table size="small">
@@ -275,8 +274,7 @@ function LoadedInpatientMeDimensioningView() {
                 rows={periodizationRows}
                 overline="Periodisering över året"
                 title="Personalbehov per vecka"
-                description="ME-dimensioneringen för slutenvård periodiseras över 52 veckor. Klicka på en vecka för att se detaljer och lägga till påverkan."
-                emptyText="Periodiseringskurvan visas när det finns ME-dimensionering att räkna på."
+                emptyText="Ingen ME-dimensionering att periodisera."
                 volumeLabel="Vårdtillfällen"
                 volumeLabelLower="vårdtillfällen"
               />
@@ -289,8 +287,6 @@ function LoadedInpatientMeDimensioningView() {
                   {!hasSavedRows ? (
                     <Alert severity="warning">
                       Spara ME-dimensioneringen innan du går till resultat.
-                      Standardvärden i tabellen räknas inte in förrän de är
-                      sparade.
                     </Alert>
                   ) : hasUnsavedChanges ? (
                     <Alert severity="warning">

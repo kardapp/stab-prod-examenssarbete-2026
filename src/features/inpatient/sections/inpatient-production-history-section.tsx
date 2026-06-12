@@ -82,7 +82,6 @@ export function InpatientProductionHistorySection(
       <FormSection
         overline="Historik"
         title="Jämförelsevärden från tidigare år"
-        description={`Mockad femårshistorik för ${props.selectedKombika.code}: plan, R12, vårddygn, vårdplatser, DRG-snitt och fördelningar.`}
       />
 
       {props.historyRows.length > 0 && latestRow ? (

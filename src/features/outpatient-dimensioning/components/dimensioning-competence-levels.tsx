@@ -57,7 +57,6 @@ export function DimensioningCompetenceLevels(
           <FormSection
             overline="Hämtat, ifyllt och beräknat"
             title="Produktionsdrivet behov"
-            description="Vårdhändelser och snitt-tid kommer från produktionsplanen. Andel och veckoarbetstid fylls i här."
           />
           <Box sx={shareSumSx(hasInvalidShare)}>
             <Typography variant="caption" color="text.secondary">
@@ -246,7 +245,6 @@ export function DimensioningCompetenceLevels(
         <FormSection
           overline="Fylls i i dimensioneringen"
           title="Justeringar och kostnader"
-          description="Admin/övrigt, ST som inte bidrar och lönekostnad sparas separat från produktionsunderlaget."
         />
 
         <Box sx={costTableSx}>
@@ -359,10 +357,6 @@ export function DimensioningCompetenceLevels(
           })}
         </Box>
 
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
-          Produktionsnärvaro är beräknad närvaro eller manuell närvaro. Total
-          närvaro inkluderar även admin/övrigt och ST som inte bidrar.
-        </Typography>
       </SectionCard>
     </Stack>
   );

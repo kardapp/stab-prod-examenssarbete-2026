@@ -81,7 +81,6 @@ export function ProductionHistorySection(
       <FormSection
         overline="Historik"
         title="Jämförelse mot tidigare år"
-        description={`Mockad femårshistorik för ${props.selectedKombika.code}: föregående års plan, vårdhändelser, DRG-snitt och fördelningar.`}
       />
 
       {props.historyRows.length > 0 && latestRow ? (

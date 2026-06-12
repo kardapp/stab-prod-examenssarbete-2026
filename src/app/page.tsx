@@ -154,9 +154,6 @@ export default function HomePage() {
               <Typography variant="h6" component="h2" sx={sectionTitleSx}>
                 Historik för vårdhändelser
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Summerad exempeldata från befintlig ÖPV-historik.
-              </Typography>
             </Stack>
 
             <Box sx={chartGridSx}>

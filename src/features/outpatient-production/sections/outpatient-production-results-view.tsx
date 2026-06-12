@@ -109,7 +109,6 @@ function VisitCountSection(props: { rows: ProductionPlanningResultRow[] }) {
       <FormSection
         overline="1. Antal vårdhändelser"
         title="Antal vårdhändelser"
-        description="Visar den sparade produktionsvolymen för öppenvård, uppdelad enligt produktionsplan och OO-fördelning."
       />
 
       <Box sx={resultSummaryGridSx}>
@@ -195,7 +194,6 @@ function VisitTimeSection(props: { rows: ProductionPlanningResultRow[] }) {
       <FormSection
         overline="2. Besökstid"
         title="Besökstid"
-        description="Visar beräknad tid för vårdhändelser utifrån snittid och volym."
       />
 
       <Box sx={resultSummaryGridSx}>
@@ -280,7 +278,6 @@ function DrgSection(props: { rows: ProductionPlanningResultRow[] }) {
       <FormSection
         overline="3. Antal DRG"
         title="Antal DRG"
-        description="Visar DRG-volymen för öppenvårdens produktionsplan."
       />
 
       <Box sx={resultSummaryGridSx}>
@@ -338,7 +335,6 @@ function VisitTimeCommentsSection(props: {
       <FormSection
         overline="Kommentar"
         title="Kommentarer om tid per vårdhändelse"
-        description="Kommentarer som sparades tillsammans med snitt-tiden i produktionsplaneringen."
       />
 
       <Box sx={commentListSx}>
@@ -383,7 +379,6 @@ function ComparisonSection(props: { rows: ProductionPlanningComparisonRow[] }) {
       <FormSection
         overline="4. Jämförelse"
         title="Aktuell plan jämfört med samma period föregående år"
-        description="Resultatet visar den senast sparade planen och jämför med föregående års mockdata."
       />
 
       <Box sx={comparisonSummaryGridSx}>

@@ -239,7 +239,6 @@ function ResultBasisSection(props: {
       <FormSection
         overline="Resultatunderlag"
         title="Sparade steg som ingår"
-        description="Resultatet bygger bara på sparade steg. Standardvärden i formulär räknas inte in förrän användaren sparar."
       />
       <Box sx={metricGridSx}>
         <PlanningMetricCard
@@ -297,7 +296,6 @@ function PresenceSection(props: {
       <FormSection
         overline="1. Närvaro"
         title="Närvaro"
-        description="Dimensionerad närvaro summerad på de nivåer användaren jämför mot."
       />
       <Box sx={metricGridSx}>
         <PlanningMetricCard
@@ -342,7 +340,6 @@ function PresenceSection(props: {
 
         <ResultSubSection
           title="Per månad"
-          description="ProdN och lönekostnad finns på månadsnivå, därför visas månad som egen sammanställning."
         >
           <ResultTable
             emptyText="Det finns inga månadsrader ännu."
@@ -409,7 +406,6 @@ function StaffingCostSection(props: {
       <FormSection
         overline="2. Bemanningskostnader"
         title="Bemanningskostnader"
-        description="Bemanningskostnad summerad på samma nivåer som närvaron."
       />
       <Box sx={metricGridSx}>
         <PlanningMetricCard
@@ -455,7 +451,6 @@ function StaffingCostSection(props: {
 
         <ResultSubSection
           title="Per månad"
-          description="Lön finns på månadsnivå, därför visas bemanningskostnad per månad som egen sammanställning."
         >
           <ResultTable
             emptyText="Det finns inga månadsrader ännu."
@@ -520,7 +515,6 @@ function CostPerProductionSection(props: {
       <FormSection
         overline="3. Bemanningskostnader per DRG/vårddygn/vårdplats"
         title="Bemanningskostnader per DRG/vårddygn/vårdplats"
-        description="Nyckeltal som jämför bemanningskostnad mot slutenvårdens produktionsmått."
       />
       <Box sx={metricGridSx}>
         <PlanningMetricCard
@@ -578,7 +572,6 @@ function CostPerProductionSection(props: {
 
         <ResultSubSection
           title="Per månad"
-          description="Lön finns endast per månad i underlaget, därför visas produktionsnyckeltalen här med månadsvolymer."
         >
           <ProductionCostTable
             rows={monthRows}

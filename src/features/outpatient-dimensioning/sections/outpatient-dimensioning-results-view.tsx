@@ -90,7 +90,6 @@ function FilterSection(props: {
       <FormSection
         overline="Filter"
         title="Resultatnivå"
-        description="Sammanställning för planåret av beräknad närvaro, bemanningskostnader och kostnad per DRG/vårdhändelse baserat på produktionsplanering och Dimensionering ME ÖPV."
       />
 
       <Box sx={filterGridSx}>
@@ -211,7 +210,6 @@ function PresenceSection(props: { rows: DimensioningResultRow[] }) {
     <ResultSection
       overline="1. Närvaro"
       title="Närvaro"
-      description="Visar produktionsnärvaro, admin/övrigt, ST som inte bidrar och total närvaro."
       emptyText="Inga närvarorader matchar valt filter."
       headerSx={presenceGridSx}
       rowSx={presenceGridSx}
@@ -247,7 +245,6 @@ function StaffingCostSection(props: { rows: DimensioningResultRow[] }) {
     <ResultSection
       overline="2. Bemanningskostnader"
       title="Bemanningskostnader"
-      description="Visar kostnaden för den totala kostnadsdrivande närvaron."
       emptyText="Inga kostnadsrader matchar valt filter."
       headerSx={staffingGridSx}
       rowSx={staffingGridSx}
@@ -281,7 +278,6 @@ function CostPerProductionSection(props: { rows: DimensioningResultRow[] }) {
     <ResultSection
       overline="3. Bemanningskostnader per DRG/vårdhändelse"
       title="Bemanningskostnader per DRG/vårdhändelse"
-      description="Visar bemanningskostnaden utslagen på DRG och vårdhändelser från produktionsplanen."
       emptyText="Inga nyckeltalsrader matchar valt filter."
       headerSx={productionCostGridSx}
       rowSx={productionCostGridSx}
@@ -317,7 +313,6 @@ function CostPerProductionSection(props: { rows: DimensioningResultRow[] }) {
 function ResultSection(props: {
   overline: string;
   title: string;
-  description: string;
   emptyText: string;
   headers: string[];
   rows: Array<{ id: string; values: Array<{ value: string; strong?: boolean }> }>;
@@ -329,7 +324,6 @@ function ResultSection(props: {
       <FormSection
         overline={props.overline}
         title={props.title}
-        description={props.description}
       />
 
       {props.rows.length === 0 ? (

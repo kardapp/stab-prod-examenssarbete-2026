@@ -20,7 +20,6 @@ export function StaffingCostSection(props: StaffingCostSectionProps) {
       <FormSection
         overline="5. Kostnader"
         title="Bemanningskostnad"
-        description="Kostnaden beräknas som lönekostnad per närvaro från historik multiplicerat med total närvaro."
       />
 
       <Box sx={costGridSx}>

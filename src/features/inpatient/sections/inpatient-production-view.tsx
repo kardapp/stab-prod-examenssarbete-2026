@@ -143,7 +143,6 @@ export function InpatientProductionView() {
             <FormSection
               overline="Steg 1"
               title="Välj ekonomisk kombika"
-              description="Vald ekonomisk kombika styr vilken slutenvårdsplan som fylls i och sparas."
             />
             <Stack spacing={2}>
               <TextField
@@ -187,7 +186,6 @@ export function InpatientProductionView() {
                 <FormSection
                   overline="Steg 2"
                   title="Produktionsunderlag"
-                  description="Slutenvård planeras från vårdtillfällen, medelvårdtid och DRG-snitt."
                 />
                 <Box sx={inputGridSx}>
                   <TextField
@@ -212,7 +210,6 @@ export function InpatientProductionView() {
                 <FormSection
                   overline="Steg 3"
                   title="Fördelningar"
-                  description="Akut/elektivt och SLL/UULP bryter ner samma antal vårdtillfällen."
                 />
                 <Box sx={pairGridSx}>
                   <PercentageGroup
@@ -264,7 +261,6 @@ export function InpatientProductionView() {
                 <FormSection
                   overline="Steg 4"
                   title="Slutenvårdsantaganden"
-                  description="Ange medelvårdtid och DRG-snitt uppdelat på SLL/UULP."
                 />
                 <Box sx={inputGridSx}>
                   <TextField

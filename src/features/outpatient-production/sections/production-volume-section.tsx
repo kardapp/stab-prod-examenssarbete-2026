@@ -24,7 +24,6 @@ export function ProductionVolumeSection(props: ProductionVolumeSectionProps) {
       <FormSection
         overline="Steg 2"
         title="Antal vårdhändelser"
-        description="Antal vårdhändelser är huvudvolymen för vald kombika under året."
       />
 
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>

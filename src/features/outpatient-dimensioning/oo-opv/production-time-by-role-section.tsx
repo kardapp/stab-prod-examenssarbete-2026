@@ -52,7 +52,6 @@ export function ProductionTimeByRoleSection(
       <FormSection
         overline="1. Inmatning tidsåtgång per yrkeskategori OO"
         title="Produktion och tid per yrkeskategori"
-        description="Underlaget kommer från produktionsplaneringen och OO-fördelningen. Öppna en rad om du behöver justera stöd, snitt-tid eller veckofördelning."
       />
 
       <Typography variant="subtitle2" sx={subheadingSx}>

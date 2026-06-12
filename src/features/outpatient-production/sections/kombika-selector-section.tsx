@@ -27,7 +27,6 @@ export function KombikaSelectorSection(props: KombikaSelectorSectionProps) {
       <FormSection
         overline="Steg 1"
         title="Välj ekonomisk kombika"
-        description="Vald ekonomisk kombika styr vilken produktionsplan som fylls i och sparas."
       />
 
       <Stack spacing={2}>

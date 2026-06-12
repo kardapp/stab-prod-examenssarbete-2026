@@ -129,7 +129,6 @@ function OoIntroSection() {
       <FormSection
         overline="Steg 2"
         title="Årets vårdhändelser fördelas till vårdande enhet"
-        description="Efter överenskommelse matas årets OO-fördelning in för hela volymen från produktionsplaneringen."
       />
       <Box sx={introGridSx}>
         <MetricValue label="Underlag" value="Senast sparad årsvolym" />
@@ -149,7 +148,6 @@ function ProductionBasisSection(props: {
       <FormSection
         overline="Produktionsunderlag"
         title="Vårdhändelser från produktionsplaneringen"
-        description="Det här är totalen du skrev in i produktionsplaneringen, summerad över yrkeskategorierna."
       />
 
       <Box sx={basisGridSx}>
@@ -466,7 +464,6 @@ function CareUnitTotalsSection(props: {
       <FormSection
         overline="Summering"
         title="Vårdhändelser per vårdande enhet"
-        description="Summerar alla fördelningsrader över yrkeskategorierna."
       />
 
       {careUnitRows.length > 0 ? (

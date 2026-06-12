@@ -19,7 +19,6 @@ export function DimensioningSummaryCard(props: DimensioningSummaryCardProps) {
       <FormSection
         overline="Sammanfattning"
         title="Summering dimensionering"
-        description="Sammanfattningen uppdateras direkt när dimensioneringsfälten ändras."
       />
 
       <Box sx={summaryGridSx}>

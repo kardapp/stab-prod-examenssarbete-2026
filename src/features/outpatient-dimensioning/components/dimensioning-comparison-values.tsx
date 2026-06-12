@@ -22,7 +22,6 @@ export function DimensioningComparisonValues(
       <FormSection
         overline="Jämförelse"
         title="Jämförelsevärden"
-        description="Stödvärden från föregående år. Dessa är inte primära inputfält."
       />
 
       <Stack spacing={1.5}>

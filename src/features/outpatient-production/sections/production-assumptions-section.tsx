@@ -76,7 +76,6 @@ export function ProductionAssumptionsSection(
       <FormSection
         overline="Steg 4"
         title="Beräkningsantaganden"
-        description="Snitt-tid och DRG-snitt används i samma produktionsberäkning."
       />
 
       <Box sx={assumptionPairGridSx}>

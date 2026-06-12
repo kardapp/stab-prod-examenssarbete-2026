@@ -138,16 +138,12 @@ export function PeriodizationCurveSection(props: {
       <FormSection
         overline={props.overline ?? "2. Periodiseringskurva"}
         title={props.title ?? "Personalbehov per vecka"}
-        description={
-          props.description ??
-          "Årsvolymen periodiseras till 52 veckor och justeras med planerade händelser."
-        }
+        description={props.description}
       />
 
       {props.rows.length === 0 ? (
         <Alert severity="info">
-          {props.emptyText ??
-            "Periodiseringskurvan visas när det finns en sparad årsplan att räkna på."}
+          {props.emptyText ?? "Ingen sparad årsplan att periodisera."}
         </Alert>
       ) : (
         <Stack spacing={1.5}>
