@@ -4,6 +4,7 @@ import { type ReactNode, useMemo, useSyncExternalStore } from "react";
 import {
   Alert,
   Box,
+  Button,
   Container,
   Stack,
   Table,
@@ -17,6 +18,7 @@ import { FormSection } from "@/shared/components/form-section";
 import { PageHeader } from "@/shared/components/page-header";
 import { PlanningMetricCard } from "@/shared/components/planning-metric-card";
 import { SectionCard } from "@/shared/components/section-card";
+import { appRoutes } from "@/shared/routes";
 import {
   formatTwoDecimals,
   formatWholeNumber,
@@ -31,6 +33,9 @@ import {
   calculateCostPerValue,
 } from "../utils/inpatient-calculations";
 import {
+  hasCurrentInpatientMeDimensioning,
+  hasCurrentInpatientOoDimensioning,
+  hasCurrentInpatientOoDistributions,
   readCurrentInpatientMeDimensioningRows,
   readCurrentInpatientOoDimensioningRows,
   readCurrentInpatientOoDimensioningSettings,
@@ -63,6 +68,9 @@ export function InpatientDimensioningResultsView() {
     if (!hasLoadedSession) {
       return {
         distributions: [],
+        hasSavedMeDimensioning: false,
+        hasSavedOoDimensioning: false,
+        hasSavedOoDistributions: false,
         meRows: [],
         ooRows: [],
         ooSettings: null,
@@ -70,29 +78,42 @@ export function InpatientDimensioningResultsView() {
       };
     }
 
+    const productionRow = readCurrentInpatientProductionRow();
+    const hasSavedMeDimensioning = hasCurrentInpatientMeDimensioning();
+    const hasSavedOoDimensioning = hasCurrentInpatientOoDimensioning();
+    const savedDistributions = readCurrentInpatientOoDistributions();
+
     return {
-      distributions: readCurrentInpatientOoDistributions(),
-      meRows: readCurrentInpatientMeDimensioningRows(),
-      ooRows: readCurrentInpatientOoDimensioningRows(),
-      ooSettings: readCurrentInpatientOoDimensioningSettings(),
-      productionRow: readCurrentInpatientProductionRow(),
+      distributions: productionRow
+        ? savedDistributions.filter(
+            (row) => row.productionRowId === productionRow.id
+          )
+        : [],
+      hasSavedMeDimensioning,
+      hasSavedOoDimensioning,
+      hasSavedOoDistributions: hasCurrentInpatientOoDistributions(),
+      meRows: hasSavedMeDimensioning
+        ? readCurrentInpatientMeDimensioningRows()
+        : [],
+      ooRows: hasSavedOoDimensioning
+        ? readCurrentInpatientOoDimensioningRows()
+        : [],
+      ooSettings: hasSavedOoDimensioning
+        ? readCurrentInpatientOoDimensioningSettings()
+        : null,
+      productionRow,
     };
   }, [hasLoadedSession]);
 
   const annualRows = useMemo(
-    () => {
-      if (!session.ooSettings) {
-        return [];
-      }
-
-      return buildInpatientDimensioningResultRows({
+    () =>
+      buildInpatientDimensioningResultRows({
         productionRow: session.productionRow,
         distributions: session.distributions,
         meRows: session.meRows,
         ooRows: session.ooRows,
         ooSettings: session.ooSettings,
-      });
-    },
+      }),
     [session]
   );
   const monthlyRows = useMemo(
@@ -126,24 +147,62 @@ export function InpatientDimensioningResultsView() {
             </Alert>
           ) : (
             <>
-              <PresenceSection
-                annualRows={annualRows}
-                monthlyRows={monthlyRows}
-                totalPresence={totalPresence}
-              />
-
-              <StaffingCostSection
-                annualRows={annualRows}
-                monthlyRows={monthlyRows}
-                totalStaffingCost={totalStaffingCost}
-              />
-
-              <CostPerProductionSection
-                annualRows={annualRows}
-                monthlyRows={monthlyRows}
+              <ResultBasisSection
+                hasSavedMeDimensioning={session.hasSavedMeDimensioning}
+                hasSavedOoDimensioning={session.hasSavedOoDimensioning}
+                hasSavedOoDistributions={
+                  session.hasSavedOoDistributions &&
+                  session.distributions.length > 0
+                }
                 productionRow={session.productionRow}
-                totalStaffingCost={totalStaffingCost}
               />
+
+              {annualRows.length === 0 ? (
+                <SectionCard>
+                  <Stack spacing={2}>
+                    <Alert severity="warning">
+                      Spara dimensionering ME eller OO innan resultatet
+                      sammanställs. Standardrader räknas inte som sparat
+                      underlag.
+                    </Alert>
+                    <Box sx={actionRowSx}>
+                      <Button
+                        variant="contained"
+                        href={appRoutes.inpatientDimensioning}
+                      >
+                        Gå till dimensionering ME
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        href={appRoutes.inpatientOoDimensioning}
+                      >
+                        Gå till dimensionering OO
+                      </Button>
+                    </Box>
+                  </Stack>
+                </SectionCard>
+              ) : (
+                <>
+                  <PresenceSection
+                    annualRows={annualRows}
+                    monthlyRows={monthlyRows}
+                    totalPresence={totalPresence}
+                  />
+
+                  <StaffingCostSection
+                    annualRows={annualRows}
+                    monthlyRows={monthlyRows}
+                    totalStaffingCost={totalStaffingCost}
+                  />
+
+                  <CostPerProductionSection
+                    annualRows={annualRows}
+                    monthlyRows={monthlyRows}
+                    productionRow={session.productionRow}
+                    totalStaffingCost={totalStaffingCost}
+                  />
+                </>
+              )}
             </>
           )}
         </Stack>
@@ -162,6 +221,46 @@ function getClientHydrationSnapshot() {
 
 function getServerHydrationSnapshot() {
   return false;
+}
+
+function ResultBasisSection(props: {
+  hasSavedMeDimensioning: boolean;
+  hasSavedOoDimensioning: boolean;
+  hasSavedOoDistributions: boolean;
+  productionRow: InpatientProductionRow;
+}) {
+  const includedParts = [
+    props.hasSavedMeDimensioning ? "ME" : "",
+    props.hasSavedOoDimensioning ? "OO" : "",
+  ].filter(Boolean);
+
+  return (
+    <SectionCard>
+      <FormSection
+        overline="Resultatunderlag"
+        title="Sparade steg som ingår"
+        description="Resultatet bygger bara på sparade steg. Standardvärden i formulär räknas inte in förrän användaren sparar."
+      />
+      <Box sx={metricGridSx}>
+        <PlanningMetricCard
+          label="Produktionsplan"
+          value={props.productionRow.economicKombika}
+        />
+        <PlanningMetricCard
+          label="Sparad"
+          value={formatSavedAt(props.productionRow.savedAt)}
+        />
+        <PlanningMetricCard
+          label="Dimensionering som ingår"
+          value={includedParts.join(" + ") || "Saknas"}
+        />
+        <PlanningMetricCard
+          label="OO-fördelning"
+          value={props.hasSavedOoDistributions ? "Sparad" : "Ingår inte"}
+        />
+      </Box>
+    </SectionCard>
+  );
 }
 
 function PresenceSection(props: {
@@ -679,6 +778,26 @@ function formatCurrency(value: number): string {
   return `${formatWholeNumber(value)} kr`;
 }
 
+function formatSavedAt(value: string): string {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Saknas";
+  }
+
+  const year = date.getFullYear();
+  const month = padDatePart(date.getMonth() + 1);
+  const day = padDatePart(date.getDate());
+  const hours = padDatePart(date.getHours());
+  const minutes = padDatePart(date.getMinutes());
+
+  return `${year}-${month}-${day} ${hours}:${minutes}`;
+}
+
+function padDatePart(value: number): string {
+  return String(value).padStart(2, "0");
+}
+
 function isNumericHeader(header: string): boolean {
   return [
     "Närvaro",
@@ -722,6 +841,12 @@ const subSectionTitleSx = {
 
 const tableWrapSx = {
   overflowX: "auto",
+};
+
+const actionRowSx = {
+  display: "flex",
+  flexWrap: "wrap",
+  gap: 1.5,
 };
 
 const headerCellSx = {

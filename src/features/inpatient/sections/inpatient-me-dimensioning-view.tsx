@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import {
   Alert,
   Box,
@@ -34,6 +34,7 @@ import {
   toNumber,
 } from "../utils/inpatient-calculations";
 import {
+  hasCurrentInpatientMeDimensioning,
   readCurrentInpatientMeDimensioningRows,
   readCurrentInpatientProductionRow,
   saveCurrentInpatientMeDimensioning,
@@ -52,6 +53,32 @@ const PERIODIZATION_WEEKLY_WORKING_MINUTES = 40 * 60;
 const PERIODIZATION_WEEKS_PER_YEAR = 52;
 
 export function InpatientMeDimensioningView() {
+  const hasLoadedSession = useSyncExternalStore(
+    subscribeToClientHydration,
+    getClientHydrationSnapshot,
+    getServerHydrationSnapshot
+  );
+
+  if (!hasLoadedSession) {
+    return (
+      <Box component="main" sx={pageSx}>
+        <Container maxWidth={false}>
+          <Stack spacing={2}>
+            <PageHeader
+              overline="Dimensionering ME slutenvård"
+              title="Läkarnärvaro kopplad till inskrivna per dag"
+            />
+            <Alert severity="info">Laddar sparat underlag...</Alert>
+          </Stack>
+        </Container>
+      </Box>
+    );
+  }
+
+  return <LoadedInpatientMeDimensioningView />;
+}
+
+function LoadedInpatientMeDimensioningView() {
   const [productionRow] = useState<InpatientProductionRow | null>(() =>
     readCurrentInpatientProductionRow()
   );
@@ -59,6 +86,10 @@ export function InpatientMeDimensioningView() {
     readCurrentInpatientMeDimensioningRows()
   );
   const [saveMessage, setSaveMessage] = useState("");
+  const [hasSavedRows, setHasSavedRows] = useState(() =>
+    hasCurrentInpatientMeDimensioning()
+  );
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const resultRows = useMemo(
     () =>
@@ -87,6 +118,7 @@ export function InpatientMeDimensioningView() {
         : [],
     [productionRow, resultRows]
   );
+  const canOpenResults = hasSavedRows && !hasUnsavedChanges;
 
   function updateRow(
     rowId: string,
@@ -94,6 +126,7 @@ export function InpatientMeDimensioningView() {
     value: string
   ) {
     setSaveMessage("");
+    setHasUnsavedChanges(true);
     setRows((current) =>
       current.map((row) =>
         row.id === rowId ? { ...row, [field]: Number(value) } : row
@@ -103,6 +136,8 @@ export function InpatientMeDimensioningView() {
 
   function saveRows() {
     saveCurrentInpatientMeDimensioning(rows);
+    setHasSavedRows(true);
+    setHasUnsavedChanges(false);
     setSaveMessage("Dimensionering ME slutenvård sparad.");
   }
 
@@ -249,6 +284,18 @@ export function InpatientMeDimensioningView() {
                   {saveMessage ? (
                     <Alert severity="success">{saveMessage}</Alert>
                   ) : null}
+                  {!hasSavedRows ? (
+                    <Alert severity="warning">
+                      Spara ME-dimensioneringen innan du går till resultat.
+                      Standardvärden i tabellen räknas inte in förrän de är
+                      sparade.
+                    </Alert>
+                  ) : hasUnsavedChanges ? (
+                    <Alert severity="warning">
+                      Du har osparade ändringar. Spara ME-dimensioneringen innan
+                      du går till resultat.
+                    </Alert>
+                  ) : null}
                   <Box sx={actionRowSx}>
                     <Button variant="contained" onClick={saveRows}>
                       Spara dimensionering ME
@@ -261,7 +308,12 @@ export function InpatientMeDimensioningView() {
                     </Button>
                     <Button
                       variant="outlined"
-                      href={appRoutes.inpatientDimensioningResults}
+                      disabled={!canOpenResults}
+                      href={
+                        canOpenResults
+                          ? appRoutes.inpatientDimensioningResults
+                          : undefined
+                      }
                     >
                       Gå till resultat
                     </Button>
@@ -274,6 +326,18 @@ export function InpatientMeDimensioningView() {
       </Container>
     </Box>
   );
+}
+
+function subscribeToClientHydration() {
+  return () => undefined;
+}
+
+function getClientHydrationSnapshot() {
+  return true;
+}
+
+function getServerHydrationSnapshot() {
+  return false;
 }
 
 function buildInpatientMePeriodizationRows(

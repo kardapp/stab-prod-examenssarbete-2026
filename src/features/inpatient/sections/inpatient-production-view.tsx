@@ -48,6 +48,7 @@ export function InpatientProductionView() {
   const [saveSeverity, setSaveSeverity] = useState<"success" | "error">(
     "success"
   );
+  const [isSaved, setIsSaved] = useState(false);
   const selectedKombika = useMemo(
     () =>
       inpatientKombikaOptions.find(
@@ -68,11 +69,13 @@ export function InpatientProductionView() {
   );
   const latestHistoryRow = productionHistory.at(-1) ?? null;
   const validationMessage = getValidationMessage(formState);
+  const canContinue = Boolean(selectedKombika && !validationMessage && isSaved);
 
   function updateFormState(
     changes: Partial<InpatientProductionFormState>
   ) {
     setSaveMessage("");
+    setIsSaved(false);
     setFormState((current) => ({ ...current, ...changes }));
   }
 
@@ -85,6 +88,7 @@ export function InpatientProductionView() {
   function saveProductionPlan() {
     if (!selectedKombika || validationMessage) {
       setSaveSeverity("error");
+      setIsSaved(false);
       setSaveMessage(validationMessage || "Välj ekonomisk kombika.");
       return;
     }
@@ -122,6 +126,7 @@ export function InpatientProductionView() {
       savedAt: new Date().toISOString(),
     });
     setSaveSeverity("success");
+    setIsSaved(true);
     setSaveMessage("Produktionsplan slutenvård sparad.");
   }
 
@@ -324,19 +329,33 @@ export function InpatientProductionView() {
                   {validationMessage ? (
                     <Alert severity="warning">{validationMessage}</Alert>
                   ) : null}
+                  {selectedKombika && !validationMessage && !isSaved ? (
+                    <Alert severity="warning">
+                      Spara produktionsplanen innan du går vidare. Annars
+                      används den senast sparade planen i nästa steg.
+                    </Alert>
+                  ) : null}
                   <Box sx={actionRowSx}>
                     <Button variant="contained" onClick={saveProductionPlan}>
                       Spara produktionsplan
                     </Button>
                     <Button
                       variant="outlined"
-                      href={appRoutes.inpatientOoDistribution}
+                      disabled={!canContinue}
+                      href={
+                        canContinue
+                          ? appRoutes.inpatientOoDistribution
+                          : undefined
+                      }
                     >
                       Fördela vårddygn till OO
                     </Button>
                     <Button
                       variant="outlined"
-                      href={appRoutes.inpatientDimensioning}
+                      disabled={!canContinue}
+                      href={
+                        canContinue ? appRoutes.inpatientDimensioning : undefined
+                      }
                     >
                       Gå till dimensionering ME
                     </Button>

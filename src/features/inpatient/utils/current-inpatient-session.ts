@@ -22,6 +22,10 @@ export function saveCurrentInpatientProductionRow(row: InpatientProductionRow) {
   writeJson(PRODUCTION_ROW_KEY, row);
 }
 
+export function hasCurrentInpatientProductionRow(): boolean {
+  return hasStorageValue(PRODUCTION_ROW_KEY);
+}
+
 export function readCurrentInpatientProductionRow():
   | InpatientProductionRow
   | null {
@@ -32,6 +36,10 @@ export function saveCurrentInpatientOoDistributions(
   rows: InpatientOoDistributionRow[]
 ) {
   writeJson(OO_DISTRIBUTIONS_KEY, rows);
+}
+
+export function hasCurrentInpatientOoDistributions(): boolean {
+  return hasStorageValue(OO_DISTRIBUTIONS_KEY);
 }
 
 export function readCurrentInpatientOoDistributions():
@@ -45,6 +53,13 @@ export function saveCurrentInpatientOoDimensioning(
 ) {
   writeJson(OO_DIMENSIONING_ROWS_KEY, rows);
   writeJson(OO_DIMENSIONING_SETTINGS_KEY, settings);
+}
+
+export function hasCurrentInpatientOoDimensioning(): boolean {
+  return (
+    hasStorageValue(OO_DIMENSIONING_ROWS_KEY) &&
+    hasStorageValue(OO_DIMENSIONING_SETTINGS_KEY)
+  );
 }
 
 export function readCurrentInpatientOoDimensioningRows():
@@ -69,6 +84,10 @@ export function saveCurrentInpatientMeDimensioning(
   writeJson(ME_DIMENSIONING_ROWS_KEY, rows);
 }
 
+export function hasCurrentInpatientMeDimensioning(): boolean {
+  return hasStorageValue(ME_DIMENSIONING_ROWS_KEY);
+}
+
 export function readCurrentInpatientMeDimensioningRows():
   | InpatientMeDimensioningRow[] {
   return readJson<InpatientMeDimensioningRow[]>(
@@ -88,6 +107,18 @@ function readJson<T>(key: string, fallback: T): T {
     return value ? (JSON.parse(value) as T) : fallback;
   } catch {
     return fallback;
+  }
+}
+
+function hasStorageValue(key: string): boolean {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  try {
+    return window.localStorage.getItem(key) !== null;
+  } catch {
+    return false;
   }
 }
 

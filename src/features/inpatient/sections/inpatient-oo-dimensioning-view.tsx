@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import {
   Alert,
   Box,
@@ -38,6 +38,7 @@ import {
   toNumber,
 } from "../utils/inpatient-calculations";
 import {
+  hasCurrentInpatientOoDimensioning,
   readCurrentInpatientOoDimensioningRows,
   readCurrentInpatientOoDimensioningSettings,
   readCurrentInpatientOoDistributions,
@@ -60,12 +61,45 @@ const PERIODIZATION_WEEKLY_WORKING_MINUTES = 40 * 60;
 const PERIODIZATION_WEEKS_PER_YEAR = 52;
 
 export function InpatientOoDimensioningView() {
+  const hasLoadedSession = useSyncExternalStore(
+    subscribeToClientHydration,
+    getClientHydrationSnapshot,
+    getServerHydrationSnapshot
+  );
+
+  if (!hasLoadedSession) {
+    return (
+      <Box component="main" sx={pageSx}>
+        <Container maxWidth={false}>
+          <Stack spacing={2}>
+            <PageHeader
+              overline="Dimensionering OO slutenvård"
+              title="Bemanning kopplad till vårddygn och vårdplatser"
+            />
+            <Alert severity="info">Laddar sparat underlag...</Alert>
+          </Stack>
+        </Container>
+      </Box>
+    );
+  }
+
+  return <LoadedInpatientOoDimensioningView />;
+}
+
+function LoadedInpatientOoDimensioningView() {
   const [productionRow] = useState<InpatientProductionRow | null>(() =>
     readCurrentInpatientProductionRow()
   );
-  const [distributions] = useState<InpatientOoDistributionRow[]>(() =>
-    readCurrentInpatientOoDistributions()
-  );
+  const [distributions] = useState<InpatientOoDistributionRow[]>(() => {
+    const savedProductionRow = readCurrentInpatientProductionRow();
+    const savedDistributions = readCurrentInpatientOoDistributions();
+
+    return savedProductionRow
+      ? savedDistributions.filter(
+          (row) => row.productionRowId === savedProductionRow.id
+        )
+      : [];
+  });
   const [rows, setRows] = useState<InpatientOoDimensioningRow[]>(() =>
     readCurrentInpatientOoDimensioningRows()
   );
@@ -73,6 +107,10 @@ export function InpatientOoDimensioningView() {
     () => readCurrentInpatientOoDimensioningSettings()
   );
   const [saveMessage, setSaveMessage] = useState("");
+  const [hasSavedRows, setHasSavedRows] = useState(() =>
+    hasCurrentInpatientOoDimensioning()
+  );
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const annualCareDays = getAnnualCareDaysFromDistributions(
     productionRow,
@@ -112,6 +150,7 @@ export function InpatientOoDimensioningView() {
         : [],
     [productionRow, resultRows, supportPresence]
   );
+  const canOpenResults = hasSavedRows && !hasUnsavedChanges;
 
   function updateRow(
     rowId: string,
@@ -119,6 +158,7 @@ export function InpatientOoDimensioningView() {
     value: string
   ) {
     setSaveMessage("");
+    setHasUnsavedChanges(true);
     setRows((current) =>
       current.map((row) =>
         row.id === rowId ? { ...row, [field]: Number(value) } : row
@@ -128,11 +168,14 @@ export function InpatientOoDimensioningView() {
 
   function updateSetting(field: OoSettingsField, value: string) {
     setSaveMessage("");
+    setHasUnsavedChanges(true);
     setSettings((current) => ({ ...current, [field]: Number(value) }));
   }
 
   function saveRows() {
     saveCurrentInpatientOoDimensioning(rows, settings);
+    setHasSavedRows(true);
+    setHasUnsavedChanges(false);
     setSaveMessage("Dimensionering OO slutenvård sparad.");
   }
 
@@ -321,6 +364,18 @@ export function InpatientOoDimensioningView() {
                   {saveMessage ? (
                     <Alert severity="success">{saveMessage}</Alert>
                   ) : null}
+                  {!hasSavedRows ? (
+                    <Alert severity="warning">
+                      Spara OO-dimensioneringen innan du går till resultat.
+                      Standardvärden i tabellen räknas inte in förrän de är
+                      sparade.
+                    </Alert>
+                  ) : hasUnsavedChanges ? (
+                    <Alert severity="warning">
+                      Du har osparade ändringar. Spara OO-dimensioneringen innan
+                      du går till resultat.
+                    </Alert>
+                  ) : null}
                   <Box sx={actionRowSx}>
                     <Button variant="contained" onClick={saveRows}>
                       Spara dimensionering OO
@@ -333,7 +388,12 @@ export function InpatientOoDimensioningView() {
                     </Button>
                     <Button
                       variant="outlined"
-                      href={appRoutes.inpatientDimensioningResults}
+                      disabled={!canOpenResults}
+                      href={
+                        canOpenResults
+                          ? appRoutes.inpatientDimensioningResults
+                          : undefined
+                      }
                     >
                       Gå till resultat
                     </Button>
@@ -346,6 +406,18 @@ export function InpatientOoDimensioningView() {
       </Container>
     </Box>
   );
+}
+
+function subscribeToClientHydration() {
+  return () => undefined;
+}
+
+function getClientHydrationSnapshot() {
+  return true;
+}
+
+function getServerHydrationSnapshot() {
+  return false;
 }
 
 function buildInpatientOoPeriodizationRows(params: {

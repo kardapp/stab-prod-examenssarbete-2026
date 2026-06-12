@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import {
   Alert,
   Box,
@@ -29,32 +29,49 @@ import {
   toNumber,
 } from "../utils/inpatient-calculations";
 import {
+  hasCurrentInpatientOoDistributions,
   readCurrentInpatientOoDistributions,
   readCurrentInpatientProductionRow,
   saveCurrentInpatientOoDistributions,
 } from "../utils/current-inpatient-session";
 
 export function InpatientOoDistributionView() {
-  const [productionRow] = useState<InpatientProductionRow | null>(() =>
-    readCurrentInpatientProductionRow()
+  const hasLoadedSession = useSyncExternalStore(
+    subscribeToClientHydration,
+    getClientHydrationSnapshot,
+    getServerHydrationSnapshot
   );
-  const [rows, setRows] = useState<InpatientOoDistributionRow[]>(() => {
-    const savedProductionRow = readCurrentInpatientProductionRow();
 
-    if (!savedProductionRow) {
-      return [];
-    }
+  if (!hasLoadedSession) {
+    return (
+      <Box component="main" sx={pageSx}>
+        <Container maxWidth={false}>
+          <Stack spacing={2}>
+            <PageHeader
+              overline="OO-fördelning slutenvård"
+              title="Fördela vårddygn till vårdande enhet"
+            />
+            <Alert severity="info">Laddar sparat underlag...</Alert>
+          </Stack>
+        </Container>
+      </Box>
+    );
+  }
 
-    const savedRows = readCurrentInpatientOoDistributions();
+  return <LoadedInpatientOoDistributionView />;
+}
 
-    return savedRows.length > 0
-      ? savedRows
-      : [
-          createDistributionRow(savedProductionRow, 0, 60),
-          createDistributionRow(savedProductionRow, 1, 40),
-        ];
-  });
+function LoadedInpatientOoDistributionView() {
+  const [initialSession] = useState(readInpatientOoDistributionSession);
+  const productionRow = initialSession.productionRow;
+  const [rows, setRows] = useState<InpatientOoDistributionRow[]>(
+    initialSession.rows
+  );
   const [saveMessage, setSaveMessage] = useState("");
+  const [hasSavedRows, setHasSavedRows] = useState(
+    initialSession.hasSavedRows
+  );
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const summary = useMemo(() => {
     const totalDistributedCareDays = rows.reduce(
@@ -76,12 +93,20 @@ export function InpatientOoDistributionView() {
         : 0,
     };
   }, [productionRow, rows]);
+  const distributionError =
+    productionRow && summary.totalDistributedCareDays > productionRow.careDays + 0.01
+      ? "Fördelade vårddygn får inte överstiga beräknade vårddygn."
+      : "";
+  const canContinue = Boolean(
+    productionRow && hasSavedRows && !hasUnsavedChanges && !distributionError
+  );
 
   function updateRow(
     rowId: string,
     changes: Partial<InpatientOoDistributionRow>
   ) {
     setSaveMessage("");
+    setHasUnsavedChanges(true);
     setRows((current) =>
       current.map((row) => (row.id === rowId ? { ...row, ...changes } : row))
     );
@@ -110,6 +135,8 @@ export function InpatientOoDistributionView() {
       return;
     }
 
+    setSaveMessage("");
+    setHasUnsavedChanges(true);
     setRows((current) => [
       ...current,
       createDistributionRow(productionRow, current.length, 0),
@@ -117,6 +144,8 @@ export function InpatientOoDistributionView() {
   }
 
   function removeDistributionRow(rowId: string) {
+    setSaveMessage("");
+    setHasUnsavedChanges(true);
     setRows((current) => current.filter((row) => row.id !== rowId));
   }
 
@@ -125,12 +154,15 @@ export function InpatientOoDistributionView() {
       return;
     }
 
-    if (summary.totalDistributedCareDays > productionRow.careDays + 0.01) {
-      setSaveMessage("Fördelade vårddygn får inte överstiga beräknade vårddygn.");
+    if (distributionError) {
+      setHasSavedRows(false);
+      setSaveMessage(distributionError);
       return;
     }
 
     saveCurrentInpatientOoDistributions(rows);
+    setHasSavedRows(true);
+    setHasUnsavedChanges(false);
     setSaveMessage("OO-fördelning för slutenvård sparad.");
   }
 
@@ -270,6 +302,20 @@ export function InpatientOoDistributionView() {
                       {saveMessage}
                     </Alert>
                   ) : null}
+                  {!hasSavedRows ? (
+                    <Alert severity="warning">
+                      Spara OO-fördelningen innan du går vidare. Förslagsraderna
+                      räknas inte in förrän de är sparade.
+                    </Alert>
+                  ) : hasUnsavedChanges ? (
+                    <Alert severity="warning">
+                      Du har osparade ändringar. Spara OO-fördelningen innan du
+                      går vidare.
+                    </Alert>
+                  ) : null}
+                  {distributionError && saveMessage !== distributionError ? (
+                    <Alert severity="error">{distributionError}</Alert>
+                  ) : null}
                   <Box sx={actionRowSx}>
                     <Button variant="contained" onClick={saveDistribution}>
                       Spara OO-fördelning
@@ -282,13 +328,23 @@ export function InpatientOoDistributionView() {
                     </Button>
                     <Button
                       variant="outlined"
-                      href={appRoutes.inpatientOoDimensioning}
+                      disabled={!canContinue}
+                      href={
+                        canContinue
+                          ? appRoutes.inpatientOoDimensioning
+                          : undefined
+                      }
                     >
                       Gå till dimensionering OO
                     </Button>
                     <Button
                       variant="outlined"
-                      href={appRoutes.inpatientProductionPlanningResults}
+                      disabled={!canContinue}
+                      href={
+                        canContinue
+                          ? appRoutes.inpatientProductionPlanningResults
+                          : undefined
+                      }
                     >
                       Gå till resultat
                     </Button>
@@ -301,6 +357,43 @@ export function InpatientOoDistributionView() {
       </Container>
     </Box>
   );
+}
+
+function readInpatientOoDistributionSession(): {
+  hasSavedRows: boolean;
+  productionRow: InpatientProductionRow | null;
+  rows: InpatientOoDistributionRow[];
+} {
+  const productionRow = readCurrentInpatientProductionRow();
+  const savedRows = readCurrentInpatientOoDistributions();
+  const rowsForProduction = productionRow
+    ? savedRows.filter((row) => row.productionRowId === productionRow.id)
+    : [];
+
+  return {
+    hasSavedRows:
+      hasCurrentInpatientOoDistributions() && rowsForProduction.length > 0,
+    productionRow,
+    rows:
+      productionRow && rowsForProduction.length === 0
+        ? [
+            createDistributionRow(productionRow, 0, 60),
+            createDistributionRow(productionRow, 1, 40),
+          ]
+        : rowsForProduction,
+  };
+}
+
+function subscribeToClientHydration() {
+  return () => undefined;
+}
+
+function getClientHydrationSnapshot() {
+  return true;
+}
+
+function getServerHydrationSnapshot() {
+  return false;
 }
 
 function createDistributionRow(

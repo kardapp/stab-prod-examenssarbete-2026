@@ -119,7 +119,7 @@ export function buildInpatientDimensioningResultRows(params: {
   distributions: InpatientOoDistributionRow[];
   meRows: InpatientMeDimensioningRow[];
   ooRows: InpatientOoDimensioningRow[];
-  ooSettings: InpatientOoDimensioningSettings;
+  ooSettings: InpatientOoDimensioningSettings | null;
 }): InpatientDimensioningResultRow[] {
   if (!params.productionRow) {
     return [];
@@ -158,9 +158,11 @@ export function buildInpatientDimensioningResultRows(params: {
       staffingCost: presence * toNumber(row.salaryCostPerPresence),
     };
   });
-  const supportPresence = calculateOoSupportPresence(params.ooSettings);
+  const supportPresence = params.ooSettings
+    ? calculateOoSupportPresence(params.ooSettings)
+    : 0;
   const supportRow =
-    supportPresence > 0
+    params.ooSettings && supportPresence > 0
       ? [
           {
             id: "oo-support-admin",
