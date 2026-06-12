@@ -4,13 +4,20 @@
 
 :root {
     --color-primary: #005883;
+    --color-graphic-blue: #00A3E0;
+    --color-secondary: #E54800;
     --color-background: #FFFFFF;
     --color-section-background: #F6F5F4;
     --color-text: #000000;
     --color-text-muted: #333333;
+    --color-text-accessible-grey: #67696B;
+    --color-text-accessible-blue: #0071C9;
     --color-text-on-dark: #FFFFFF;
     --color-link: #005883;
     --color-border: #CECECE;
+    --color-error: #9E1B34;
+    --color-warning: #E54800;
+    --color-success: #00574F;
 
     --page-background: var(--color-background);
     --section-background: var(--color-section-background);
@@ -26,6 +33,7 @@ body {
 body {
     background: var(--page-background);
     color: var(--color-text);
+    font-family: "Open Sans", Arial, sans-serif;
 }
 
 a {

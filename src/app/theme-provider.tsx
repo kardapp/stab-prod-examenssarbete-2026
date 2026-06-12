@@ -1,18 +1,12 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { CssBaseline, ThemeProvider } from "@mui/material";
-import { appTheme } from "./theme";
+import { KarolinskaTheme } from "@/shared/theme/karolinska-theme";
 
 type AppThemeProviderProps = {
   children: ReactNode;
 };
 
 export function AppThemeProvider(props: AppThemeProviderProps) {
-  return (
-    <ThemeProvider theme={appTheme}>
-      <CssBaseline />
-      {props.children}
-    </ThemeProvider>
-  );
+  return <KarolinskaTheme>{props.children}</KarolinskaTheme>;
 }
