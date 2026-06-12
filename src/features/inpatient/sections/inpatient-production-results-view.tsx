@@ -31,7 +31,8 @@ import {
   readCurrentInpatientOoDistributions,
   readCurrentInpatientProductionRow,
 } from "../utils/current-inpatient-session";
-import { calculateCostPerValue } from "../utils/inpatient-calculations";
+
+const DAYS_PER_YEAR = 365;
 
 export function InpatientProductionResultsView() {
   const [productionRow] = useState<InpatientProductionRow | null>(() =>
@@ -49,6 +50,26 @@ export function InpatientProductionResultsView() {
       ),
     [distributions]
   );
+  const acuteCareEvents = productionRow
+    ? (productionRow.careEvents * productionRow.acutePercentage) / 100
+    : 0;
+  const electiveCareEvents = productionRow
+    ? (productionRow.careEvents * productionRow.electivePercentage) / 100
+    : 0;
+  const sllCareEvents = productionRow
+    ? (productionRow.careEvents * productionRow.sllPercentage) / 100
+    : 0;
+  const uulpCareEvents = productionRow
+    ? (productionRow.careEvents * productionRow.uulpPercentage) / 100
+    : 0;
+  const sllDrgPoints = productionRow
+    ? productionRow.sllDrgPoints ??
+      sllCareEvents * (productionRow.sllDrgAverage ?? productionRow.drgAverage)
+    : 0;
+  const uulpDrgPoints = productionRow
+    ? productionRow.uulpDrgPoints ??
+      uulpCareEvents * (productionRow.uulpDrgAverage ?? productionRow.drgAverage)
+    : 0;
 
   return (
     <Box component="main" sx={pageSx}>
@@ -67,54 +88,60 @@ export function InpatientProductionResultsView() {
             <>
               <SectionCard>
                 <FormSection
-                  overline="1. Sammanfattning"
-                  title="Slutenvårdsvolym och kapacitet"
+                  overline="1. Antal vårdtillfällen"
+                  title="Antal vårdtillfällen"
+                  description="Visar planerade vårdtillfällen per dag och uppdelat på akut/elektivt samt SLL/UULP."
                 />
                 <Box sx={metricGridSx}>
                   <PlanningMetricCard
-                    label="Vårdtillfällen"
+                    label="Årets vårdtillfällen"
                     value={formatWholeNumber(productionRow.careEvents)}
-                    helperText={`${formatOneDecimal(
-                      productionRow.careEvents / 365
-                    )} per dag`}
                   />
                   <PlanningMetricCard
-                    label="Vårddygn"
-                    value={formatWholeNumber(productionRow.careDays)}
-                    helperText={`${formatOneDecimal(
-                      productionRow.careDays / 365
-                    )} per dag`}
-                  />
-                  <PlanningMetricCard
-                    label="DRG-poäng"
-                    value={formatOneDecimal(productionRow.drgPoints)}
-                    helperText={`${formatOneDecimal(
-                      productionRow.drgPoints / 365
-                    )} per dag`}
-                  />
-                  <PlanningMetricCard
-                    label="Snitt antal vårdplatser"
-                    value={formatTwoDecimals(productionRow.averageCarePlaces)}
+                    label="Per dag"
+                    value={formatOneDecimal(
+                      productionRow.careEvents / DAYS_PER_YEAR
+                    )}
                   />
                   <PlanningMetricCard
                     label="Akut / elektivt"
-                    value={`${formatOneDecimal(
+                    value={`${formatWholeNumber(
+                      acuteCareEvents
+                    )} / ${formatWholeNumber(electiveCareEvents)}`}
+                    helperText={`${formatOneDecimal(
                       productionRow.acutePercentage
                     )}% / ${formatOneDecimal(productionRow.electivePercentage)}%`}
                   />
                   <PlanningMetricCard
                     label="SLL / UULP"
-                    value={`${formatOneDecimal(
+                    value={`${formatWholeNumber(
+                      sllCareEvents
+                    )} / ${formatWholeNumber(uulpCareEvents)}`}
+                    helperText={`${formatOneDecimal(
                       productionRow.sllPercentage
                     )}% / ${formatOneDecimal(productionRow.uulpPercentage)}%`}
                   />
+                </Box>
+              </SectionCard>
+
+              <SectionCard>
+                <FormSection
+                  overline="2. Antal vårddygn"
+                  title="Antal vårddygn"
+                  description="Medelvårdtid × vårdtillfällen = vårddygn."
+                />
+                <Box sx={metricGridSx}>
                   <PlanningMetricCard
-                    label="DRG per vårddygn"
-                    value={formatTwoDecimals(
-                      calculateCostPerValue(
-                        productionRow.drgPoints,
-                        productionRow.careDays
-                      )
+                    label="Vårddygn"
+                    value={formatWholeNumber(productionRow.careDays)}
+                    helperText={`${formatOneDecimal(
+                      productionRow.averageLengthOfStay
+                    )} × ${formatWholeNumber(productionRow.careEvents)}`}
+                  />
+                  <PlanningMetricCard
+                    label="Per dag"
+                    value={formatOneDecimal(
+                      productionRow.careDays / DAYS_PER_YEAR
                     )}
                   />
                   <PlanningMetricCard
@@ -126,7 +153,61 @@ export function InpatientProductionResultsView() {
 
               <SectionCard>
                 <FormSection
-                  overline="2. OO-fördelning"
+                  overline="3. Antal DRG-poäng"
+                  title="Antal DRG-poäng"
+                  description="DRG-snitt SLL/UULP × vårdtillfällen per betalare = DRG-poäng."
+                />
+                <Box sx={metricGridSx}>
+                  <PlanningMetricCard
+                    label="DRG-poäng"
+                    value={formatOneDecimal(productionRow.drgPoints)}
+                    helperText={`${formatTwoDecimals(
+                      productionRow.drgAverage
+                    )} viktat DRG-snitt`}
+                  />
+                  <PlanningMetricCard
+                    label="Per dag"
+                    value={formatOneDecimal(
+                      productionRow.drgPoints / DAYS_PER_YEAR
+                    )}
+                  />
+                  <PlanningMetricCard
+                    label="SLL"
+                    value={formatOneDecimal(sllDrgPoints)}
+                    helperText={`${formatTwoDecimals(
+                      productionRow.sllDrgAverage ?? productionRow.drgAverage
+                    )} × ${formatWholeNumber(sllCareEvents)}`}
+                  />
+                  <PlanningMetricCard
+                    label="UULP"
+                    value={formatOneDecimal(uulpDrgPoints)}
+                    helperText={`${formatTwoDecimals(
+                      productionRow.uulpDrgAverage ?? productionRow.drgAverage
+                    )} × ${formatWholeNumber(uulpCareEvents)}`}
+                  />
+                </Box>
+              </SectionCard>
+
+              <SectionCard>
+                <FormSection
+                  overline="4. Snitt antal vårdplatser"
+                  title="Snitt antal vårdplatser"
+                  description="Vårddygn / 365 = snitt antal vårdplatser."
+                />
+                <Box sx={metricGridSx}>
+                  <PlanningMetricCard
+                    label="Snitt antal vårdplatser"
+                    value={formatTwoDecimals(productionRow.averageCarePlaces)}
+                    helperText={`${formatWholeNumber(
+                      productionRow.careDays
+                    )} / ${DAYS_PER_YEAR}`}
+                  />
+                </Box>
+              </SectionCard>
+
+              <SectionCard>
+                <FormSection
+                  overline="5. OO-fördelning"
                   title="Vårddygn per vårdande enhet"
                 />
                 {distributions.length === 0 ? (

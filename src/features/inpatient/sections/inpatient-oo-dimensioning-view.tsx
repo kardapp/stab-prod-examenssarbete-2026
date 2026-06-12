@@ -52,6 +52,7 @@ type OoRowNumberField = Exclude<
 >;
 type OoSettingsField = keyof InpatientOoDimensioningSettings;
 type InpatientOoResultRow = InpatientOoDimensioningRow & {
+  careDaysFromProductionPlan: number;
   presence: number;
   staffingCost: number;
   weeklyHours: number;
@@ -127,13 +128,14 @@ function LoadedInpatientOoDimensioningView() {
 
         return {
           ...row,
+          careDaysFromProductionPlan: annualCareDays,
           presence,
           weeklyHours:
             averageCarePlaces * toNumber(row.hoursPerCarePlacePerDay) * 7,
           staffingCost: presence * toNumber(row.salaryCostPerPresence),
         };
       }),
-    [averageCarePlaces, rows]
+    [annualCareDays, averageCarePlaces, rows]
   );
   const supportPresence = calculateOoSupportPresence(settings);
   const totalPresence =
@@ -234,6 +236,9 @@ function LoadedInpatientOoDimensioningView() {
                       <TableRow>
                         <TableCell sx={headerCellSx}>Yrkeskategori</TableCell>
                         <TableCell sx={headerCellSx} align="right">
+                          Vårddygn från produktionsplan
+                        </TableCell>
+                        <TableCell sx={headerCellSx} align="right">
                           Tim/vårdplats/dygn
                         </TableCell>
                         <TableCell sx={headerCellSx} align="right">
@@ -254,6 +259,9 @@ function LoadedInpatientOoDimensioningView() {
                       {resultRows.map((row) => (
                         <TableRow key={row.id}>
                           <TableCell>{row.roleCategory}</TableCell>
+                          <TableCell align="right">
+                            {formatWholeNumber(row.careDaysFromProductionPlan)}
+                          </TableCell>
                           <EditableNumberCell
                             value={row.hoursPerCarePlacePerDay}
                             onChange={(value) =>

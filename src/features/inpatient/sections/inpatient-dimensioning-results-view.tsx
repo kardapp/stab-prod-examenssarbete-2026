@@ -360,7 +360,7 @@ function PresenceSection(props: {
         <ResultSubSection title="Per område">
           <ResultTable
             emptyText="Det finns inga områdesrader ännu."
-            headers={["Område", "Närvaro"]}
+            headers={["Område (ÖPV/SLV/admin/etc.)", "Närvaro"]}
             rows={areaRows.map((row) => ({
               id: `presence-area-${row.id}`,
               cells: [
@@ -453,7 +453,10 @@ function StaffingCostSection(props: {
           />
         </ResultSubSection>
 
-        <ResultSubSection title="Per månad">
+        <ResultSubSection
+          title="Per månad"
+          description="Lön finns på månadsnivå, därför visas bemanningskostnad per månad som egen sammanställning."
+        >
           <ResultTable
             emptyText="Det finns inga månadsrader ännu."
             headers={["Månad", "Bemanningskostnad"]}
@@ -470,7 +473,7 @@ function StaffingCostSection(props: {
         <ResultSubSection title="Per område">
           <ResultTable
             emptyText="Det finns inga områdesrader ännu."
-            headers={["Område", "Bemanningskostnad"]}
+            headers={["Område (ÖPV/SLV/admin/etc.)", "Bemanningskostnad"]}
             rows={areaRows.map((row) => ({
               id: `staffing-area-${row.id}`,
               cells: [
@@ -573,7 +576,10 @@ function CostPerProductionSection(props: {
           />
         </ResultSubSection>
 
-        <ResultSubSection title="Per månad">
+        <ResultSubSection
+          title="Per månad"
+          description="Lön finns endast per månad i underlaget, därför visas produktionsnyckeltalen här med månadsvolymer."
+        >
           <ProductionCostTable
             rows={monthRows}
             drgPoints={monthlyDrgPoints}
@@ -765,13 +771,7 @@ function groupRows(
 }
 
 function formatArea(row: InpatientDimensioningResultRow): string {
-  const category = row.category.toLocaleLowerCase("sv-SE");
-
-  if (category.includes("admin") || category.includes("stöd")) {
-    return "Admin";
-  }
-
-  return "SLV";
+  return row.area || row.source || "Saknas";
 }
 
 function formatCurrency(value: number): string {

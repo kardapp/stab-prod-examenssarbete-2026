@@ -21,10 +21,26 @@ export function calculateInpatientCareDays(
 }
 
 export function calculateInpatientDrgPoints(
-  careEvents: number,
-  drgAverage: number
+  sllCareEvents: number,
+  sllDrgAverage: number,
+  uulpCareEvents: number,
+  uulpDrgAverage: number
 ): number {
-  return toNumber(careEvents) * toNumber(drgAverage);
+  return (
+    toNumber(sllCareEvents) * toNumber(sllDrgAverage) +
+    toNumber(uulpCareEvents) * toNumber(uulpDrgAverage)
+  );
+}
+
+export function calculateWeightedDrgAverage(
+  careEvents: number,
+  drgPoints: number
+): number {
+  if (toNumber(careEvents) <= 0) {
+    return 0;
+  }
+
+  return toNumber(drgPoints) / toNumber(careEvents);
 }
 
 export function calculateAverageCarePlaces(careDays: number): number {
@@ -39,23 +55,35 @@ export function calculateInpatientProductionValues(
     careEvents,
     formState.averageLengthOfStay
   );
+  const sllCareEvents = (careEvents * toNumber(formState.sllPercentage)) / 100;
+  const uulpCareEvents =
+    (careEvents * toNumber(formState.uulpPercentage)) / 100;
+  const sllDrgPoints =
+    sllCareEvents * toNumber(formState.sllDrgAverage);
+  const uulpDrgPoints =
+    uulpCareEvents * toNumber(formState.uulpDrgAverage);
   const drgPoints = calculateInpatientDrgPoints(
-    careEvents,
-    formState.drgAverage
+    sllCareEvents,
+    formState.sllDrgAverage,
+    uulpCareEvents,
+    formState.uulpDrgAverage
   );
 
   return {
     acuteCareEvents: (careEvents * toNumber(formState.acutePercentage)) / 100,
     electiveCareEvents:
       (careEvents * toNumber(formState.electivePercentage)) / 100,
-    sllCareEvents: (careEvents * toNumber(formState.sllPercentage)) / 100,
-    uulpCareEvents: (careEvents * toNumber(formState.uulpPercentage)) / 100,
+    sllCareEvents,
+    uulpCareEvents,
     careEventsPerDay: careEvents / DAYS_PER_YEAR,
     careDays,
     careDaysPerDay: careDays / DAYS_PER_YEAR,
     averageCarePlaces: calculateAverageCarePlaces(careDays),
     drgPoints,
     drgPointsPerDay: drgPoints / DAYS_PER_YEAR,
+    sllDrgPoints,
+    uulpDrgPoints,
+    weightedDrgAverage: calculateWeightedDrgAverage(careEvents, drgPoints),
   };
 }
 
@@ -141,6 +169,7 @@ export function buildInpatientDimensioningResultRows(params: {
     return {
       id: `me-${row.id}`,
       source: "ME" as const,
+      area: "SLV",
       category: row.competenceLevel,
       section: productionRow.section,
       careProvidingUnit: "ME",
@@ -155,6 +184,7 @@ export function buildInpatientDimensioningResultRows(params: {
     return {
       id: `oo-${row.id}`,
       source: "OO" as const,
+      area: "SLV",
       category: row.roleCategory,
       section: productionRow.section,
       careProvidingUnit: careUnit,
@@ -172,6 +202,7 @@ export function buildInpatientDimensioningResultRows(params: {
           {
             id: "oo-support-admin",
             source: "OO" as const,
+            area: "Admin/övrigt",
             category: "Vårdnära stöd/admin",
             section: productionRow.section,
             careProvidingUnit: careUnit,

@@ -16,11 +16,7 @@ import { PageHeader } from "@/shared/components/page-header";
 import { PlanningMetricCard } from "@/shared/components/planning-metric-card";
 import { SectionCard } from "@/shared/components/section-card";
 import { appRoutes } from "@/shared/routes";
-import {
-  formatOneDecimal,
-  formatTwoDecimals,
-  formatWholeNumber,
-} from "@/shared/utils/format-number";
+import { formatOneDecimal } from "@/shared/utils/format-number";
 import {
   CURRENT_INPATIENT_PRODUCTION_PLAN_ID,
   inpatientKombikaOptions,
@@ -110,16 +106,20 @@ export function InpatientProductionView() {
         ? "SLL"
         : "UULP",
       plannedCareEvents: formState.careEvents,
+      drgAverage: calculatedValues.weightedDrgAverage,
+      sllDrgAverage: formState.sllDrgAverage,
+      uulpDrgAverage: formState.uulpDrgAverage,
       careEvents: formState.careEvents,
       acutePercentage: formState.acutePercentage,
       electivePercentage: formState.electivePercentage,
       sllPercentage: formState.sllPercentage,
       uulpPercentage: formState.uulpPercentage,
       averageLengthOfStay: formState.averageLengthOfStay,
-      drgAverage: formState.drgAverage,
       careDays: calculatedValues.careDays,
       averageCarePlaces: calculatedValues.averageCarePlaces,
       drgPoints: calculatedValues.drgPoints,
+      sllDrgPoints: calculatedValues.sllDrgPoints,
+      uulpDrgPoints: calculatedValues.uulpDrgPoints,
       previousYearPlan: latestHistoryRow?.plannedCareEvents ?? 0,
       r12Outcome: latestHistoryRow?.r12CareEvents ?? 0,
       previousYearOutcome: latestHistoryRow?.previousYearOutcome ?? 0,
@@ -201,6 +201,10 @@ export function InpatientProductionView() {
                     fullWidth
                     slotProps={{ htmlInput: { min: 0, step: 1 } }}
                   />
+                  <PlanningMetricCard
+                    label="Per dag"
+                    value={formatOneDecimal(calculatedValues.careEventsPerDay)}
+                  />
                 </Box>
               </SectionCard>
 
@@ -260,7 +264,7 @@ export function InpatientProductionView() {
                 <FormSection
                   overline="Steg 4"
                   title="Slutenvårdsantaganden"
-                  description="Medelvårdtid räknar fram vårddygn och snitt antal vårdplatser."
+                  description="Ange medelvårdtid och DRG-snitt uppdelat på SLL/UULP."
                 />
                 <Box sx={inputGridSx}>
                   <TextField
@@ -278,40 +282,26 @@ export function InpatientProductionView() {
                     slotProps={{ htmlInput: { min: 0, step: 0.1 } }}
                   />
                   <TextField
-                    label="DRG-snitt"
+                    label="DRG-snitt SLL"
                     type="number"
                     size="small"
-                    value={formState.drgAverage}
+                    value={formState.sllDrgAverage}
                     onChange={(event) =>
-                      handleNumberChange("drgAverage", event.target.value)
+                      handleNumberChange("sllDrgAverage", event.target.value)
                     }
                     fullWidth
                     slotProps={{ htmlInput: { min: 0, step: 0.1 } }}
                   />
-                </Box>
-              </SectionCard>
-
-              <SectionCard>
-                <FormSection
-                  overline="Förhandsvisning"
-                  title="Beräknade slutenvårdsvärden"
-                />
-                <Box sx={metricGridSx}>
-                  <PlanningMetricCard
-                    label="Vårddygn"
-                    value={formatWholeNumber(calculatedValues.careDays)}
-                  />
-                  <PlanningMetricCard
-                    label="Snitt antal vårdplatser"
-                    value={formatTwoDecimals(calculatedValues.averageCarePlaces)}
-                  />
-                  <PlanningMetricCard
-                    label="DRG-poäng"
-                    value={formatOneDecimal(calculatedValues.drgPoints)}
-                  />
-                  <PlanningMetricCard
-                    label="Vårdtillfällen per dag"
-                    value={formatOneDecimal(calculatedValues.careEventsPerDay)}
+                  <TextField
+                    label="DRG-snitt UULP"
+                    type="number"
+                    size="small"
+                    value={formState.uulpDrgAverage}
+                    onChange={(event) =>
+                      handleNumberChange("uulpDrgAverage", event.target.value)
+                    }
+                    fullWidth
+                    slotProps={{ htmlInput: { min: 0, step: 0.1 } }}
                   />
                 </Box>
               </SectionCard>
@@ -432,8 +422,12 @@ function getValidationMessage(formState: InpatientProductionFormState): string {
     return "Medelvårdtid måste vara större än 0.";
   }
 
-  if (toNumber(formState.drgAverage) <= 0) {
-    return "DRG-snitt måste vara större än 0.";
+  if (toNumber(formState.sllDrgAverage) <= 0) {
+    return "DRG-snitt SLL måste vara större än 0.";
+  }
+
+  if (toNumber(formState.uulpDrgAverage) <= 0) {
+    return "DRG-snitt UULP måste vara större än 0.";
   }
 
   if (formState.acutePercentage + formState.electivePercentage !== 100) {
@@ -497,16 +491,6 @@ const percentageRowSx = {
   gridTemplateColumns: {
     xs: "1fr",
     sm: "minmax(90px, 1fr) minmax(120px, 0.7fr) minmax(140px, 1fr)",
-  },
-};
-
-const metricGridSx = {
-  display: "grid",
-  gap: 1.5,
-  gridTemplateColumns: {
-    xs: "1fr",
-    md: "repeat(2, minmax(0, 1fr))",
-    xl: "repeat(4, minmax(0, 1fr))",
   },
 };
 

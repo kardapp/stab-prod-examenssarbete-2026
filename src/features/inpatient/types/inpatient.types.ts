@@ -10,6 +10,8 @@ export type BaseProductionRow = {
   payerType: InpatientPayerType;
   plannedCareEvents: number;
   drgAverage: number;
+  sllDrgAverage: number;
+  uulpDrgAverage: number;
 };
 
 export type InpatientKombikaOption = {
@@ -29,7 +31,8 @@ export type InpatientProductionFormState = {
   sllPercentage: number;
   uulpPercentage: number;
   averageLengthOfStay: number;
-  drgAverage: number;
+  sllDrgAverage: number;
+  uulpDrgAverage: number;
 };
 
 export type InpatientCalculatedValues = {
@@ -43,6 +46,9 @@ export type InpatientCalculatedValues = {
   averageCarePlaces: number;
   drgPoints: number;
   drgPointsPerDay: number;
+  sllDrgPoints: number;
+  uulpDrgPoints: number;
+  weightedDrgAverage: number;
 };
 
 export type InpatientProductionRow = BaseProductionRow & {
@@ -60,6 +66,8 @@ export type InpatientProductionRow = BaseProductionRow & {
   careDays: number;
   averageCarePlaces: number;
   drgPoints: number;
+  sllDrgPoints: number;
+  uulpDrgPoints: number;
   previousYearPlan: number;
   r12Outcome: number;
   previousYearOutcome: number;
@@ -119,6 +127,7 @@ export type InpatientMeDimensioningRow = {
 export type InpatientDimensioningResultRow = {
   id: string;
   source: "ME" | "OO";
+  area: string;
   category: string;
   section: string;
   careProvidingUnit: string;

@@ -49,7 +49,7 @@ export function InpatientOoDistributionView() {
           <Stack spacing={2}>
             <PageHeader
               overline="OO-fördelning slutenvård"
-              title="Fördela vårddygn till vårdande enhet"
+              title="Fördelning av vårddygn till OO"
             />
             <Alert severity="info">Laddar sparat underlag...</Alert>
           </Stack>
@@ -172,7 +172,7 @@ function LoadedInpatientOoDistributionView() {
         <Stack spacing={2}>
           <PageHeader
             overline="OO-fördelning slutenvård"
-            title="Fördela vårddygn till vårdande enhet"
+            title="Fördelning av vårddygn till OO"
           />
 
           {!productionRow ? (

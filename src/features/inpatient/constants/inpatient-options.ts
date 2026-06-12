@@ -52,7 +52,8 @@ export const initialInpatientProductionFormState: InpatientProductionFormState =
     sllPercentage: 82,
     uulpPercentage: 18,
     averageLengthOfStay: 4.2,
-    drgAverage: 1.35,
+    sllDrgAverage: 1.35,
+    uulpDrgAverage: 1.2,
   };
 
 export const inpatientProductionHistoryByKombikaId: Record<
