@@ -289,11 +289,14 @@ export function formatSignedPercentage(value: number): string {
   return `${value > 0 ? "+" : ""}${formatOneDecimal(value)}%`;
 }
 
-export function formatWeekTitle(point: WeeklyCurvePoint): string {
+export function formatWeekTitle(
+  point: WeeklyCurvePoint,
+  volumeLabelLower = "vårdhändelser"
+): string {
   return [
     `Vecka ${point.week}`,
     `Personalbehov ${formatTwoDecimals(point.adjustedStaffingNeed)} heltid`,
-    `${formatOneDecimal(point.adjustedVisits)} vårdhändelser`,
+    `${formatOneDecimal(point.adjustedVisits)} ${volumeLabelLower}`,
     `Påverkan ${formatSignedPercentage(point.impactPercentage)}`,
   ].join(" · ");
 }

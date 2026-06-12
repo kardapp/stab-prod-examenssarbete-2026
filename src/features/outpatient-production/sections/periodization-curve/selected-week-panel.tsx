@@ -16,6 +16,7 @@ import {
 type SelectedWeekPanelProps = {
   selectedPoint: WeeklyCurvePoint;
   showDrg?: boolean;
+  volumeLabel?: string;
 };
 
 export function SelectedWeekPanel(props: SelectedWeekPanelProps) {
@@ -45,7 +46,7 @@ export function SelectedWeekPanel(props: SelectedWeekPanelProps) {
 
       <Box sx={summaryGridSx}>
         <SummaryValue
-          label="Vårdhändelser"
+          label={props.volumeLabel ?? "Vårdhändelser"}
           value={formatOneDecimal(props.selectedPoint.adjustedVisits)}
         />
         <SummaryValue

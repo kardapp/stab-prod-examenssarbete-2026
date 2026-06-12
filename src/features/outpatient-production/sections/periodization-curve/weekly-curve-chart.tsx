@@ -6,6 +6,7 @@ type WeeklyCurveChartProps = {
   curvePoints: WeeklyCurvePoint[];
   maxPresence: number;
   selectedWeek: number | null;
+  volumeLabelLower?: string;
   onSelectWeek: (week: number) => void;
 };
 
@@ -40,7 +41,10 @@ export function WeeklyCurveChart(props: WeeklyCurveChartProps) {
                       aria-label={`Vecka ${point.week}`}
                       aria-expanded={isSelected}
                       aria-pressed={isSelected}
-                      title={formatWeekTitle(point)}
+                      title={formatWeekTitle(
+                        point,
+                        props.volumeLabelLower
+                      )}
                       onClick={() => props.onSelectWeek(point.week)}
                       sx={{
                         ...barButtonSx,

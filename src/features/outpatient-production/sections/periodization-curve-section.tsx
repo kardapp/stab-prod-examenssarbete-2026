@@ -28,6 +28,8 @@ export function PeriodizationCurveSection(props: {
   description?: string;
   emptyText?: string;
   showDrg?: boolean;
+  volumeLabel?: string;
+  volumeLabelLower?: string;
 }) {
   const [impacts, setImpacts] = useState<WeeklyImpact[]>([]);
   const [draft, setDraft] = useState<WeeklyImpactDraft>(initialImpactDraft);
@@ -153,6 +155,7 @@ export function PeriodizationCurveSection(props: {
             curvePoints={curvePoints}
             maxPresence={maxPresence}
             selectedWeek={selectedWeek}
+            volumeLabelLower={props.volumeLabelLower}
             onSelectWeek={handleSelectWeek}
           />
 
@@ -163,6 +166,7 @@ export function PeriodizationCurveSection(props: {
                 impacts={selectedPoint.impacts}
                 selectedPoint={selectedPoint}
                 showDrg={props.showDrg}
+                volumeLabel={props.volumeLabel}
                 validationMessage={validationMessage}
                 onAddImpact={addImpact}
                 onClose={handleCloseWeek}
@@ -184,6 +188,7 @@ function FocusedWeekAccordion(props: {
   impacts: WeeklyImpact[];
   selectedPoint: WeeklyCurvePoint;
   showDrg?: boolean;
+  volumeLabel?: string;
   validationMessage: string;
   onAddImpact: () => void;
   onClose: () => void;
@@ -215,6 +220,7 @@ function FocusedWeekAccordion(props: {
         <SelectedWeekPanel
           selectedPoint={props.selectedPoint}
           showDrg={props.showDrg}
+          volumeLabel={props.volumeLabel}
         />
 
         <WeeklyImpactControls
@@ -234,6 +240,7 @@ function FocusedWeekAccordion(props: {
         <WeeklyBreakdownTable
           selectedPoint={props.selectedPoint}
           showDrg={props.showDrg}
+          volumeLabel={props.volumeLabel}
         />
       </Box>
     </Box>

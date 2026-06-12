@@ -18,6 +18,8 @@ import { FormSection } from "@/shared/components/form-section";
 import { PageHeader } from "@/shared/components/page-header";
 import { PlanningMetricCard } from "@/shared/components/planning-metric-card";
 import { SectionCard } from "@/shared/components/section-card";
+import { PeriodizationCurveSection } from "@/features/outpatient-production/sections/periodization-curve-section";
+import type { WeeklyCurveSourceRow } from "@/features/outpatient-production/sections/periodization-curve/periodization-curve-model";
 import { appRoutes } from "@/shared/routes";
 import {
   formatTwoDecimals,
@@ -48,6 +50,14 @@ type OoRowNumberField = Exclude<
   "id" | "roleCategory"
 >;
 type OoSettingsField = keyof InpatientOoDimensioningSettings;
+type InpatientOoResultRow = InpatientOoDimensioningRow & {
+  presence: number;
+  staffingCost: number;
+  weeklyHours: number;
+};
+
+const PERIODIZATION_WEEKLY_WORKING_MINUTES = 40 * 60;
+const PERIODIZATION_WEEKS_PER_YEAR = 52;
 
 export function InpatientOoDimensioningView() {
   const [productionRow] = useState<InpatientProductionRow | null>(() =>
@@ -91,6 +101,17 @@ export function InpatientOoDimensioningView() {
   const totalPresence =
     resultRows.reduce((sum, row) => sum + row.presence, 0) + supportPresence;
   const totalCost = resultRows.reduce((sum, row) => sum + row.staffingCost, 0);
+  const periodizationRows = useMemo(
+    () =>
+      productionRow
+        ? buildInpatientOoPeriodizationRows({
+            productionRow,
+            rows: resultRows,
+            supportPresence,
+          })
+        : [],
+    [productionRow, resultRows, supportPresence]
+  );
 
   function updateRow(
     rowId: string,
@@ -285,6 +306,16 @@ export function InpatientOoDimensioningView() {
                 </Box>
               </SectionCard>
 
+              <PeriodizationCurveSection
+                rows={periodizationRows}
+                overline="Periodisering över året"
+                title="Personalbehov per vecka"
+                description="OO-dimensioneringen för slutenvård periodiseras över 52 veckor. Klicka på en vecka för att se detaljer och lägga till påverkan."
+                emptyText="Periodiseringskurvan visas när det finns OO-dimensionering att räkna på."
+                volumeLabel="Vårdtillfällen"
+                volumeLabelLower="vårdtillfällen"
+              />
+
               <SectionCard>
                 <Stack spacing={2}>
                   {saveMessage ? (
@@ -315,6 +346,54 @@ export function InpatientOoDimensioningView() {
       </Container>
     </Box>
   );
+}
+
+function buildInpatientOoPeriodizationRows(params: {
+  productionRow: InpatientProductionRow;
+  rows: InpatientOoResultRow[];
+  supportPresence: number;
+}): WeeklyCurveSourceRow[] {
+  const productionPresence = params.rows.reduce(
+    (sum, row) => sum + row.presence,
+    0
+  );
+  const productionRows = params.rows
+    .filter((row) => row.presence > 0)
+    .map((row) => {
+      const share =
+        productionPresence > 0 ? row.presence / productionPresence : 0;
+
+      return {
+        id: `oo-${row.id}`,
+        careUnitName: "OO slutenvård",
+        roleCategory: row.roleCategory,
+        visits: params.productionRow.careEvents * share,
+        totalVisitMinutes:
+          row.presence *
+          PERIODIZATION_WEEKLY_WORKING_MINUTES *
+          PERIODIZATION_WEEKS_PER_YEAR,
+        drgPoints: params.productionRow.drgPoints * share,
+      };
+    });
+
+  if (params.supportPresence <= 0) {
+    return productionRows;
+  }
+
+  return [
+    ...productionRows,
+    {
+      id: "oo-support-admin",
+      careUnitName: "Vårdnära stöd/admin",
+      roleCategory: "Stöd/admin",
+      visits: 0,
+      totalVisitMinutes:
+        params.supportPresence *
+        PERIODIZATION_WEEKLY_WORKING_MINUTES *
+        PERIODIZATION_WEEKS_PER_YEAR,
+      drgPoints: 0,
+    },
+  ];
 }
 
 function EditableNumberCell(props: {

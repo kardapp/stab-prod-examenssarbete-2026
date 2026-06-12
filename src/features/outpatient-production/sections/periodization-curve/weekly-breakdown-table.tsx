@@ -19,6 +19,7 @@ import type { WeeklyCurvePoint } from "./periodization-curve-model";
 type WeeklyBreakdownTableProps = {
   selectedPoint: WeeklyCurvePoint;
   showDrg?: boolean;
+  volumeLabel?: string;
 };
 
 export function WeeklyBreakdownTable(props: WeeklyBreakdownTableProps) {
@@ -54,7 +55,9 @@ export function WeeklyBreakdownTable(props: WeeklyBreakdownTableProps) {
               <TableRow>
                 <HeaderCell>Vårdande enhet</HeaderCell>
                 <HeaderCell>Yrkeskategori</HeaderCell>
-                <HeaderCell align="right">Vårdhändelser</HeaderCell>
+                <HeaderCell align="right">
+                  {props.volumeLabel ?? "Vårdhändelser"}
+                </HeaderCell>
                 <HeaderCell align="right">Tid</HeaderCell>
                 {props.showDrg !== false ? (
                   <HeaderCell align="right">DRG</HeaderCell>
@@ -77,7 +80,7 @@ export function WeeklyBreakdownTable(props: WeeklyBreakdownTableProps) {
                   />
                   <BreakdownCell
                     align="right"
-                    label="Vårdhändelser"
+                    label={props.volumeLabel ?? "Vårdhändelser"}
                     value={formatOneDecimal(row.visits)}
                   />
                   <BreakdownCell
