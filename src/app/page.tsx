@@ -23,24 +23,71 @@ type DashboardHistoryRow = {
   electiveCareEvents: number;
 };
 
-const planningAreas = [
+type NavigationGroup = {
+  accentColor: string;
+  title: string;
+  items: NavigationItem[];
+};
+
+type NavigationItem = {
+  href?: string;
+  label: string;
+};
+
+const navigationGroups: NavigationGroup[] = [
   {
-    label: "ÖPV",
-    href: appRoutes.outpatientProductionPlanning,
+    accentColor: "#005883",
+    title: "Produktionsplanering",
+    items: [
+      {
+        label: "ÖPV",
+        href: appRoutes.outpatientProductionPlanning,
+      },
+      {
+        label: "SLV",
+        href: appRoutes.inpatientProductionPlanning,
+      },
+      {
+        label: "Ingrepp",
+      },
+      {
+        label: "Radiologi",
+      },
+    ],
   },
   {
-    label: "SLV",
-    href: appRoutes.inpatientProductionPlanning,
+    accentColor: "#00574f",
+    title: "Dimensionering",
+    items: [
+      {
+        label: "ÖPV",
+        href: appRoutes.outpatientDimensioning,
+      },
+      {
+        label: "SLV",
+        href: appRoutes.inpatientDimensioning,
+      },
+      {
+        label: "Ingrepp",
+      },
+      {
+        label: "Radiologi",
+      },
+      {
+        label: "Admin",
+      },
+      {
+        label: "Inskolning",
+      },
+      {
+        label: "FoUU",
+      },
+      {
+        label: "Etc.",
+      },
+    ],
   },
-  {
-    label: "Ingrepp",
-    href: undefined,
-  },
-  {
-    label: "Radiologi",
-    href: undefined,
-  },
-] as const satisfies readonly { label: string; href?: string }[];
+];
 
 const dashboardRows = buildDashboardHistoryRows();
 const yearLabels = dashboardRows.map((row) => String(row.year));
@@ -70,33 +117,31 @@ export default function HomePage() {
             </Typography>
           </Box>
 
-          <Box component="section" sx={sectionSx}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
-              <Typography variant="h5">Sektion</Typography>
+          <Box component="section" sx={navigationSectionSx}>
+            <Box sx={navigationToolbarSx}>
+              <Box sx={sectionPickerSx}>
+                <Typography variant="h6" component="label" htmlFor="section">
+                  Sektion
+                </Typography>
 
-              <TextField
-                select
-                label="Välj sektion"
-                defaultValue=""
-                sx={{ minWidth: 180 }}
-              >
-                <MenuItem value="sektion-1">Sektion 1</MenuItem>
-                <MenuItem value="sektion-2">Sektion 2</MenuItem>
-                <MenuItem value="sektion-3">Sektion 3</MenuItem>
-              </TextField>
+                <TextField
+                  id="section"
+                  select
+                  label="Välj sektion"
+                  defaultValue=""
+                  size="small"
+                  sx={sectionFieldSx}
+                >
+                  <MenuItem value="sektion-1">Sektion 1</MenuItem>
+                  <MenuItem value="sektion-2">Sektion 2</MenuItem>
+                  <MenuItem value="sektion-3">Sektion 3</MenuItem>
+                </TextField>
+              </Box>
             </Box>
 
-            <Box sx={areaGridSx}>
-              {planningAreas.map((area) => (
-                <Button
-                  key={area.label}
-                  href={area.href}
-                  type="button"
-                  variant="contained"
-                  sx={areaButtonSx}
-                >
-                  {area.label}
-                </Button>
+            <Box sx={navigationGridSx}>
+              {navigationGroups.map((group) => (
+                <NavigationGroupPanel key={group.title} group={group} />
               ))}
             </Box>
           </Box>
@@ -191,6 +236,39 @@ function ChartFrame(props: { children: ReactNode }) {
   return <Box sx={chartFrameSx}>{props.children}</Box>;
 }
 
+function NavigationGroupPanel(props: { group: NavigationGroup }) {
+  return (
+    <Box
+      sx={{
+        ...navigationGroupSx,
+        borderTopColor: props.group.accentColor,
+      }}
+    >
+      <Box sx={navigationGroupHeaderSx}>
+        <Box sx={{ bgcolor: props.group.accentColor, ...navigationAccentSx }} />
+        <Typography variant="subtitle1" sx={navigationGroupTitleSx}>
+          {props.group.title}
+        </Typography>
+      </Box>
+      <Box sx={navigationButtonGridSx}>
+        {props.group.items.map((item) => (
+          <Button
+            key={item.label}
+            disabled={!item.href}
+            href={item.href}
+            title={item.href ? undefined : "Ej aktiverad"}
+            type="button"
+            variant="outlined"
+            sx={navigationButtonSx}
+          >
+            {item.label}
+          </Button>
+        ))}
+      </Box>
+    </Box>
+  );
+}
+
 function buildDashboardHistoryRows(): DashboardHistoryRow[] {
   const rowsByYear = new Map<number, DashboardHistoryRow>();
 
@@ -257,6 +335,32 @@ const sectionSx = {
   minWidth: 0,
 };
 
+const navigationSectionSx = {
+  bgcolor: "var(--section-background)",
+  border: "1px solid var(--color-border)",
+  borderRadius: 1,
+  minWidth: 0,
+  p: { xs: 2, md: 2.5 },
+};
+
+const sectionPickerSx = {
+  alignItems: { xs: "flex-start", sm: "center" },
+  display: "flex",
+  flexDirection: { xs: "column", sm: "row" },
+  gap: 1.25,
+};
+
+const navigationToolbarSx = {
+  alignItems: { xs: "stretch", md: "center" },
+  display: "flex",
+  justifyContent: "space-between",
+  mb: 2.5,
+};
+
+const sectionFieldSx = {
+  minWidth: { xs: "100%", sm: 280 },
+};
+
 const sectionOverlineSx = {
   color: "primary.main",
   fontWeight: 700,
@@ -268,27 +372,62 @@ const sectionTitleSx = {
   fontWeight: 700,
 };
 
-const areaGridSx = {
+const navigationGridSx = {
   display: "grid",
-  gap: 1.5,
+  gap: 2,
   gridTemplateColumns: {
     xs: "1fr",
-    sm: "repeat(2, minmax(0, 1fr))",
-    lg: "repeat(4, minmax(0, 1fr))",
+    lg: "repeat(2, minmax(0, 1fr))",
   },
 };
 
-const areaButtonSx = {
-  alignItems: "center",
-  bgcolor: "primary.main",
-  border: "1px solid",
-  borderColor: "primary.main",
+const navigationGroupSx = {
+  bgcolor: "#fff",
+  border: "1px solid var(--color-border)",
   borderRadius: 1,
-  color: "primary.contrastText",
-  justifyContent: "center",
-  minHeight: 68,
+  borderTop: "4px solid",
+  minWidth: 0,
   p: 1.5,
-  fontSize: { xs: "1rem", md: "1.1rem" },
+};
+
+const navigationGroupHeaderSx = {
+  alignItems: "center",
+  display: "flex",
+  gap: 1,
+  mb: 1.25,
+};
+
+const navigationAccentSx = {
+  borderRadius: 999,
+  height: 10,
+  width: 10,
+};
+
+const navigationGroupTitleSx = {
+  color: "text.primary",
+  fontWeight: 700,
+};
+
+const navigationButtonGridSx = {
+  display: "grid",
+  gap: 1,
+  gridTemplateColumns: {
+    xs: "repeat(2, minmax(0, 1fr))",
+    sm: "repeat(4, minmax(0, 1fr))",
+  },
+};
+
+const navigationButtonSx = {
+  alignItems: "center",
+  bgcolor: "#fff",
+  border: "1px solid",
+  borderColor: "var(--color-border)",
+  borderRadius: 1,
+  color: "text.primary",
+  justifyContent: "center",
+  minHeight: 60,
+  p: 1.5,
+  fontSize: { xs: "0.95rem", md: "1rem" },
   fontWeight: 700,
   lineHeight: 1.15,
   letterSpacing: 0,
@@ -296,10 +435,15 @@ const areaButtonSx = {
   transition:
     "background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease, transform 120ms ease",
   "&:hover": {
-    bgcolor: "primary.main",
+    bgcolor: "#f7fbfd",
     borderColor: "primary.main",
-    boxShadow: "0 3px 10px rgba(0, 88, 131, 0.22)",
+    boxShadow: "0 3px 10px rgba(0, 88, 131, 0.18)",
     transform: "translateY(-1px)",
+  },
+  "&.Mui-disabled": {
+    bgcolor: "#f3f3f3",
+    borderColor: "divider",
+    color: "text.disabled",
   },
 };
 
