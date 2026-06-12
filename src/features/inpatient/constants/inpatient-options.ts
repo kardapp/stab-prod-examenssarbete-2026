@@ -314,7 +314,7 @@ export const initialInpatientMeDimensioningRows: InpatientMeDimensioningRow[] = 
   {
     id: "me-ol",
     competenceLevel: "ÖL",
-    doctorsPerTenInpatients: 0.5,
+    doctorPresence: 28.8,
     weeklyWorkHours: 40,
     nonContributingPresence: 0,
     adminOtherPresence: 0.4,
@@ -323,7 +323,7 @@ export const initialInpatientMeDimensioningRows: InpatientMeDimensioningRow[] = 
   {
     id: "me-bol",
     competenceLevel: "BÖL",
-    doctorsPerTenInpatients: 0.7,
+    doctorPresence: 40.3,
     weeklyWorkHours: 40,
     nonContributingPresence: 0,
     adminOtherPresence: 0.3,
@@ -332,7 +332,7 @@ export const initialInpatientMeDimensioningRows: InpatientMeDimensioningRow[] = 
   {
     id: "me-spec",
     competenceLevel: "SPEC",
-    doctorsPerTenInpatients: 1.1,
+    doctorPresence: 63.3,
     weeklyWorkHours: 40,
     nonContributingPresence: 0,
     adminOtherPresence: 0.2,
@@ -341,7 +341,7 @@ export const initialInpatientMeDimensioningRows: InpatientMeDimensioningRow[] = 
   {
     id: "me-st-leg",
     competenceLevel: "ST/LEG",
-    doctorsPerTenInpatients: 0.8,
+    doctorPresence: 46,
     weeklyWorkHours: 40,
     nonContributingPresence: 0.2,
     adminOtherPresence: 0.1,
@@ -350,7 +350,7 @@ export const initialInpatientMeDimensioningRows: InpatientMeDimensioningRow[] = 
   {
     id: "me-ul",
     competenceLevel: "UL",
-    doctorsPerTenInpatients: 0.2,
+    doctorPresence: 11.5,
     weeklyWorkHours: 40,
     nonContributingPresence: 0.1,
     adminOtherPresence: 0,

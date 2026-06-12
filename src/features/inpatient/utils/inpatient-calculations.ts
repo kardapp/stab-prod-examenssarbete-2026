@@ -106,9 +106,14 @@ export function calculateMeDimensioningPresence(
   averageInpatientsPerDay: number,
   row: InpatientMeDimensioningRow
 ): number {
+  const doctorPresence =
+    typeof row.doctorPresence === "undefined"
+      ? (toNumber(averageInpatientsPerDay) / 10) *
+        toNumber(row.doctorsPerTenInpatients)
+      : toNumber(row.doctorPresence);
+
   return (
-    (toNumber(averageInpatientsPerDay) / 10) *
-      toNumber(row.doctorsPerTenInpatients) +
+    doctorPresence +
     toNumber(row.nonContributingPresence) +
     toNumber(row.adminOtherPresence)
   );

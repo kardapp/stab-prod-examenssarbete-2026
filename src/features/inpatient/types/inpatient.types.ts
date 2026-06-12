@@ -108,7 +108,8 @@ export type InpatientOoDimensioningSettings = {
 export type InpatientMeDimensioningRow = {
   id: string;
   competenceLevel: string;
-  doctorsPerTenInpatients: number;
+  doctorPresence: number;
+  doctorsPerTenInpatients?: number;
   weeklyWorkHours: number;
   nonContributingPresence: number;
   adminOtherPresence: number;

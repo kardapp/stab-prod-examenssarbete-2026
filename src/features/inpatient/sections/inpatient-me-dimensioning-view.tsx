@@ -42,7 +42,7 @@ import {
 
 type MeNumberField = Exclude<
   keyof InpatientMeDimensioningRow,
-  "id" | "competenceLevel"
+  "id" | "competenceLevel" | "doctorsPerTenInpatients"
 >;
 type InpatientMeResultRow = InpatientMeDimensioningRow & {
   presence: number;
@@ -83,7 +83,9 @@ function LoadedInpatientMeDimensioningView() {
     readCurrentInpatientProductionRow()
   );
   const [rows, setRows] = useState<InpatientMeDimensioningRow[]>(() =>
-    readCurrentInpatientMeDimensioningRows()
+    readCurrentInpatientMeDimensioningRows().map((row) =>
+      normalizeMeDimensioningRow(row, productionRow?.averageCarePlaces ?? 0)
+    )
   );
   const [saveMessage, setSaveMessage] = useState("");
   const [hasSavedRows, setHasSavedRows] = useState(() =>
@@ -185,7 +187,7 @@ function LoadedInpatientMeDimensioningView() {
                 <FormSection
                   overline="1. Kompetensnivåer"
                   title="Läkarnärvaro per kompetensnivå"
-                  description="Närvaron räknas från antal inskrivna per dag, inte från öppenvårdens tidsantaganden."
+                  description="Antal inskrivna per dag hämtas från produktionen och används som underlag när läkarnärvaro fylls i per kompetensnivå."
                 />
                 <Box sx={{ overflowX: "auto" }}>
                   <Table size="small">
@@ -193,7 +195,7 @@ function LoadedInpatientMeDimensioningView() {
                       <TableRow>
                         <TableCell sx={headerCellSx}>Kompetensnivå</TableCell>
                         <TableCell sx={headerCellSx} align="right">
-                          Läkare / 10 inskrivna
+                          Läkarnärvaro
                         </TableCell>
                         <TableCell sx={headerCellSx} align="right">
                           ST som inte bidrar
@@ -202,10 +204,10 @@ function LoadedInpatientMeDimensioningView() {
                           Admin/övrigt
                         </TableCell>
                         <TableCell sx={headerCellSx} align="right">
-                          Lönekostnad/närvaro
+                          Lönekostnad/närvaro (historik)
                         </TableCell>
                         <TableCell sx={headerCellSx} align="right">
-                          Närvaro
+                          Total närvaro
                         </TableCell>
                       </TableRow>
                     </TableHead>
@@ -214,11 +216,11 @@ function LoadedInpatientMeDimensioningView() {
                         <TableRow key={row.id}>
                           <TableCell>{row.competenceLevel}</TableCell>
                           <EditableNumberCell
-                            value={row.doctorsPerTenInpatients}
+                            value={row.doctorPresence}
                             onChange={(value) =>
                               updateRow(
                                 row.id,
-                                "doctorsPerTenInpatients",
+                                "doctorPresence",
                                 value
                               )
                             }
@@ -338,6 +340,25 @@ function getClientHydrationSnapshot() {
 
 function getServerHydrationSnapshot() {
   return false;
+}
+
+function normalizeMeDimensioningRow(
+  row: InpatientMeDimensioningRow,
+  averageInpatientsPerDay: number
+): InpatientMeDimensioningRow {
+  if (typeof row.doctorPresence !== "undefined") {
+    return {
+      ...row,
+      doctorPresence: toNumber(row.doctorPresence),
+    };
+  }
+
+  return {
+    ...row,
+    doctorPresence:
+      (toNumber(averageInpatientsPerDay) / 10) *
+      toNumber(row.doctorsPerTenInpatients),
+  };
 }
 
 function buildInpatientMePeriodizationRows(
