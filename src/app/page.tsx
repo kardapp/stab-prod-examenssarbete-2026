@@ -92,7 +92,7 @@ export default function HomePage() {
                   key={area.label}
                   href={area.href}
                   type="button"
-                  variant="outlined"
+                  variant="contained"
                   sx={areaButtonSx}
                 >
                   {area.label}
@@ -280,10 +280,11 @@ const areaGridSx = {
 
 const areaButtonSx = {
   alignItems: "center",
-  bgcolor: "var(--page-background)",
-  borderColor: "divider",
+  bgcolor: "primary.main",
+  border: "1px solid",
+  borderColor: "primary.main",
   borderRadius: 1,
-  color: "primary.main",
+  color: "primary.contrastText",
   justifyContent: "center",
   minHeight: 68,
   p: 1.5,
@@ -295,9 +296,9 @@ const areaButtonSx = {
   transition:
     "background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease, transform 120ms ease",
   "&:hover": {
-    bgcolor: "var(--section-background)",
+    bgcolor: "primary.main",
     borderColor: "primary.main",
-    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
+    boxShadow: "0 3px 10px rgba(0, 88, 131, 0.22)",
     transform: "translateY(-1px)",
   },
 };

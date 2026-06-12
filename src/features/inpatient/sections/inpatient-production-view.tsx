@@ -321,7 +321,7 @@ export function InpatientProductionView() {
                 selectedKombika={selectedKombika}
               />
 
-              <SectionCard>
+              <SectionCard tone="action">
                 <Stack spacing={2}>
                   {saveMessage ? (
                     <Alert severity={saveSeverity}>{saveMessage}</Alert>

@@ -291,7 +291,7 @@ function LoadedInpatientOoDistributionView() {
                 </Box>
               </SectionCard>
 
-              <SectionCard>
+              <SectionCard tone="action">
                 <Stack spacing={2}>
                   {saveMessage ? (
                     <Alert

@@ -56,7 +56,7 @@ export const karolinskaTheme = createTheme({
       contrastText: karolinskaColors.white,
     },
     success: {
-      main: karolinskaColors.darkGreen,
+      main: karolinskaColors.darkBlue,
       contrastText: karolinskaColors.white,
     },
     background: {
@@ -132,7 +132,7 @@ export const karolinskaTheme = createTheme({
         root: {
           fontWeight: 700,
           textTransform: "none",
-          "&.MuiButton-contained": {
+          "&.MuiButton-contained.MuiButton-colorPrimary": {
             backgroundColor: karolinskaColors.darkBlue,
             color: karolinskaColors.white,
             "&:hover": {
@@ -143,21 +143,21 @@ export const karolinskaTheme = createTheme({
               color: karolinskaColors.textMuted,
             },
           },
-          "&.MuiButton-outlined": {
-            backgroundColor: karolinskaColors.white,
+          "&.MuiButton-outlined.MuiButton-colorPrimary": {
+            backgroundColor: karolinskaColors.darkBlue,
             borderColor: karolinskaColors.darkBlue,
-            color: karolinskaColors.darkBlue,
+            color: karolinskaColors.white,
             "&:hover": {
-              backgroundColor: karolinskaColors.lightGrey,
+              backgroundColor: karolinskaColors.darkBlue,
               borderColor: karolinskaColors.darkBlue,
             },
             "&.Mui-disabled": {
-              backgroundColor: karolinskaColors.white,
+              backgroundColor: karolinskaColors.lightGrey,
               borderColor: karolinskaColors.lightGrey,
               color: karolinskaColors.textMuted,
             },
           },
-          "&.MuiButton-text": {
+          "&.MuiButton-text.MuiButton-colorPrimary": {
             color: karolinskaColors.darkBlue,
             "&:hover": {
               backgroundColor: karolinskaColors.lightGrey,
@@ -268,7 +268,7 @@ export const karolinskaTheme = createTheme({
             color: karolinskaColors.blue,
           },
           "&.MuiAlert-colorSuccess .MuiAlert-icon": {
-            color: karolinskaColors.darkGreen,
+            color: karolinskaColors.darkBlue,
           },
           "&.MuiAlert-colorWarning .MuiAlert-icon": {
             color: karolinskaColors.orange,

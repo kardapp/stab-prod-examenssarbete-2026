@@ -281,7 +281,7 @@ function LoadedInpatientMeDimensioningView() {
                 volumeLabelLower="vårdtillfällen"
               />
 
-              <SectionCard>
+              <SectionCard tone="action">
                 <Stack spacing={2}>
                   {saveMessage ? (
                     <Alert severity="success">{saveMessage}</Alert>

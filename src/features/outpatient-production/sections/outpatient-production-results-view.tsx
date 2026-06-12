@@ -202,7 +202,7 @@ function ComparisonSection(props: { rows: ProductionPlanningComparisonRow[] }) {
 
 function ActionsSection() {
   return (
-    <SectionCard>
+    <SectionCard tone="action">
       <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
         <Button variant="outlined" href={appRoutes.outpatientOoDistribution}>
           Tillbaka till OO-fördelning

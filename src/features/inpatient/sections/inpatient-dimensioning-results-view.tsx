@@ -158,7 +158,7 @@ export function InpatientDimensioningResultsView() {
               />
 
               {annualRows.length === 0 ? (
-                <SectionCard>
+                <SectionCard tone="action">
                   <Stack spacing={2}>
                     <Alert severity="warning">
                       Spara dimensionering ME eller OO innan resultatet

@@ -12,7 +12,7 @@ type DimensioningActionsProps = {
 
 export function DimensioningActions(props: DimensioningActionsProps) {
   return (
-    <SectionCard>
+    <SectionCard tone="action">
       <Stack spacing={2}>
         {props.saveMessage ? (
           <Alert severity={getSaveMessageSeverity(props.saveMessage)}>

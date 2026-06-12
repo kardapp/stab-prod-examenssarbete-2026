@@ -13,7 +13,7 @@ type ProductionActionsSectionProps = {
 
 export function ProductionActionsSection(props: ProductionActionsSectionProps) {
   return (
-    <SectionCard>
+    <SectionCard tone="action">
       <Stack spacing={2}>
         {props.saveMessage ? (
           <Alert severity={props.saveSeverity}>{props.saveMessage}</Alert>

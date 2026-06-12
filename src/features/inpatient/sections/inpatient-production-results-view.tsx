@@ -173,7 +173,7 @@ export function InpatientProductionResultsView() {
                 )}
               </SectionCard>
 
-              <SectionCard>
+              <SectionCard tone="action">
                 <Box sx={actionRowSx}>
                   <Button
                     variant="outlined"

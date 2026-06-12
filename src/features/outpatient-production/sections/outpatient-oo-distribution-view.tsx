@@ -534,7 +534,7 @@ function OoActionsSection(props: {
   onSave: () => void | Promise<void>;
 }) {
   return (
-    <SectionCard>
+    <SectionCard tone="action">
       <Stack spacing={2}>
         {props.saveMessage ? (
           <Alert severity="success">{props.saveMessage}</Alert>
