@@ -29,7 +29,7 @@ import {
   toNumber,
 } from "../utils/inpatient-calculations";
 import { saveCurrentInpatientProductionRow } from "../utils/current-inpatient-session";
-import { InpatientProductionHistorySection } from "./inpatient-production-history-section";
+import { InpatientProductionHistorySection } from "../sections/inpatient-production-history-section";
 
 type NumberField = Exclude<
   keyof InpatientProductionFormState,

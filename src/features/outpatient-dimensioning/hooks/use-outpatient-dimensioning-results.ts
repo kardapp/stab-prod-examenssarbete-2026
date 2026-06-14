@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { OutpatientProductionRow } from "@/types/production";
+import type { OutpatientProductionRow } from "@/shared/types/production";
 import {
   CURRENT_OUTPATIENT_PRODUCTION_PLAN_ID,
   filterCurrentOutpatientProductionRows,

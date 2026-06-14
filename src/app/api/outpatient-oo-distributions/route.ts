@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { PoolClient } from "pg";
-import { db } from "@/lib/db/db";
+import { db } from "@/lib/db/client";
 
 type SaveOoDistributionPayload = {
   productionRowId?: number;

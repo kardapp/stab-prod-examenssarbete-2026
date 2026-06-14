@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { OutpatientProductionRow } from "@/types/production";
+import type { OutpatientProductionRow } from "@/shared/types/production";
 import type { ProductionPlanningVisitTimeComment } from "../types/outpatient-production-results.types";
 import type { SavedOoDistributionRow } from "../types/outpatient-oo-distribution.types";
 import { comparisonValuesByKombikaId } from "../constants/outpatient-production-options";

@@ -13,7 +13,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import type { OutpatientProductionRow } from "@/types/production";
+import type { OutpatientProductionRow } from "@/shared/types/production";
 import { FormSection } from "@/shared/components/form-section";
 import { PageHeader } from "@/shared/components/page-header";
 import { SectionCard } from "@/shared/components/section-card";

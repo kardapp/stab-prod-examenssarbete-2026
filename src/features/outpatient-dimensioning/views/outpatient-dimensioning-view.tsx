@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { Alert, Box, CircularProgress, Container, Stack } from "@mui/material";
-import type { OutpatientProductionRow } from "@/types/production";
+import type { OutpatientProductionRow } from "@/shared/types/production";
 import {
   calculateProductionRowMetrics,
   getAnnualVisits,

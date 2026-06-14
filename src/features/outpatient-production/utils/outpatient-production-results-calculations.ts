@@ -1,4 +1,4 @@
-import type { OutpatientProductionRow } from "@/types/production";
+import type { OutpatientProductionRow } from "@/shared/types/production";
 import type { SavedOoDistributionRow } from "../types/outpatient-oo-distribution.types";
 import type { ComparisonValues } from "../types/outpatient-production.types";
 import type {

@@ -1,4 +1,4 @@
-import type { OutpatientProductionRow } from "@/types/production";
+import type { OutpatientProductionRow } from "@/shared/types/production";
 import {
   formatRoleDistributionLabel,
   getAnnualVisits,

@@ -1,7 +1,7 @@
 import type {
   DimensioningInputSummary,
   OutpatientProductionRow,
-} from "@/types/production";
+} from "@/shared/types/production";
 import type {
   OutpatientProductionCalculatedValues,
   OutpatientProductionFormState,

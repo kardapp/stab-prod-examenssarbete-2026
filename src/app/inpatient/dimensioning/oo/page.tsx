@@ -1,4 +1,4 @@
-import { InpatientOoDimensioningView } from "@/features/inpatient/sections/inpatient-oo-dimensioning-view";
+import { InpatientOoDimensioningView } from "@/features/inpatient/views/inpatient-oo-dimensioning-view";
 
 export default function InpatientOoDimensioningPage() {
   return <InpatientOoDimensioningView />;

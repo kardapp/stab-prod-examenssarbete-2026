@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { OutpatientDimensioningView } from "@/features/outpatient-dimensioning/sections/outpatient-dimensioning-view";
+import { OutpatientDimensioningView } from "@/features/outpatient-dimensioning/views/outpatient-dimensioning-view";
 
 export default function OutpatientDimensioningPage() {
   return (

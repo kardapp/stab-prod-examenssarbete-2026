@@ -4,28 +4,58 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
-        source: "/",
-        destination: "/firstpage",
+        source: "/firstpage",
+        destination: "/",
         permanent: false,
       },
       {
         source: "/production-planning/outpatient",
-        destination: "/outpatient/productionplanning",
+        destination: "/outpatient/production-planning",
+        permanent: false,
+      },
+      {
+        source: "/outpatient/productionplanning",
+        destination: "/outpatient/production-planning",
+        permanent: false,
+      },
+      {
+        source: "/outpatient/productionplanning/oodistribution",
+        destination: "/outpatient/production-planning/oo-distribution",
+        permanent: false,
+      },
+      {
+        source: "/outpatient/productionplanning/results",
+        destination: "/outpatient/production-planning/results",
+        permanent: false,
+      },
+      {
+        source: "/inpatient/productionplanning",
+        destination: "/inpatient/production-planning",
+        permanent: false,
+      },
+      {
+        source: "/inpatient/productionplanning/oodistribution",
+        destination: "/inpatient/production-planning/oo-distribution",
+        permanent: false,
+      },
+      {
+        source: "/inpatient/productionplanning/results",
+        destination: "/inpatient/production-planning/results",
         permanent: false,
       },
       {
         source: "/outpatient/production/production-planning",
-        destination: "/outpatient/productionplanning",
+        destination: "/outpatient/production-planning",
         permanent: false,
       },
       {
         source: "/outpatient/production/oo-distribution",
-        destination: "/outpatient/productionplanning/oodistribution",
+        destination: "/outpatient/production-planning/oo-distribution",
         permanent: false,
       },
       {
         source: "/outpatient/production/results-production-planning",
-        destination: "/outpatient/productionplanning/results",
+        destination: "/outpatient/production-planning/results",
         permanent: false,
       },
       {

@@ -2,14 +2,14 @@
 
 import { Box, Container, Stack } from "@mui/material";
 import { PageHeader } from "@/shared/components/page-header";
-import { CalculatedPreviewSection } from "./calculated-preview-section";
-import { DistributionSection } from "./distribution-section";
-import { KombikaSelectorSection } from "./kombika-selector-section";
-import { ProductionAssumptionsSection } from "./production-assumptions-section";
-import { ProductionActionsSection } from "./production-actions-section";
-import { ProductionHistorySection } from "./production-history-section";
-import { ProductionVolumeSection } from "./production-volume-section";
 import { useOutpatientProductionForm } from "../hooks/use-outpatient-production-form";
+import { CalculatedPreviewSection } from "../sections/calculated-preview-section";
+import { DistributionSection } from "../sections/distribution-section";
+import { KombikaSelectorSection } from "../sections/kombika-selector-section";
+import { ProductionActionsSection } from "../sections/production-actions-section";
+import { ProductionAssumptionsSection } from "../sections/production-assumptions-section";
+import { ProductionHistorySection } from "../sections/production-history-section";
+import { ProductionVolumeSection } from "../sections/production-volume-section";
 
 export function OutpatientProductionView() {
   const production = useOutpatientProductionForm();

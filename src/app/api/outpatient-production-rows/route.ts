@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { PoolClient } from "pg";
 import { calculateAnnualVolumeFromVisits } from "@/features/outpatient-production/utils/outpatient-production-calculations";
-import { db } from "@/lib/db/db";
+import { db } from "@/lib/db/client";
 
 type CreateOutpatientProductionRowPayload = {
   id?: number;

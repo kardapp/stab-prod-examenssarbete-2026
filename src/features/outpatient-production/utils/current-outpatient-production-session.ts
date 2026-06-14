@@ -1,4 +1,4 @@
-import type { OutpatientProductionRow } from "@/types/production";
+import type { OutpatientProductionRow } from "@/shared/types/production";
 import type { SavedOoDistributionRow } from "../types/outpatient-oo-distribution.types";
 
 export const CURRENT_OUTPATIENT_PRODUCTION_PLAN_ID = 1;
