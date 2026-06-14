@@ -147,12 +147,16 @@ function DayBar(props: {
 }
 
 function getDayBarColor(day: WeeklyCurveDay): string {
+  if (day.impacts.length === 0) {
+    return "#d8dee5";
+  }
+
   if (day.impactPercentage > 0) {
-    return "#000000";
+    return "#005883";
   }
 
   if (day.impactPercentage < 0) {
-    return "#333333";
+    return "#4f5b66";
   }
 
   return "#005883";

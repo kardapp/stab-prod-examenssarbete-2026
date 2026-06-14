@@ -96,8 +96,12 @@ export function WeeklyImpactControls(props: WeeklyImpactControlsProps) {
             <Button
               type="button"
               size="small"
-              variant={allWeekdaysSelected ? "contained" : "outlined"}
+              variant="contained"
+              color="inherit"
+              disableElevation
+              aria-pressed={allWeekdaysSelected}
               onClick={() => props.onDraftWeekdaysChange(allWeekdays)}
+              sx={dayButtonSx(allWeekdaysSelected)}
             >
               Alla
             </Button>
@@ -111,9 +115,12 @@ export function WeeklyImpactControls(props: WeeklyImpactControlsProps) {
                   key={weekday.value}
                   type="button"
                   size="small"
-                  variant={isSelected ? "contained" : "outlined"}
+                  variant="contained"
+                  color="inherit"
+                  disableElevation
+                  aria-pressed={isSelected}
                   onClick={() => toggleWeekday(weekday.value)}
-                  sx={dayButtonSx}
+                  sx={dayButtonSx(isSelected)}
                 >
                   {weekday.shortLabel}
                 </Button>
@@ -251,9 +258,23 @@ const dayButtonGridSx = {
   gap: 0.75,
 };
 
-const dayButtonSx = {
-  minWidth: 0,
-};
+function dayButtonSx(isSelected: boolean) {
+  return {
+    "&&": {
+      bgcolor: isSelected ? "primary.main" : "#eef1f4",
+      border: "1px solid",
+      borderColor: isSelected ? "primary.main" : "#d5dce3",
+      boxShadow: "none",
+      color: isSelected ? "primary.contrastText" : "#5f6b76",
+    },
+    minWidth: 0,
+    "&&:hover": {
+      bgcolor: isSelected ? "primary.dark" : "#e2e7ec",
+      borderColor: isSelected ? "primary.dark" : "#c4ccd5",
+      boxShadow: "none",
+    },
+  };
+}
 
 const addButtonSx = {
   alignSelf: "end",
