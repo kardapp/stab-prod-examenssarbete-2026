@@ -183,6 +183,7 @@ function sortWeekdays(weekdays: WeekdayKey[]): WeekdayKey[] {
 }
 
 const fieldSx = {
+  alignSelf: "start",
   minWidth: 0,
   width: "100%",
 };
@@ -191,7 +192,13 @@ const impactPanelSx = {
   border: "1px solid var(--color-border)",
   borderRadius: 1,
   bgcolor: "background.paper",
+  display: "flex",
+  flexDirection: "column",
+  height: "100%",
+  minHeight: 0,
+  minWidth: 0,
   p: 1.5,
+  width: "100%",
 };
 
 const impactHeaderSx = {
@@ -213,25 +220,40 @@ const selectedDaysBadgeSx = {
 };
 
 const impactFormSx = {
+  alignContent: {
+    xl: "start",
+  },
+  alignItems: "start",
   display: "grid",
+  flex: 1,
   gridTemplateColumns: {
     xs: "1fr",
     md: "repeat(2, minmax(0, 1fr))",
-    xl: "repeat(4, minmax(0, 1fr))",
+    xl: "repeat(3, minmax(0, 1fr))",
+  },
+  gridTemplateRows: {
+    xl: "66px minmax(120px, 144px)",
   },
   gap: 1.5,
-  mt: 1,
+  minHeight: 0,
+  mt: 1.5,
+  width: "100%",
 };
 
 const dayPickerSx = {
   border: "1px solid var(--color-border)",
   borderRadius: 1,
   bgcolor: "var(--page-background)",
+  display: "flex",
+  flexDirection: "column",
   gridColumn: {
     xs: "1",
     md: "1 / -1",
-    xl: "span 3",
+    xl: "span 2",
   },
+  height: "100%",
+  justifyContent: "stretch",
+  minHeight: 0,
   p: 1,
 };
 
@@ -249,13 +271,18 @@ const dayPickerLabelSx = {
 };
 
 const dayButtonGridSx = {
+  alignContent: "center",
   display: "grid",
+  flex: 1,
   gridTemplateColumns: {
     xs: "repeat(2, minmax(0, 1fr))",
     sm: "repeat(4, minmax(0, 1fr))",
     lg: "repeat(7, minmax(0, 1fr))",
   },
+  gridAutoRows: "36px",
   gap: 0.75,
+  justifyContent: "stretch",
+  minHeight: 0,
 };
 
 function dayButtonSx(isSelected: boolean) {
@@ -268,6 +295,7 @@ function dayButtonSx(isSelected: boolean) {
       color: isSelected ? "primary.contrastText" : "#5f6b76",
     },
     minWidth: 0,
+    minHeight: 36,
     "&&:hover": {
       bgcolor: isSelected ? "primary.dark" : "#e2e7ec",
       borderColor: isSelected ? "primary.dark" : "#c4ccd5",
@@ -277,8 +305,21 @@ function dayButtonSx(isSelected: boolean) {
 }
 
 const addButtonSx = {
-  alignSelf: "end",
-  minHeight: 40,
+  alignSelf: {
+    xs: "stretch",
+    xl: "start",
+  },
+  gridColumn: {
+    xs: "1",
+    md: "1 / -1",
+    xl: "span 1",
+  },
+  justifySelf: "stretch",
+  minHeight: {
+    xs: 40,
+    xl: 72,
+  },
+  width: "100%",
 };
 
 const impactListSx = {
