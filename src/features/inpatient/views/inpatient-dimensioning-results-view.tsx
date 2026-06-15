@@ -304,7 +304,7 @@ function PresenceSection(props: {
         />
       </Box>
 
-      <Stack spacing={2.5}>
+      <Box sx={compactSubSectionGridSx}>
         <ResultSubSection title="Per yrkeskategori">
           <ResultTable
             emptyText="Det finns inga närvarorader ännu."
@@ -319,7 +319,10 @@ function PresenceSection(props: {
           />
         </ResultSubSection>
 
-        <ResultSubSection title="Per ekonomisk sektion samt vårdande kostnadsställe">
+        <ResultSubSection
+          title="Per ekonomisk sektion samt vårdande kostnadsställe"
+          span="full"
+        >
           <ResultTable
             emptyText="Det finns inga sektionsrader ännu."
             headers={[
@@ -367,7 +370,7 @@ function PresenceSection(props: {
             }))}
           />
         </ResultSubSection>
-      </Stack>
+      </Box>
     </SectionCard>
   );
 }
@@ -414,7 +417,7 @@ function StaffingCostSection(props: {
         />
       </Box>
 
-      <Stack spacing={2.5}>
+      <Box sx={compactSubSectionGridSx}>
         <ResultSubSection title="Per yrkeskategori">
           <ResultTable
             emptyText="Det finns inga kostnadsrader ännu."
@@ -430,7 +433,10 @@ function StaffingCostSection(props: {
           />
         </ResultSubSection>
 
-        <ResultSubSection title="Per ekonomisk sektion samt vårdande kostnadsställe">
+        <ResultSubSection
+          title="Per ekonomisk sektion samt vårdande kostnadsställe"
+          span="full"
+        >
           <ResultTable
             emptyText="Det finns inga sektionsrader ännu."
             headers={[
@@ -478,7 +484,7 @@ function StaffingCostSection(props: {
             }))}
           />
         </ResultSubSection>
-      </Stack>
+      </Box>
     </SectionCard>
   );
 }
@@ -670,10 +676,11 @@ function rightCell(value: string): ResultTableCell {
 function ResultSubSection(props: {
   children: ReactNode;
   description?: string;
+  span?: "full";
   title: string;
 }) {
   return (
-    <Box sx={subSectionSx}>
+    <Box sx={[subSectionSx, props.span === "full" ? fullSubSectionSx : {}]}>
       <Typography variant="subtitle2" sx={subSectionTitleSx}>
         {props.title}
       </Typography>
@@ -821,9 +828,26 @@ const metricGridSx = {
   mb: 2,
 };
 
+const compactSubSectionGridSx = {
+  alignItems: "start",
+  display: "grid",
+  gap: 1.5,
+  gridTemplateColumns: {
+    xs: "1fr",
+    lg: "repeat(2, minmax(280px, 1fr))",
+    xl: "repeat(3, minmax(260px, 1fr))",
+  },
+};
+
 const subSectionSx = {
   borderTop: "1px solid var(--color-border)",
   pt: 1.5,
+};
+
+const fullSubSectionSx = {
+  gridColumn: {
+    lg: "1 / -1",
+  },
 };
 
 const subSectionTitleSx = {

@@ -11,6 +11,7 @@ import type {
   DimensioningResultRow,
   DimensioningResultSummary,
   SavedMeDimensioningRow,
+  SavedOoDimensioningResultRow,
 } from "../types/outpatient-dimensioning-results.types";
 import { isDayCareRow, toNumber } from "./outpatient-dimensioning-calculations";
 
@@ -78,7 +79,8 @@ export function calculateCostPerCareEvent(
 
 export function calculateOutpatientDimensioningResults(
   productionRows: OutpatientProductionRow[],
-  dimensioningRows: SavedMeDimensioningRow[]
+  dimensioningRows: SavedMeDimensioningRow[],
+  ooResultRows: SavedOoDimensioningResultRow[] = []
 ): DimensioningResultRow[] {
   const basisVisitsByKey = new Map<string, number>();
 
@@ -94,7 +96,7 @@ export function calculateOutpatientDimensioningResults(
     );
   });
 
-  return dimensioningRows.flatMap((dimensioningRow) => {
+  const meRows = dimensioningRows.flatMap((dimensioningRow) => {
     const matchingProductionRows = productionRows.filter(
       (productionRow) =>
         productionRow.production_plan_id ===
@@ -115,6 +117,8 @@ export function calculateOutpatientDimensioningResults(
       calculateYearResultRow(productionRow, dimensioningRow, basisVisits)
     );
   });
+
+  return [...meRows, ...ooResultRows.map(calculateSavedOoResultRow)];
 }
 
 export function filterDimensioningResultRows(
@@ -299,6 +303,47 @@ function calculateYearResultRow(
   };
 }
 
+function calculateSavedOoResultRow(
+  row: SavedOoDimensioningResultRow
+): DimensioningResultRow {
+  const productionPresence = toNumber(row.production_presence);
+  const adminOtherPresence = toNumber(row.admin_other_presence);
+  const nonContributingPresence = toNumber(row.non_contributing_presence);
+  const totalPresence =
+    toNumber(row.total_presence) ||
+    calculateTotalPresence(
+      productionPresence,
+      adminOtherPresence,
+      nonContributingPresence
+    );
+  const staffingCost = toNumber(row.staffing_cost);
+  const visits = toNumber(row.visits);
+  const drgTotal = toNumber(row.drg_total);
+
+  return {
+    id: `oo-${row.id}`,
+    productionPlanId: row.production_plan_id,
+    kombikaId: row.kombika_pf_id,
+    careType: normalizeCareType(row.care_type),
+    roleCategory: row.role_category || "OO",
+    competenceLevel: row.competence_level || "OO",
+    economicSection: row.economic_section || MISSING_VALUE,
+    careCostCenter: row.care_cost_center || NOT_DISTRIBUTED,
+    sourcePeriod: row.source_period || MISSING_VALUE,
+    period: row.source_period || MISSING_VALUE,
+    productionPresence,
+    adminOtherPresence,
+    nonContributingPresence,
+    totalPresence,
+    salaryCostPerPresence: toNumber(row.salary_cost_per_presence),
+    staffingCost,
+    visits,
+    drgTotal,
+    costPerDrg: calculateCostPerDrg(staffingCost, drgTotal),
+    costPerCareEvent: calculateCostPerCareEvent(staffingCost, visits),
+  };
+}
+
 function calculateProductionPresence(params: {
   automaticPresence: number;
   basisShare: number;
@@ -373,6 +418,10 @@ function formatRoleCategory(row: OutpatientProductionRow): string {
 
 function getProductionCareType(row: OutpatientProductionRow): CareType {
   return isDayCareRow(row) ? "dagvard" : "mottagning";
+}
+
+function normalizeCareType(careType: string | null | undefined): CareType {
+  return careType === "dagvard" ? "dagvard" : "mottagning";
 }
 
 function createBasisKey(

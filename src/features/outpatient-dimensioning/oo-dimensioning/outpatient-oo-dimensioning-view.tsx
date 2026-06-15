@@ -88,6 +88,7 @@ export function OutpatientOoDimensioningView() {
               />
 
               <ActionsSection
+                isSaving={dimensioning.isSaving}
                 saveMessage={dimensioning.saveMessage}
                 onSave={dimensioning.saveDimensioning}
               />
@@ -100,6 +101,7 @@ export function OutpatientOoDimensioningView() {
 }
 
 function ActionsSection(props: {
+  isSaving: boolean;
   saveMessage: string;
   onSave: () => void | Promise<void>;
 }) {
@@ -110,8 +112,13 @@ function ActionsSection(props: {
           <Alert severity="success">{props.saveMessage}</Alert>
         ) : null}
         <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
-          <Button type="button" variant="contained" onClick={props.onSave}>
-            Spara dimensionering OO
+          <Button
+            type="button"
+            variant="contained"
+            disabled={props.isSaving}
+            onClick={props.onSave}
+          >
+            {props.isSaving ? "Sparar..." : "Spara dimensionering OO"}
           </Button>
           <Button
             type="button"

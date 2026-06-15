@@ -11,6 +11,7 @@ import {
 } from "@/features/outpatient-production/utils/current-outpatient-production-session";
 import {
   buildOoProductionRows,
+  buildOoDimensioningResultRows,
   buildOoPeriodizationRows,
   calculateOoDimensioningBasis,
   calculateOoDimensioningSummary,
@@ -57,6 +58,7 @@ export function useOutpatientOoDimensioning() {
     salaryCostPerPresence: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [saveMessage, setSaveMessage] = useState("");
 
@@ -221,8 +223,42 @@ export function useOutpatientOoDimensioning() {
     setSettings((current) => ({ ...current, [field]: value }));
   }
 
-  function saveDimensioning() {
-    setSaveMessage("Dimensionering OO ÖPV är sparad i aktuell vy.");
+  async function saveDimensioning() {
+    if (productionRows.length === 0) {
+      setSaveMessage("Det finns ingen OO-dimensionering att spara.");
+      return;
+    }
+
+    setIsSaving(true);
+    setSaveMessage("");
+
+    try {
+      const response = await fetch("/api/outpatient-dimensioning-oo-results", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productionPlanId: CURRENT_OUTPATIENT_PRODUCTION_PLAN_ID,
+          rows: buildOoDimensioningResultRows({
+            productionRows,
+            rawProductionRows,
+            careSupportRows,
+            adminOtherTime,
+            settings,
+          }),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Could not save OO dimensioning results.");
+      }
+
+      setSaveMessage("Dimensionering OO ÖPV är sparad.");
+    } catch (error) {
+      console.error(error);
+      setSaveMessage("Dimensionering OO ÖPV kunde inte sparas.");
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return {
@@ -232,6 +268,7 @@ export function useOutpatientOoDimensioning() {
     careSupportRows,
     errorMessage,
     isLoading,
+    isSaving,
     periodizationRows,
     productionRows,
     rawProductionRows,

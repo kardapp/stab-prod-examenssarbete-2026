@@ -126,7 +126,7 @@ export function ProductionTimeByRoleSection(
                     value={`${formatTwoDecimals(
                       calculateProductionHours(
                         calculateWeeklyVisits(row) +
-                          row.supportVisitsForOtherRoles,
+                        row.supportVisitsForOtherRoles,
                         row.averageMinutesPerVisit
                       )
                     )} h`}
@@ -163,12 +163,16 @@ export function ProductionTimeByRoleSection(
                     </Box>
                   </Box>
 
-                  <OptionalInputGroup title="Visa fält för justering">
+                  <OptionalInputGroup
+                    title="Justera volym och snitt-tid"
+                    description=""
+                  >
                     <Box sx={inputGridSx}>
                       <TextField
                         label="Stödvolym för andra roller/vecka"
                         type="number"
                         size="small"
+                        helperText="Extra besök per vecka som den här rollen lägger tid på."
                         value={row.supportVisitsForOtherRoles}
                         onChange={(event) =>
                           props.onRowChange(
@@ -180,10 +184,10 @@ export function ProductionTimeByRoleSection(
                         slotProps={{ htmlInput: { min: 0, step: 0.1 } }}
                       />
                       <TextField
-                        label="Snitt-tid, justering"
+                        label="Snitt-tid per besök"
                         type="number"
                         size="small"
-                        helperText={`Från plan: ${formatOneDecimal(
+                        helperText={`Minuter per besök. Från plan: ${formatOneDecimal(
                           row.sourceAverageMinutesPerVisit
                         )} min`}
                         value={row.averageMinutesPerVisit}
@@ -200,7 +204,10 @@ export function ProductionTimeByRoleSection(
                   </OptionalInputGroup>
                 </Box>
 
-                <OptionalInputGroup title="Visa veckofördelning">
+                <OptionalInputGroup
+                  title="Veckofördelning"
+                  description="Fördela veckans vårdhändelser över dagarna. Summan blir vårdhändelser per vecka."
+                >
                   <Box sx={weekdayGridSx}>
                     {weekdayFields.map((weekday) => (
                       <TextField
@@ -230,19 +237,23 @@ export function ProductionTimeByRoleSection(
   );
 }
 
-function OptionalInputGroup(props: { children: ReactNode; title: string }) {
+function OptionalInputGroup(props: {
+  children: ReactNode;
+  description: string;
+  title: string;
+}) {
   return (
-    <Accordion disableGutters sx={optionalAccordionSx}>
-      <AccordionSummary sx={optionalSummarySx}>
-        <Box sx={optionalHeaderSx}>
-          <Typography variant="subtitle2" sx={optionalTitleSx}>
-            {props.title}
-          </Typography>
-          <Box sx={smallOpenCellSx}>Öppna</Box>
-        </Box>
-      </AccordionSummary>
-      <AccordionDetails sx={optionalDetailsSx}>{props.children}</AccordionDetails>
-    </Accordion>
+    <Box sx={optionalGroupSx}>
+      <Box sx={optionalHeaderSx}>
+        <Typography variant="subtitle2" sx={optionalTitleSx}>
+          {props.title}
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          {props.description}
+        </Typography>
+      </Box>
+      <Box sx={optionalDetailsSx}>{props.children}</Box>
+    </Box>
   );
 }
 
@@ -369,31 +380,16 @@ const detailMetricGridSx = {
   gap: 1,
 };
 
-const optionalAccordionSx = {
+const optionalGroupSx = {
   ...detailGroupSx,
-  boxShadow: "none",
-  overflow: "hidden",
-  p: 0,
-  "&:before": {
-    display: "none",
-  },
-};
-
-const optionalSummarySx = {
-  minHeight: 52,
-  px: 1.5,
-  "& .MuiAccordionSummary-content": {
-    my: 1,
-    minWidth: 0,
-  },
+  display: "grid",
+  gap: 1.25,
 };
 
 const optionalHeaderSx = {
-  alignItems: "center",
   display: "grid",
-  gap: 1,
-  gridTemplateColumns: "minmax(0, 1fr) auto",
-  width: "100%",
+  gap: 0.25,
+  minWidth: 0,
 };
 
 const optionalTitleSx = {
@@ -401,18 +397,8 @@ const optionalTitleSx = {
   fontWeight: 700,
 };
 
-const smallOpenCellSx = {
-  border: "1px solid #005883",
-  borderRadius: 1,
-  color: "#005883",
-  fontWeight: 700,
-  px: 1,
-  py: 0.5,
-};
-
 const optionalDetailsSx = {
-  borderTop: "1px solid var(--color-border)",
-  p: 1.5,
+  minWidth: 0,
 };
 
 const inputGridSx = {

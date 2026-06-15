@@ -10,6 +10,7 @@ import {
 import type {
   DimensioningResultFilters,
   SavedMeDimensioningRow,
+  SavedOoDimensioningResultRow,
 } from "../types/outpatient-dimensioning-results.types";
 import {
   buildDimensioningResultOptions,
@@ -27,6 +28,9 @@ export function useOutpatientDimensioningResults() {
   const [dimensioningRows, setDimensioningRows] = useState<
     SavedMeDimensioningRow[]
   >([]);
+  const [ooResultRows, setOoResultRows] = useState<
+    SavedOoDimensioningResultRow[]
+  >([]);
   const [filters, setFilters] =
     useState<DimensioningResultFilters>(initialResultFilters);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,10 +46,15 @@ export function useOutpatientDimensioningResults() {
         if (currentRowIds.length === 0) {
           setProductionRows([]);
           setDimensioningRows([]);
+          setOoResultRows([]);
           return;
         }
 
-        const [productionResponse, dimensioningResponse] = await Promise.all([
+        const [
+          productionResponse,
+          dimensioningResponse,
+          ooResultsResponse,
+        ] = await Promise.all([
           fetch(
             `/api/outpatient-production-rows?productionPlanId=${CURRENT_OUTPATIENT_PRODUCTION_PLAN_ID}`,
             {
@@ -58,16 +67,30 @@ export function useOutpatientDimensioningResults() {
               signal: controller.signal,
             }
           ),
+          fetch(
+            `/api/outpatient-dimensioning-oo-results?productionPlanId=${CURRENT_OUTPATIENT_PRODUCTION_PLAN_ID}`,
+            {
+              signal: controller.signal,
+            }
+          ),
         ]);
 
-        if (!productionResponse.ok || !dimensioningResponse.ok) {
+        if (
+          !productionResponse.ok ||
+          !dimensioningResponse.ok ||
+          !ooResultsResponse.ok
+        ) {
           throw new Error("Could not fetch outpatient dimensioning results.");
         }
 
-        const [productionData, dimensioningData] = await Promise.all([
-          productionResponse.json() as Promise<OutpatientProductionRow[]>,
-          dimensioningResponse.json() as Promise<SavedMeDimensioningRow[]>,
-        ]);
+        const [productionData, dimensioningData, ooResultsData] =
+          await Promise.all([
+            productionResponse.json() as Promise<OutpatientProductionRow[]>,
+            dimensioningResponse.json() as Promise<SavedMeDimensioningRow[]>,
+            ooResultsResponse.json() as Promise<
+              SavedOoDimensioningResultRow[]
+            >,
+          ]);
 
         const currentProductionRows = filterCurrentOutpatientProductionRows(
           productionData,
@@ -79,9 +102,15 @@ export function useOutpatientDimensioningResults() {
             row.production_row_id === null ||
             currentRowIdSet.has(row.production_row_id)
         );
+        const currentOoResultRows = ooResultsData.filter(
+          (row) =>
+            row.production_row_id === null ||
+            currentRowIdSet.has(row.production_row_id)
+        );
 
         setProductionRows(currentProductionRows);
         setDimensioningRows(currentDimensioningRows);
+        setOoResultRows(currentOoResultRows);
       } catch (error) {
         if (!controller.signal.aborted) {
           console.error(error);
@@ -101,8 +130,12 @@ export function useOutpatientDimensioningResults() {
 
   const resultRows = useMemo(
     () =>
-      calculateOutpatientDimensioningResults(productionRows, dimensioningRows),
-    [dimensioningRows, productionRows]
+      calculateOutpatientDimensioningResults(
+        productionRows,
+        dimensioningRows,
+        ooResultRows
+      ),
+    [dimensioningRows, ooResultRows, productionRows]
   );
 
   const filteredRows = useMemo(

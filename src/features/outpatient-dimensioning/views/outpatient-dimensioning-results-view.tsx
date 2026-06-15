@@ -85,6 +85,10 @@ function FilterSection(props: {
   ) => void;
   onClearFilters: () => void;
 }) {
+  const showCompetenceFilter = props.options.competenceLevels.some(
+    (option) => option !== "OO"
+  );
+
   return (
     <SectionCard>
       <FormSection
@@ -117,14 +121,16 @@ function FilterSection(props: {
           options={props.options.roleCategories}
           onChange={(value) => props.onFilterChange("roleCategory", value)}
         />
-        <FilterSelect
-          label="Kompetensnivå"
-          value={props.filters.competenceLevel}
-          options={props.options.competenceLevels}
-          onChange={(value) =>
-            props.onFilterChange("competenceLevel", value)
-          }
-        />
+        {showCompetenceFilter ? (
+          <FilterSelect
+            label="Kompetensnivå"
+            value={props.filters.competenceLevel}
+            options={props.options.competenceLevels}
+            onChange={(value) =>
+              props.onFilterChange("competenceLevel", value)
+            }
+          />
+        ) : null}
         <TextField
           select
           label="Vårdtyp"
@@ -206,29 +212,47 @@ function SummaryStrip(props: { summary: DimensioningResultSummary }) {
 }
 
 function PresenceSection(props: { rows: DimensioningResultRow[] }) {
+  const showCompetenceLevel = shouldShowCompetenceLevel(props.rows);
+
   return (
     <ResultSection
       overline="1. Närvaro"
       title="Närvaro"
       emptyText="Inga närvarorader matchar valt filter."
-      headerSx={presenceGridSx}
-      rowSx={presenceGridSx}
-      headers={[
-        "År",
-        "Yrkeskategori",
-        "Kompetensnivå",
-        "Ekonomisk kombika/sektion",
-        "Produktionsnärvaro",
-        "Admin/övrigt",
-        "ST som inte bidrar",
-        "Total närvaro",
-      ]}
+      headerSx={
+        showCompetenceLevel ? presenceGridSx : presenceGridWithoutCompetenceSx
+      }
+      rowSx={
+        showCompetenceLevel ? presenceGridSx : presenceGridWithoutCompetenceSx
+      }
+      headers={
+        showCompetenceLevel
+          ? [
+              "År",
+              "Yrkeskategori",
+              "Kompetensnivå",
+              "Ekonomisk kombika/sektion",
+              "Produktionsnärvaro",
+              "Admin/övrigt",
+              "ST som inte bidrar",
+              "Total närvaro",
+            ]
+          : [
+              "År",
+              "Yrkeskategori",
+              "Ekonomisk kombika/sektion",
+              "Produktionsnärvaro",
+              "Admin/övrigt",
+              "ST som inte bidrar",
+              "Total närvaro",
+            ]
+      }
       rows={props.rows.map((row) => ({
         id: `presence-${row.id}`,
         values: [
           { value: row.period },
           { value: row.roleCategory },
-          { value: row.competenceLevel },
+          ...(showCompetenceLevel ? [{ value: row.competenceLevel }] : []),
           { value: formatSection(row) },
           { value: formatTwoDecimals(row.productionPresence) },
           { value: formatTwoDecimals(row.adminOtherPresence) },
@@ -241,28 +265,45 @@ function PresenceSection(props: { rows: DimensioningResultRow[] }) {
 }
 
 function StaffingCostSection(props: { rows: DimensioningResultRow[] }) {
+  const showCompetenceLevel = shouldShowCompetenceLevel(props.rows);
+
   return (
     <ResultSection
       overline="2. Bemanningskostnader"
       title="Bemanningskostnader"
       emptyText="Inga kostnadsrader matchar valt filter."
-      headerSx={staffingGridSx}
-      rowSx={staffingGridSx}
-      headers={[
-        "År",
-        "Yrkeskategori",
-        "Kompetensnivå",
-        "Ekonomisk kombika/sektion",
-        "Total närvaro",
-        "Lönekostnad/närvaro",
-        "Bemanningskostnad",
-      ]}
+      headerSx={
+        showCompetenceLevel ? staffingGridSx : staffingGridWithoutCompetenceSx
+      }
+      rowSx={
+        showCompetenceLevel ? staffingGridSx : staffingGridWithoutCompetenceSx
+      }
+      headers={
+        showCompetenceLevel
+          ? [
+              "År",
+              "Yrkeskategori",
+              "Kompetensnivå",
+              "Ekonomisk kombika/sektion",
+              "Total närvaro",
+              "Lönekostnad/närvaro",
+              "Bemanningskostnad",
+            ]
+          : [
+              "År",
+              "Yrkeskategori",
+              "Ekonomisk kombika/sektion",
+              "Total närvaro",
+              "Lönekostnad/närvaro",
+              "Bemanningskostnad",
+            ]
+      }
       rows={props.rows.map((row) => ({
         id: `staffing-${row.id}`,
         values: [
           { value: row.period },
           { value: row.roleCategory },
-          { value: row.competenceLevel },
+          ...(showCompetenceLevel ? [{ value: row.competenceLevel }] : []),
           { value: formatSection(row) },
           { value: formatTwoDecimals(row.totalPresence) },
           { value: formatCurrency(row.salaryCostPerPresence) },
@@ -274,30 +315,53 @@ function StaffingCostSection(props: { rows: DimensioningResultRow[] }) {
 }
 
 function CostPerProductionSection(props: { rows: DimensioningResultRow[] }) {
+  const showCompetenceLevel = shouldShowCompetenceLevel(props.rows);
+
   return (
     <ResultSection
       overline="3. Bemanningskostnader per DRG/vårdhändelse"
       title="Bemanningskostnader per DRG/vårdhändelse"
       emptyText="Inga nyckeltalsrader matchar valt filter."
-      headerSx={productionCostGridSx}
-      rowSx={productionCostGridSx}
-      headers={[
-        "År",
-        "Yrkeskategori",
-        "Kompetensnivå",
-        "Ekonomisk kombika/sektion",
-        "Bemanningskostnad",
-        "Vårdhändelser",
-        "DRG",
-        "Kostnad per DRG",
-        "Kostnad per vårdhändelse",
-      ]}
+      headerSx={
+        showCompetenceLevel
+          ? productionCostGridSx
+          : productionCostGridWithoutCompetenceSx
+      }
+      rowSx={
+        showCompetenceLevel
+          ? productionCostGridSx
+          : productionCostGridWithoutCompetenceSx
+      }
+      headers={
+        showCompetenceLevel
+          ? [
+              "År",
+              "Yrkeskategori",
+              "Kompetensnivå",
+              "Ekonomisk kombika/sektion",
+              "Bemanningskostnad",
+              "Vårdhändelser",
+              "DRG",
+              "Kostnad per DRG",
+              "Kostnad per vårdhändelse",
+            ]
+          : [
+              "År",
+              "Yrkeskategori",
+              "Ekonomisk kombika/sektion",
+              "Bemanningskostnad",
+              "Vårdhändelser",
+              "DRG",
+              "Kostnad per DRG",
+              "Kostnad per vårdhändelse",
+            ]
+      }
       rows={props.rows.map((row) => ({
         id: `production-cost-${row.id}`,
         values: [
           { value: row.period },
           { value: row.roleCategory },
-          { value: row.competenceLevel },
+          ...(showCompetenceLevel ? [{ value: row.competenceLevel }] : []),
           { value: formatSection(row) },
           { value: formatCurrency(row.staffingCost) },
           { value: formatWholeNumber(row.visits) },
@@ -405,6 +469,10 @@ function formatCurrency(value: number): string {
   return `${formatWholeNumber(value)} kr`;
 }
 
+function shouldShowCompetenceLevel(rows: DimensioningResultRow[]): boolean {
+  return rows.some((row) => row.competenceLevel !== "OO");
+}
+
 const filterGridSx = {
   display: "grid",
   gridTemplateColumns: {
@@ -453,6 +521,14 @@ const presenceGridSx = {
   },
 };
 
+const presenceGridWithoutCompetenceSx = {
+  ...baseResultRowSx,
+  gridTemplateColumns: {
+    xs: "1fr",
+    xl: "minmax(70px, 0.6fr) minmax(100px, 0.8fr) minmax(160px, 1.2fr) repeat(4, minmax(92px, 0.8fr))",
+  },
+};
+
 const staffingGridSx = {
   ...baseResultRowSx,
   gridTemplateColumns: {
@@ -461,11 +537,27 @@ const staffingGridSx = {
   },
 };
 
+const staffingGridWithoutCompetenceSx = {
+  ...baseResultRowSx,
+  gridTemplateColumns: {
+    xs: "1fr",
+    xl: "minmax(70px, 0.6fr) minmax(100px, 0.8fr) minmax(160px, 1.2fr) repeat(3, minmax(110px, 0.9fr))",
+  },
+};
+
 const productionCostGridSx = {
   ...baseResultRowSx,
   gridTemplateColumns: {
     xs: "1fr",
     xl: "minmax(70px, 0.6fr) minmax(100px, 0.8fr) minmax(86px, 0.7fr) minmax(150px, 1.1fr) repeat(5, minmax(96px, 0.8fr))",
+  },
+};
+
+const productionCostGridWithoutCompetenceSx = {
+  ...baseResultRowSx,
+  gridTemplateColumns: {
+    xs: "1fr",
+    xl: "minmax(70px, 0.6fr) minmax(100px, 0.8fr) minmax(150px, 1.1fr) repeat(5, minmax(96px, 0.8fr))",
   },
 };
 

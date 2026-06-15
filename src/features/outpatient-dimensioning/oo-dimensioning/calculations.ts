@@ -20,6 +20,28 @@ export const WEEKS_PER_YEAR = 52;
 export const DEFAULT_WEEKLY_WORKING_HOURS = 40;
 export const DEFAULT_SALARY_COST_PER_PRESENCE = 650000;
 
+export type OoDimensioningResultPayloadRow = {
+  productionRowId: number | null;
+  distributionId: number | null;
+  rowType: "production" | "care_support" | "admin_other";
+  rowKey: string;
+  kombikaId: string;
+  roleCategory: string;
+  competenceLevel: string;
+  economicSection: string;
+  careCostCenter: string;
+  sourcePeriod: string;
+  careType: "mottagning" | "dagvard";
+  productionPresence: number;
+  adminOtherPresence: number;
+  nonContributingPresence: number;
+  totalPresence: number;
+  salaryCostPerPresence: number;
+  staffingCost: number;
+  visits: number;
+  drgTotal: number;
+};
+
 export const weekdayFields: Array<{
   field: WeekdayField;
   label: string;
@@ -318,6 +340,111 @@ export function buildOoPeriodizationRows(params: {
   return [...productionCurveRows, ...supportCurveRows, ...adminCurveRows];
 }
 
+export function buildOoDimensioningResultRows(params: {
+  productionRows: OoDimensioningProductionRow[];
+  rawProductionRows: OutpatientProductionRow[];
+  careSupportRows: OoCareSupportRow[];
+  adminOtherTime: OoAdminOtherTimeState;
+  settings: OoDimensioningSettings;
+}): OoDimensioningResultPayloadRow[] {
+  const sourceRowsById = new Map(
+    params.rawProductionRows.map((row) => [row.id, row])
+  );
+  const weeklyWorkingHours =
+    toNumber(params.settings.weeklyWorkingHours) || DEFAULT_WEEKLY_WORKING_HOURS;
+  const salaryCostPerPresence = toNumber(params.settings.salaryCostPerPresence);
+  const sourcePeriod = getSourcePeriod(params.rawProductionRows);
+  const productionRows = params.productionRows.map((row) => {
+    const sourceRow = sourceRowsById.get(row.productionRowId);
+    const weeklyVisits =
+      calculateWeeklyVisits(row) + toNumber(row.supportVisitsForOtherRoles);
+    const weeklyProductionHours = calculateProductionHours(
+      weeklyVisits,
+      toNumber(row.averageMinutesPerVisit)
+    );
+    const productionPresence = calculateProductionPresence(
+      weeklyProductionHours,
+      weeklyWorkingHours
+    );
+
+    return createResultPayloadRow({
+      productionRowId: row.productionRowId,
+      distributionId: row.distributionId,
+      rowType: "production",
+      rowKey: `production-${row.id}`,
+      kombikaId: sourceRow?.kombika_pf_id ?? "",
+      roleCategory: row.roleCategory || "OO-produktion",
+      economicSection: formatEconomicSection(row, sourceRow),
+      careCostCenter: row.careUnit || "Ej fördelad",
+      sourcePeriod: formatProductionPeriod(sourceRow) || sourcePeriod,
+      productionPresence,
+      adminOtherPresence: 0,
+      salaryCostPerPresence,
+      visits: weeklyVisits * WEEKS_PER_YEAR,
+    });
+  });
+  const careSupportRows = params.careSupportRows
+    .filter((row) => toNumber(row.careSupportHoursPerWeek) > 0)
+    .map((row) => {
+      const adminOtherPresence = calculateProductionPresence(
+        toNumber(row.careSupportHoursPerWeek),
+        weeklyWorkingHours
+      );
+
+      return createResultPayloadRow({
+        productionRowId: null,
+        distributionId: null,
+        rowType: "care_support",
+        rowKey: `care-support-${row.id}`,
+        kombikaId: "",
+        roleCategory: row.careSupportRole || "Vårdnära stöd",
+        economicSection: "Vårdnära stöd",
+        careCostCenter: "Vårdnära stöd",
+        sourcePeriod,
+        productionPresence: 0,
+        adminOtherPresence,
+        salaryCostPerPresence,
+        visits: 0,
+      });
+    });
+  const adminRows = [
+    createAdminResultRow({
+      key: "admin",
+      label: "Admin",
+      hours: params.adminOtherTime.adminHoursPerWeek,
+      sourcePeriod,
+      salaryCostPerPresence,
+      weeklyWorkingHours,
+    }),
+    createAdminResultRow({
+      key: "training",
+      label: "Inskolning",
+      hours: params.adminOtherTime.trainingHoursPerWeek,
+      sourcePeriod,
+      salaryCostPerPresence,
+      weeklyWorkingHours,
+    }),
+    createAdminResultRow({
+      key: "competence-development",
+      label: "Kompetensutveckling",
+      hours: params.adminOtherTime.competenceDevelopmentHoursPerWeek,
+      sourcePeriod,
+      salaryCostPerPresence,
+      weeklyWorkingHours,
+    }),
+    createAdminResultRow({
+      key: "other",
+      label: "Övrig tid",
+      hours: params.adminOtherTime.otherHoursPerWeek,
+      sourcePeriod,
+      salaryCostPerPresence,
+      weeklyWorkingHours,
+    }),
+  ].filter((row): row is OoDimensioningResultPayloadRow => Boolean(row));
+
+  return [...productionRows, ...careSupportRows, ...adminRows];
+}
+
 function createOoProductionRow(
   productionRow: OutpatientProductionRow,
   distribution: SavedOoDistributionRow | null
@@ -357,6 +484,115 @@ function createOoProductionRow(
     saturdayVisits: 0,
     sundayVisits: 0,
   };
+}
+
+function createAdminResultRow(params: {
+  key: string;
+  label: string;
+  hours: number;
+  sourcePeriod: string;
+  salaryCostPerPresence: number;
+  weeklyWorkingHours: number;
+}): OoDimensioningResultPayloadRow | null {
+  const hours = toNumber(params.hours);
+
+  if (hours <= 0) {
+    return null;
+  }
+
+  return createResultPayloadRow({
+    productionRowId: null,
+    distributionId: null,
+    rowType: "admin_other",
+    rowKey: `admin-other-${params.key}`,
+    kombikaId: "",
+    roleCategory: params.label,
+    economicSection: "Admin och övrig tid",
+    careCostCenter: "Admin och övrig tid",
+    sourcePeriod: params.sourcePeriod,
+    productionPresence: 0,
+    adminOtherPresence: calculateProductionPresence(
+      hours,
+      params.weeklyWorkingHours
+    ),
+    salaryCostPerPresence: params.salaryCostPerPresence,
+    visits: 0,
+  });
+}
+
+function createResultPayloadRow(params: {
+  productionRowId: number | null;
+  distributionId: number | null;
+  rowType: OoDimensioningResultPayloadRow["rowType"];
+  rowKey: string;
+  kombikaId: string;
+  roleCategory: string;
+  economicSection: string;
+  careCostCenter: string;
+  sourcePeriod: string;
+  productionPresence: number;
+  adminOtherPresence: number;
+  salaryCostPerPresence: number;
+  visits: number;
+}): OoDimensioningResultPayloadRow {
+  const totalPresence =
+    params.productionPresence + params.adminOtherPresence;
+
+  return {
+    productionRowId: params.productionRowId,
+    distributionId: params.distributionId,
+    rowType: params.rowType,
+    rowKey: params.rowKey,
+    kombikaId: params.kombikaId,
+    roleCategory: params.roleCategory,
+    competenceLevel: "OO",
+    economicSection: params.economicSection,
+    careCostCenter: params.careCostCenter,
+    sourcePeriod: params.sourcePeriod,
+    careType: "mottagning",
+    productionPresence: params.productionPresence,
+    adminOtherPresence: params.adminOtherPresence,
+    nonContributingPresence: 0,
+    totalPresence,
+    salaryCostPerPresence: params.salaryCostPerPresence,
+    staffingCost: totalPresence * params.salaryCostPerPresence,
+    visits: params.visits,
+    drgTotal: 0,
+  };
+}
+
+function formatEconomicSection(
+  row: OoDimensioningProductionRow,
+  sourceRow: OutpatientProductionRow | undefined
+): string {
+  return (
+    row.economicKombika ||
+    [sourceRow?.kombika_pf_id, sourceRow?.section ?? sourceRow?.kombika_pf]
+      .filter(Boolean)
+      .join(" - ") ||
+    "Saknas"
+  );
+}
+
+function getSourcePeriod(rows: OutpatientProductionRow[]): string {
+  return (
+    rows.map(formatProductionPeriod).find((period) => period.length > 0) ||
+    "Saknas"
+  );
+}
+
+function formatProductionPeriod(
+  row: OutpatientProductionRow | undefined
+): string {
+  if (!row) {
+    return "";
+  }
+
+  if (row.production_plan_year) {
+    return String(row.production_plan_year);
+  }
+
+  return row.period_value ?? "";
 }
 
 function getDistributionVisits(
