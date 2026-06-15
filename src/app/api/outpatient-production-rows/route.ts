@@ -513,18 +513,68 @@ export async function DELETE(request: Request) {
     client = await db.connect();
     await client.query("BEGIN");
 
-    const dimensioningTableResult = await client.query(
-      "SELECT to_regclass('public.dimensionering_me_opv_rows') AS table_name"
+    const hasMeDimensioningTable = await tableExists(
+      client,
+      "dimensionering_me_opv_rows"
     );
-    const hasDimensioningTable = Boolean(
-      dimensioningTableResult.rows[0]?.table_name
+    const hasOoDimensioningResultsTable = await tableExists(
+      client,
+      "dimensionering_oo_opv_result_rows"
+    );
+    const hasOoDistributionsTable = await tableExists(
+      client,
+      "outpatient_oo_distributions"
+    );
+    const hasOoRoleAllocationsTable = await tableExists(
+      client,
+      "outpatient_oo_distribution_role_allocations"
     );
 
-    if (hasDimensioningTable) {
+    if (hasMeDimensioningTable) {
       await client.query(
         `
           DELETE FROM dimensionering_me_opv_rows
           WHERE production_plan_id = $1
+        `,
+        [productionPlanId]
+      );
+    }
+
+    if (hasOoDimensioningResultsTable) {
+      await client.query(
+        `
+          DELETE FROM dimensionering_oo_opv_result_rows
+          WHERE production_plan_id = $1
+        `,
+        [productionPlanId]
+      );
+    }
+
+    if (hasOoRoleAllocationsTable && hasOoDistributionsTable) {
+      await client.query(
+        `
+          DELETE FROM outpatient_oo_distribution_role_allocations
+          WHERE distribution_id IN (
+            SELECT distributions.id
+            FROM outpatient_oo_distributions AS distributions
+            INNER JOIN outpatient_production_rows AS rows
+              ON rows.id = distributions.production_row_id
+            WHERE rows.production_plan_id = $1
+          )
+        `,
+        [productionPlanId]
+      );
+    }
+
+    if (hasOoDistributionsTable) {
+      await client.query(
+        `
+          DELETE FROM outpatient_oo_distributions
+          WHERE production_row_id IN (
+            SELECT id
+            FROM outpatient_production_rows
+            WHERE production_plan_id = $1
+          )
         `,
         [productionPlanId]
       );
@@ -555,4 +605,16 @@ export async function DELETE(request: Request) {
   } finally {
     client?.release();
   }
+}
+
+async function tableExists(
+  client: PoolClient,
+  tableName: string
+): Promise<boolean> {
+  const result = await client.query(
+    "SELECT to_regclass($1) AS table_name",
+    [`public.${tableName}`]
+  );
+
+  return Boolean(result.rows[0]?.table_name);
 }
