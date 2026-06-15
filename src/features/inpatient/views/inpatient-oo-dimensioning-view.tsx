@@ -229,6 +229,7 @@ function LoadedInpatientOoDimensioningView() {
                 <FormSection
                   overline="1. Produktion per yrkeskategori"
                   title="Timmar per vårdplats och dygn"
+                  description="Fyll i historisk lönekostnad per närvaro. Kostnaden beräknas som värdet multiplicerat med beräknad närvaro per yrkeskategori."
                 />
                 <Box sx={{ overflowX: "auto" }}>
                   <Table size="small">
@@ -245,7 +246,7 @@ function LoadedInpatientOoDimensioningView() {
                           Veckoarbetstid
                         </TableCell>
                         <TableCell sx={headerCellSx} align="right">
-                          Lönekostnad/närvaro
+                          Lönekostnad per historisk närvaro
                         </TableCell>
                         <TableCell sx={headerCellSx} align="right">
                           Timmar/vecka

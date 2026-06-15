@@ -19,7 +19,7 @@ export function CareSupportSection(props: CareSupportSectionProps) {
     <SectionCard>
       <FormSection
         overline="2. Vårdnära stöd"
-        title="Stödresurser nära vården"
+        title="Inmatning för vårdnära stöd"
       />
 
       <Box sx={supportGridSx}>

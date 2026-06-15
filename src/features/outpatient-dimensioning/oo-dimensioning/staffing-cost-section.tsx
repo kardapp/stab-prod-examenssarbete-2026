@@ -20,13 +20,15 @@ export function StaffingCostSection(props: StaffingCostSectionProps) {
       <FormSection
         overline="5. Kostnader"
         title="Bemanningskostnad"
+        description="Kostnaden beräknas som historisk lönekostnad per närvaro multiplicerat med beräknad total närvaro."
       />
 
       <Box sx={costGridSx}>
         <TextField
-          label="Lönekostnad/närvaro (historik)"
+          label="Lönekostnad per historisk närvaro"
           type="number"
           size="small"
+          helperText="Används som: historisk lönekostnad/närvaro × beräknad total närvaro."
           value={props.settings.salaryCostPerPresence}
           onChange={(event) =>
             props.onSettingsChange(

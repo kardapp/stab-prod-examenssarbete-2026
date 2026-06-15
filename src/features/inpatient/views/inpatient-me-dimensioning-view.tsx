@@ -187,6 +187,7 @@ function LoadedInpatientMeDimensioningView() {
                 <FormSection
                   overline="1. Kompetensnivåer"
                   title="Läkarnärvaro per kompetensnivå"
+                  description="Fyll i historisk lönekostnad per närvaro. Kostnaden beräknas som värdet multiplicerat med beräknad total närvaro per kompetensnivå."
                 />
                 <Box sx={{ overflowX: "auto" }}>
                   <Table size="small">
@@ -203,7 +204,7 @@ function LoadedInpatientMeDimensioningView() {
                           Admin/övrigt
                         </TableCell>
                         <TableCell sx={headerCellSx} align="right">
-                          Lönekostnad/närvaro (historik)
+                          Lönekostnad per historisk närvaro
                         </TableCell>
                         <TableCell sx={headerCellSx} align="right">
                           Total närvaro
