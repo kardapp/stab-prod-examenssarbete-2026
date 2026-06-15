@@ -6,6 +6,7 @@ type WeeklyCurveChartProps = {
   curvePoints: WeeklyCurvePoint[];
   maxPresence: number;
   selectedWeek: number | null;
+  volumeLabel?: string;
   volumeLabelLower?: string;
   onSelectWeek: (week: number) => void;
 };
@@ -43,7 +44,8 @@ export function WeeklyCurveChart(props: WeeklyCurveChartProps) {
                       aria-pressed={isSelected}
                       title={formatWeekTitle(
                         point,
-                        props.volumeLabelLower
+                        props.volumeLabelLower,
+                        props.volumeLabel
                       )}
                       onClick={() => props.onSelectWeek(point.week)}
                       sx={{

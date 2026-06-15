@@ -2,6 +2,8 @@ import { Alert, Box, Button, MenuItem, TextField, Typography } from "@mui/materi
 import {
   formatImpactWeekdays,
   formatSignedPercentage,
+  getImpactTargetLabel,
+  impactTargetOptions,
   impactTypeOptions,
   weekdayOptions,
   type WeekdayKey,
@@ -13,6 +15,8 @@ type WeeklyImpactControlsProps = {
   draft: WeeklyImpactDraft;
   impacts: WeeklyImpact[];
   selectedWeek: number;
+  showDrg?: boolean;
+  volumeLabel?: string;
   validationMessage: string;
   onAddImpact: () => void;
   onDraftChange: (
@@ -21,12 +25,16 @@ type WeeklyImpactControlsProps = {
   ) => void;
   onDraftWeekdaysChange: (weekdays: WeekdayKey[]) => void;
   onRemoveImpact: (impactId: string) => void;
+  onTargetChange: (value: string) => void;
   onTypeChange: (value: string) => void;
 };
 
 export function WeeklyImpactControls(props: WeeklyImpactControlsProps) {
   const allWeekdays = weekdayOptions.map((option) => option.value);
   const allWeekdaysSelected = props.draft.weekdays.length === allWeekdays.length;
+  const visibleImpactTargetOptions = impactTargetOptions.filter(
+    (option) => props.showDrg !== false || option.value !== "drgPoints"
+  );
 
   function toggleWeekday(weekday: WeekdayKey) {
     const nextWeekdays = props.draft.weekdays.includes(weekday)
@@ -64,6 +72,20 @@ export function WeeklyImpactControls(props: WeeklyImpactControlsProps) {
           {impactTypeOptions.map((option) => (
             <MenuItem key={option.value} value={option.value}>
               {option.label}
+            </MenuItem>
+          ))}
+        </TextField>
+        <TextField
+          select
+          label="Påverkar"
+          size="small"
+          value={props.draft.target}
+          onChange={(event) => props.onTargetChange(event.target.value)}
+          sx={fieldSx}
+        >
+          {visibleImpactTargetOptions.map((option) => (
+            <MenuItem key={option.value} value={option.value}>
+              {getImpactTargetLabel(option.value, props.volumeLabel)}
             </MenuItem>
           ))}
         </TextField>
@@ -156,6 +178,7 @@ export function WeeklyImpactControls(props: WeeklyImpactControlsProps) {
                 <Typography sx={{ fontWeight: 700 }}>{impact.name}</Typography>
                 <Typography variant="body2" color="text.secondary">
                   v. {impact.startWeek}-{impact.endWeek} ·{" "}
+                  {getImpactTargetLabel(impact.target, props.volumeLabel)} ·{" "}
                   {formatImpactWeekdays(impact)} ·{" "}
                   {formatSignedPercentage(impact.percentage)}
                 </Typography>
@@ -229,7 +252,7 @@ const impactFormSx = {
   gridTemplateColumns: {
     xs: "1fr",
     md: "repeat(2, minmax(0, 1fr))",
-    xl: "repeat(3, minmax(0, 1fr))",
+    xl: "repeat(4, minmax(0, 1fr))",
   },
   gridTemplateRows: {
     xl: "66px minmax(120px, 144px)",
@@ -249,7 +272,7 @@ const dayPickerSx = {
   gridColumn: {
     xs: "1",
     md: "1 / -1",
-    xl: "span 2",
+    xl: "span 3",
   },
   height: "100%",
   justifyContent: "stretch",

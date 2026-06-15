@@ -10,7 +10,9 @@ import type {
 } from "./periodization-curve-model";
 import {
   formatImpactWeekdays,
+  formatMetricImpactSummary,
   formatSignedPercentage,
+  getImpactTargetLabel,
 } from "./periodization-curve-model";
 
 type SelectedWeekPanelProps = {
@@ -39,8 +41,18 @@ export function SelectedWeekPanel(props: SelectedWeekPanelProps) {
             {impactedDayCount} av 7 dagar påverkade
           </Typography>
         </Box>
-        <Typography variant="caption" sx={impactBadgeSx}>
-          {formatSignedPercentage(props.selectedPoint.impactPercentage)}
+        <Typography
+          variant="caption"
+          sx={impactBadgeSx}
+          title={formatMetricImpactSummary(
+            props.selectedPoint.impactPercentages,
+            props.volumeLabel
+          )}
+        >
+          {formatMetricImpactSummary(
+            props.selectedPoint.impactPercentages,
+            props.volumeLabel
+          )}
         </Typography>
       </Box>
 
@@ -48,17 +60,26 @@ export function SelectedWeekPanel(props: SelectedWeekPanelProps) {
         <SummaryValue
           label={props.volumeLabel ?? "Vårdhändelser"}
           value={formatOneDecimal(props.selectedPoint.adjustedVisits)}
+          helperText={formatMetricImpactText(
+            props.selectedPoint.impactPercentages.visits
+          )}
         />
         <SummaryValue
           label="Tid"
           value={`${formatWholeNumber(
             props.selectedPoint.adjustedVisitMinutes
           )} min`}
+          helperText={formatMetricImpactText(
+            props.selectedPoint.impactPercentages.visitMinutes
+          )}
         />
         {props.showDrg !== false ? (
           <SummaryValue
             label="DRG"
             value={formatTwoDecimals(props.selectedPoint.adjustedDrgPoints)}
+            helperText={formatMetricImpactText(
+              props.selectedPoint.impactPercentages.drgPoints
+            )}
           />
         ) : null}
         <SummaryValue
@@ -66,6 +87,9 @@ export function SelectedWeekPanel(props: SelectedWeekPanelProps) {
           value={`${formatTwoDecimals(
             props.selectedPoint.adjustedStaffingNeed
           )} heltid`}
+          helperText={formatMetricImpactText(
+            props.selectedPoint.impactPercentages.staffingNeed
+          )}
         />
       </Box>
 
@@ -78,6 +102,7 @@ export function SelectedWeekPanel(props: SelectedWeekPanelProps) {
               heightPercentage={
                 (day.adjustedStaffingNeed / maxDayPresence) * 100
               }
+              volumeLabel={props.volumeLabel}
             />
           ))}
         </Box>
@@ -89,6 +114,7 @@ export function SelectedWeekPanel(props: SelectedWeekPanelProps) {
             <Box key={impact.id} sx={impactRowSx}>
               <Typography sx={impactNameSx}>{impact.name}</Typography>
               <Typography variant="body2" color="text.secondary">
+                {getImpactTargetLabel(impact.target, props.volumeLabel)} ·{" "}
                 {formatSignedPercentage(impact.percentage)} ·{" "}
                 {formatImpactWeekdays(impact)}
               </Typography>
@@ -104,7 +130,11 @@ export function SelectedWeekPanel(props: SelectedWeekPanelProps) {
   );
 }
 
-function SummaryValue(props: { label: string; value: string }) {
+function SummaryValue(props: {
+  helperText?: string;
+  label: string;
+  value: string;
+}) {
   return (
     <Box sx={summaryValueSx}>
       <Typography variant="caption" color="text.secondary">
@@ -113,6 +143,11 @@ function SummaryValue(props: { label: string; value: string }) {
       <Typography sx={{ color: "#005883", fontWeight: 700 }}>
         {props.value}
       </Typography>
+      {props.helperText ? (
+        <Typography variant="caption" sx={summaryHelperSx}>
+          {props.helperText}
+        </Typography>
+      ) : null}
     </Box>
   );
 }
@@ -120,6 +155,7 @@ function SummaryValue(props: { label: string; value: string }) {
 function DayBar(props: {
   day: WeeklyCurveDay;
   heightPercentage: number;
+  volumeLabel?: string;
 }) {
   const isImpacted = props.day.impacts.length > 0;
 
@@ -127,7 +163,7 @@ function DayBar(props: {
     <Box sx={dayColumnSx}>
       <Box sx={dayBarAreaSx}>
         <Box
-          title={formatDayTitle(props.day)}
+          title={formatDayTitle(props.day, props.volumeLabel)}
           sx={{
             ...dayBarSx,
             bgcolor: getDayBarColor(props.day),
@@ -140,7 +176,7 @@ function DayBar(props: {
         {props.day.shortLabel}
       </Typography>
       <Typography variant="caption" sx={dayImpactSx(isImpacted)}>
-        {formatSignedPercentage(props.day.impactPercentage)}
+        {formatDayImpactLabel(props.day)}
       </Typography>
     </Box>
   );
@@ -162,16 +198,44 @@ function getDayBarColor(day: WeeklyCurveDay): string {
   return "#005883";
 }
 
-function formatDayTitle(day: WeeklyCurveDay): string {
+function formatDayTitle(day: WeeklyCurveDay, volumeLabel?: string): string {
   const impactNames =
     day.impacts.map((impact) => impact.name).join(", ") || "Ingen påverkan";
 
   return [
     day.label,
     `Personalbehov ${formatTwoDecimals(day.adjustedStaffingNeed)} heltid`,
-    `Påverkan ${formatSignedPercentage(day.impactPercentage)}`,
+    `Påverkan ${formatMetricImpactSummary(day.impactPercentages, volumeLabel)}`,
     impactNames,
   ].join(" · ");
+}
+
+function formatMetricImpactText(percentage: number): string | undefined {
+  if (Math.abs(percentage) < 0.05) {
+    return undefined;
+  }
+
+  return `Påverkan ${formatSignedPercentage(percentage)}`;
+}
+
+function formatDayImpactLabel(day: WeeklyCurveDay): string {
+  const changedTargetCount = Object.values(day.impactPercentages).filter(
+    (percentage) => Math.abs(percentage) >= 0.05
+  ).length;
+
+  if (changedTargetCount === 0) {
+    return "0.0%";
+  }
+
+  if (changedTargetCount === 1) {
+    const percentage = Object.values(day.impactPercentages).find(
+      (value) => Math.abs(value) >= 0.05
+    );
+
+    return formatSignedPercentage(percentage ?? 0);
+  }
+
+  return `${changedTargetCount} mått`;
 }
 
 const selectedWeekSx = {
@@ -196,8 +260,12 @@ const impactBadgeSx = {
   flexShrink: 0,
   fontWeight: 800,
   lineHeight: 1,
+  maxWidth: { xs: 160, sm: 260 },
+  overflow: "hidden",
   px: 1,
   py: 0.75,
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
 };
 
 const summaryGridSx = {
@@ -217,6 +285,14 @@ const summaryValueSx = {
   bgcolor: "var(--page-background)",
   minWidth: 0,
   p: 1,
+};
+
+const summaryHelperSx = {
+  color: "text.secondary",
+  display: "block",
+  fontWeight: 700,
+  lineHeight: 1.2,
+  mt: 0.25,
 };
 
 const dailyCurveScrollerSx = {

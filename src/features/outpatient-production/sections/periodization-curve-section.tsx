@@ -10,6 +10,7 @@ import {
   impactTypeOptions,
   initialImpactDraft,
   parseImpactType,
+  parseImpactTarget,
   type WeekdayKey,
   type WeeklyCurvePoint,
   type WeeklyCurveSourceRow,
@@ -92,6 +93,14 @@ export function PeriodizationCurveSection(props: {
     }));
   }
 
+  function handleTargetChange(value: string) {
+    setValidationMessage("");
+    setDraft((current) => ({
+      ...current,
+      target: parseImpactTarget(value),
+    }));
+  }
+
   function addImpact() {
     const activeWeek = selectedWeek ?? clampWeek(Number(draft.startWeek));
     const percentage = Number(draft.percentage);
@@ -115,6 +124,7 @@ export function PeriodizationCurveSection(props: {
     const nextImpact: WeeklyImpact = {
       id: `impact-${Date.now()}`,
       type: draft.type,
+      target: draft.target,
       name,
       startWeek: activeWeek,
       endWeek: activeWeek,
@@ -151,6 +161,7 @@ export function PeriodizationCurveSection(props: {
             curvePoints={curvePoints}
             maxPresence={maxPresence}
             selectedWeek={selectedWeek}
+            volumeLabel={props.volumeLabel}
             volumeLabelLower={props.volumeLabelLower}
             onSelectWeek={handleSelectWeek}
           />
@@ -169,6 +180,7 @@ export function PeriodizationCurveSection(props: {
                 onDraftChange={handleDraftChange}
                 onDraftWeekdaysChange={handleDraftWeekdaysChange}
                 onRemoveImpact={removeImpact}
+                onTargetChange={handleTargetChange}
                 onTypeChange={handleTypeChange}
               />
             ) : null}
@@ -194,6 +206,7 @@ function FocusedWeekAccordion(props: {
   ) => void;
   onDraftWeekdaysChange: (weekdays: WeekdayKey[]) => void;
   onRemoveImpact: (impactId: string) => void;
+  onTargetChange: (value: string) => void;
   onTypeChange: (value: string) => void;
 }) {
   return (
@@ -223,11 +236,14 @@ function FocusedWeekAccordion(props: {
           draft={props.draft}
           impacts={props.impacts}
           selectedWeek={props.selectedPoint.week}
+          showDrg={props.showDrg}
+          volumeLabel={props.volumeLabel}
           validationMessage={props.validationMessage}
           onAddImpact={props.onAddImpact}
           onDraftChange={props.onDraftChange}
           onDraftWeekdaysChange={props.onDraftWeekdaysChange}
           onRemoveImpact={props.onRemoveImpact}
+          onTargetChange={props.onTargetChange}
           onTypeChange={props.onTypeChange}
         />
       </Box>
