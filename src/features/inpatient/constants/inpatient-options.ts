@@ -353,7 +353,7 @@ export const initialInpatientMeDimensioningRows: InpatientMeDimensioningRow[] = 
     competenceLevel: "UL",
     doctorPresence: 11.5,
     weeklyWorkHours: 40,
-    nonContributingPresence: 0.1,
+    nonContributingPresence: 0,
     adminOtherPresence: 0,
     salaryCostPerPresence: 520000,
   },

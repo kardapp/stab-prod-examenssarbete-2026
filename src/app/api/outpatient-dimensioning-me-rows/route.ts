@@ -79,7 +79,10 @@ export async function GET(request: Request) {
           day_care_calculation_method,
           key_ratio,
           manual_presence,
-          non_contributing_st_presence,
+          CASE
+            WHEN competence_level = 'ST/LEG' THEN non_contributing_st_presence
+            ELSE 0
+          END AS non_contributing_st_presence,
           admin_other_presence,
           salary_cost_per_presence,
           comment,
@@ -185,7 +188,9 @@ export async function PUT(request: Request) {
             row.dayCareCalculationMethod ?? "calculate_as_outpatient",
             toNullableNumber(row.keyRatio),
             toNullableNumber(row.manualPresence),
-            toNullableNumber(row.nonContributingStPresence),
+            isStLegCompetenceLevel(row.competenceLevel)
+              ? toNullableNumber(row.nonContributingStPresence)
+              : 0,
             toNullableNumber(row.adminOtherPresence),
             toNullableNumber(row.salaryCostPerPresence),
             row.comment ?? "",
@@ -214,7 +219,10 @@ export async function PUT(request: Request) {
           day_care_calculation_method,
           key_ratio,
           manual_presence,
-          non_contributing_st_presence,
+          CASE
+            WHEN competence_level = 'ST/LEG' THEN non_contributing_st_presence
+            ELSE 0
+          END AS non_contributing_st_presence,
           admin_other_presence,
           salary_cost_per_presence,
           comment,
@@ -293,4 +301,8 @@ function toNullableNumber(
   const numberValue = Number(value);
 
   return Number.isFinite(numberValue) ? numberValue : null;
+}
+
+function isStLegCompetenceLevel(competenceLevel: string): boolean {
+  return competenceLevel === "ST/LEG";
 }

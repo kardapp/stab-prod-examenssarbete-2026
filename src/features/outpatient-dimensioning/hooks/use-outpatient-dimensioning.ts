@@ -265,6 +265,13 @@ export function useOutpatientDimensioning() {
     field: DimensioningRowField,
     value: string
   ) {
+    if (
+      field === "nonContributingStPresence" &&
+      !canEditNonContributingSt(competenceLevel)
+    ) {
+      return;
+    }
+
     setSaveMessage("");
     setDimensioningRows((current) =>
       current.map((row) =>
@@ -294,7 +301,7 @@ export function useOutpatientDimensioning() {
           productionPlanId,
           kombikaId: selection.kombikaId,
           careType: selection.careType,
-          rows: dimensioningRows,
+          rows: dimensioningRows.map(sanitizeDimensioningRow),
         }),
       });
 
@@ -515,7 +522,7 @@ function applyCareType(
   rows: DimensioningRowState[],
   careType: CareType
 ): DimensioningRowState[] {
-  return rows.map((row) => ({ ...row, careType }));
+  return rows.map((row) => sanitizeDimensioningRow({ ...row, careType }));
 }
 
 function mergeSavedDimensioningRows(
@@ -552,7 +559,9 @@ function mergeSavedDimensioningRows(
       keyRatio: toInputValue(savedRow.key_ratio, ""),
       manualPresence: toInputValue(savedRow.manual_presence, ""),
       nonContributingStPresence: toInputValue(
-        savedRow.non_contributing_st_presence,
+        canEditNonContributingSt(savedRow.competence_level)
+          ? savedRow.non_contributing_st_presence
+          : "",
         defaultRow.nonContributingStPresence
       ),
       adminOtherPresence: toInputValue(
@@ -578,4 +587,21 @@ function toInputValue(
   }
 
   return String(value);
+}
+
+function sanitizeDimensioningRow(
+  row: DimensioningRowState
+): DimensioningRowState {
+  if (canEditNonContributingSt(row.competenceLevel)) {
+    return row;
+  }
+
+  return {
+    ...row,
+    nonContributingStPresence: "",
+  };
+}
+
+function canEditNonContributingSt(competenceLevel: CompetenceLevel): boolean {
+  return competenceLevel === "ST/LEG";
 }

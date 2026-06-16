@@ -260,7 +260,9 @@ function calculateYearResultRow(
   const adminOtherPresence =
     toNumber(dimensioningRow.admin_other_presence) * basisShare;
   const nonContributingPresence =
-    toNumber(dimensioningRow.non_contributing_st_presence) * basisShare;
+    dimensioningRow.competence_level === "ST/LEG"
+      ? toNumber(dimensioningRow.non_contributing_st_presence) * basisShare
+      : 0;
   const totalPresence = calculateTotalPresence(
     productionPresence,
     adminOtherPresence,
@@ -308,15 +310,17 @@ function calculateSavedOoResultRow(
 ): DimensioningResultRow {
   const productionPresence = toNumber(row.production_presence);
   const adminOtherPresence = toNumber(row.admin_other_presence);
-  const nonContributingPresence = toNumber(row.non_contributing_presence);
-  const totalPresence =
-    toNumber(row.total_presence) ||
-    calculateTotalPresence(
-      productionPresence,
-      adminOtherPresence,
-      nonContributingPresence
-    );
-  const staffingCost = toNumber(row.staffing_cost);
+  const nonContributingPresence = 0;
+  const totalPresence = calculateTotalPresence(
+    productionPresence,
+    adminOtherPresence,
+    nonContributingPresence
+  );
+  const salaryCostPerPresence = toNumber(row.salary_cost_per_presence);
+  const staffingCost = calculateStaffingCost(
+    totalPresence,
+    salaryCostPerPresence
+  );
   const visits = toNumber(row.visits);
   const drgTotal = toNumber(row.drg_total);
 
@@ -335,7 +339,7 @@ function calculateSavedOoResultRow(
     adminOtherPresence,
     nonContributingPresence,
     totalPresence,
-    salaryCostPerPresence: toNumber(row.salary_cost_per_presence),
+    salaryCostPerPresence,
     staffingCost,
     visits,
     drgTotal,

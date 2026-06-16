@@ -256,7 +256,7 @@ function PresenceSection(props: { rows: DimensioningResultRow[] }) {
           { value: formatSection(row) },
           { value: formatTwoDecimals(row.productionPresence) },
           { value: formatTwoDecimals(row.adminOtherPresence) },
-          { value: formatTwoDecimals(row.nonContributingPresence) },
+          { value: formatNonContributingPresence(row) },
           { value: formatTwoDecimals(row.totalPresence), strong: true },
         ],
       }))}
@@ -467,6 +467,12 @@ function formatSection(row: DimensioningResultRow): string {
 
 function formatCurrency(value: number): string {
   return `${formatWholeNumber(value)} kr`;
+}
+
+function formatNonContributingPresence(row: DimensioningResultRow): string {
+  return row.competenceLevel === "ST/LEG"
+    ? formatTwoDecimals(row.nonContributingPresence)
+    : "-";
 }
 
 function shouldShowCompetenceLevel(rows: DimensioningResultRow[]): boolean {

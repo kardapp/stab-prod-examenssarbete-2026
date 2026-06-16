@@ -139,10 +139,14 @@ export function calculateMeDimensioningPresence(
       ? (toNumber(averageInpatientsPerDay) / 10) *
         toNumber(row.doctorsPerTenInpatients)
       : toNumber(row.doctorPresence);
+  const nonContributingPresence =
+    row.competenceLevel === "ST/LEG"
+      ? toNumber(row.nonContributingPresence)
+      : 0;
 
   return (
     doctorPresence +
-    toNumber(row.nonContributingPresence) +
+    nonContributingPresence +
     toNumber(row.adminOtherPresence)
   );
 }

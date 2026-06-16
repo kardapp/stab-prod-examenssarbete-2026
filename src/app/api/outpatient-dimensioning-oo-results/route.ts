@@ -115,6 +115,13 @@ export async function PUT(request: Request) {
       );
 
       for (const row of rows) {
+        const productionPresence = toNumber(row.productionPresence);
+        const adminOtherPresence = toNumber(row.adminOtherPresence);
+        const nonContributingPresence = 0;
+        const totalPresence = productionPresence + adminOtherPresence;
+        const salaryCostPerPresence = toNumber(row.salaryCostPerPresence);
+        const staffingCost = totalPresence * salaryCostPerPresence;
+
         await db.query(
           `
             INSERT INTO dimensionering_oo_opv_result_rows (
@@ -157,12 +164,12 @@ export async function PUT(request: Request) {
             row.careCostCenter,
             row.sourcePeriod,
             row.careType ?? "mottagning",
-            toNumber(row.productionPresence),
-            toNumber(row.adminOtherPresence),
-            toNumber(row.nonContributingPresence),
-            toNumber(row.totalPresence),
-            toNumber(row.salaryCostPerPresence),
-            toNumber(row.staffingCost),
+            productionPresence,
+            adminOtherPresence,
+            nonContributingPresence,
+            totalPresence,
+            salaryCostPerPresence,
+            staffingCost,
             toNumber(row.visits),
             toNumber(row.drgTotal),
           ]

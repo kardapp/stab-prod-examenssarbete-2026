@@ -281,18 +281,27 @@ export function DimensioningCompetenceLevels(
                     }
                   />
                 </InputValue>
-                <InputValue label="ST ej bidrar" align="right">
-                  <NumberField
-                    value={row.nonContributingStPresence}
-                    onChange={(value) =>
-                      props.onRowChange(
-                        row.competenceLevel,
-                        "nonContributingStPresence",
-                        value
-                      )
-                    }
+                {canEditNonContributingSt(row.competenceLevel) ? (
+                  <InputValue label="ST ej bidrar" align="right">
+                    <NumberField
+                      value={row.nonContributingStPresence}
+                      onChange={(value) =>
+                        props.onRowChange(
+                          row.competenceLevel,
+                          "nonContributingStPresence",
+                          value
+                        )
+                      }
+                    />
+                  </InputValue>
+                ) : (
+                  <ReadOnlyValue
+                    label="ST ej bidrar"
+                    value="-"
+                    align="right"
+                    muted
                   />
-                </InputValue>
+                )}
                 <ReadOnlyValue
                   label="Total närvaro"
                   value={formatTwoDecimals(calculation.totalPresence)}
@@ -447,6 +456,10 @@ function NumberField(props: {
 
 function formatCurrency(value: number): string {
   return `${formatWholeNumber(value)} kr`;
+}
+
+function canEditNonContributingSt(competenceLevel: CompetenceLevel): boolean {
+  return competenceLevel === "ST/LEG";
 }
 
 function shareSumSx(hasError: boolean) {

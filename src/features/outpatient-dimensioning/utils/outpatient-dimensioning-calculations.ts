@@ -220,7 +220,10 @@ export function calculateDimensioningRows(params: {
         ? manualPresence
         : calculatedPresence;
     const adminOtherPresence = toNumber(row.adminOtherPresence);
-    const nonContributingPresence = toNumber(row.nonContributingStPresence);
+    const nonContributingPresence =
+      row.competenceLevel === "ST/LEG"
+        ? toNumber(row.nonContributingStPresence)
+        : 0;
     const totalPresence = calculateTotalPresence({
       productionPresence,
       adminOtherPresence,

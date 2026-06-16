@@ -131,13 +131,16 @@ function LoadedInpatientMeDimensioningView() {
     setHasUnsavedChanges(true);
     setRows((current) =>
       current.map((row) =>
-        row.id === rowId ? { ...row, [field]: Number(value) } : row
+        row.id === rowId ? updateMeDimensioningRow(row, field, value) : row
       )
     );
   }
 
   function saveRows() {
-    saveCurrentInpatientMeDimensioning(rows);
+    const sanitizedRows = rows.map(sanitizeMeDimensioningRow);
+
+    saveCurrentInpatientMeDimensioning(sanitizedRows);
+    setRows(sanitizedRows);
     setHasSavedRows(true);
     setHasUnsavedChanges(false);
     setSaveMessage("Dimensionering ME slutenvård sparad.");
@@ -225,16 +228,20 @@ function LoadedInpatientMeDimensioningView() {
                               )
                             }
                           />
-                          <EditableNumberCell
-                            value={row.nonContributingPresence}
-                            onChange={(value) =>
-                              updateRow(
-                                row.id,
-                                "nonContributingPresence",
-                                value
-                              )
-                            }
-                          />
+                          {canEditNonContributingPresence(row) ? (
+                            <EditableNumberCell
+                              value={row.nonContributingPresence}
+                              onChange={(value) =>
+                                updateRow(
+                                  row.id,
+                                  "nonContributingPresence",
+                                  value
+                                )
+                              }
+                            />
+                          ) : (
+                            <ReadOnlyNumberCell value="-" />
+                          )}
                           <EditableNumberCell
                             value={row.adminOtherPresence}
                             onChange={(value) =>
@@ -343,19 +350,58 @@ function normalizeMeDimensioningRow(
   row: InpatientMeDimensioningRow,
   averageInpatientsPerDay: number
 ): InpatientMeDimensioningRow {
-  if (typeof row.doctorPresence !== "undefined") {
+  const normalizedRow = sanitizeMeDimensioningRow(row);
+
+  if (typeof normalizedRow.doctorPresence !== "undefined") {
+    return {
+      ...normalizedRow,
+      doctorPresence: toNumber(normalizedRow.doctorPresence),
+    };
+  }
+
+  return {
+    ...normalizedRow,
+    doctorPresence:
+      (toNumber(averageInpatientsPerDay) / 10) *
+      toNumber(normalizedRow.doctorsPerTenInpatients),
+  };
+}
+
+function updateMeDimensioningRow(
+  row: InpatientMeDimensioningRow,
+  field: MeNumberField,
+  value: string
+): InpatientMeDimensioningRow {
+  if (
+    field === "nonContributingPresence" &&
+    !canEditNonContributingPresence(row)
+  ) {
+    return row;
+  }
+
+  return { ...row, [field]: Number(value) };
+}
+
+function sanitizeMeDimensioningRow(
+  row: InpatientMeDimensioningRow
+): InpatientMeDimensioningRow {
+  if (canEditNonContributingPresence(row)) {
     return {
       ...row,
-      doctorPresence: toNumber(row.doctorPresence),
+      nonContributingPresence: toNumber(row.nonContributingPresence),
     };
   }
 
   return {
     ...row,
-    doctorPresence:
-      (toNumber(averageInpatientsPerDay) / 10) *
-      toNumber(row.doctorsPerTenInpatients),
+    nonContributingPresence: 0,
   };
+}
+
+function canEditNonContributingPresence(
+  row: InpatientMeDimensioningRow
+): boolean {
+  return row.competenceLevel === "ST/LEG";
 }
 
 function buildInpatientMePeriodizationRows(
@@ -399,6 +445,10 @@ function EditableNumberCell(props: {
       />
     </TableCell>
   );
+}
+
+function ReadOnlyNumberCell(props: { value: string }) {
+  return <TableCell align="right">{props.value}</TableCell>;
 }
 
 const pageSx = {
