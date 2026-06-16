@@ -10,6 +10,7 @@ import {
   Typography,
 } from "@mui/material";
 import { FormSection } from "@/shared/components/form-section";
+import { FormattedNumberTextField } from "@/shared/components/formatted-number-text-field";
 import { SectionCard } from "@/shared/components/section-card";
 import {
   formatOneDecimal,
@@ -445,8 +446,7 @@ function NumberField(props: {
   onChange: (value: string) => void;
 }) {
   return (
-    <TextField
-      type="number"
+    <FormattedNumberTextField
       size="small"
       value={props.value}
       disabled={props.disabled}

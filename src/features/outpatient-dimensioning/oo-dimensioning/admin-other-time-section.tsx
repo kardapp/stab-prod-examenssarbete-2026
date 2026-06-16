@@ -1,5 +1,6 @@
-import { Box, TextField, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { FormSection } from "@/shared/components/form-section";
+import { FormattedNumberTextField } from "@/shared/components/formatted-number-text-field";
 import { SectionCard } from "@/shared/components/section-card";
 import type { OoAdminOtherTimeState } from "./types";
 
@@ -70,9 +71,8 @@ function TimeField(props: {
   onChange: (value: number) => void;
 }) {
   return (
-    <TextField
+    <FormattedNumberTextField
       label={props.label}
-      type="number"
       size="small"
       value={props.value}
       onChange={(event) => props.onChange(Number(event.target.value))}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 import {
   Alert,
   Box,
@@ -23,10 +23,6 @@ import {
   formatTwoDecimals,
   formatWholeNumber,
 } from "@/shared/utils/format-number";
-import type {
-  InpatientOoDistributionRow,
-  InpatientProductionRow,
-} from "../types/inpatient.types";
 import {
   readCurrentInpatientOoDistributions,
   readCurrentInpatientProductionRow,
@@ -35,12 +31,25 @@ import {
 const DAYS_PER_YEAR = 365;
 
 export function InpatientProductionResultsView() {
-  const [productionRow] = useState<InpatientProductionRow | null>(() =>
-    readCurrentInpatientProductionRow()
+  const hasLoadedSession = useSyncExternalStore(
+    subscribeToClientHydration,
+    getClientHydrationSnapshot,
+    getServerHydrationSnapshot
   );
-  const [distributions] = useState<InpatientOoDistributionRow[]>(() =>
-    readCurrentInpatientOoDistributions()
-  );
+  const session = useMemo(() => {
+    if (!hasLoadedSession) {
+      return {
+        distributions: [],
+        productionRow: null,
+      };
+    }
+
+    return {
+      distributions: readCurrentInpatientOoDistributions(),
+      productionRow: readCurrentInpatientProductionRow(),
+    };
+  }, [hasLoadedSession]);
+  const { distributions, productionRow } = session;
 
   const distributedCareDays = useMemo(
     () =>
@@ -80,7 +89,9 @@ export function InpatientProductionResultsView() {
             title="Resultat produktionsplan slutenvård"
           />
 
-          {!productionRow ? (
+          {!hasLoadedSession ? (
+            <Alert severity="info">Laddar sparat underlag...</Alert>
+          ) : !productionRow ? (
             <Alert severity="info">
               Spara en produktionsplan för slutenvård innan resultat visas.
             </Alert>
@@ -276,6 +287,18 @@ export function InpatientProductionResultsView() {
       </Container>
     </Box>
   );
+}
+
+function subscribeToClientHydration() {
+  return () => undefined;
+}
+
+function getClientHydrationSnapshot() {
+  return true;
+}
+
+function getServerHydrationSnapshot() {
+  return false;
 }
 
 const pageSx = {

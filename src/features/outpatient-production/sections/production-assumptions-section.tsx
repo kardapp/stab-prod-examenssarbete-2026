@@ -12,6 +12,7 @@ import {
   Typography,
 } from "@mui/material";
 import { FormSection } from "@/shared/components/form-section";
+import { FormattedNumberTextField } from "@/shared/components/formatted-number-text-field";
 import { SectionCard } from "@/shared/components/section-card";
 import { ValidationMessage } from "../components/validation-message";
 import { visitTypeOptions } from "../constants/outpatient-production-options";
@@ -114,9 +115,8 @@ export function ProductionAssumptionsSection(
               ))}
             </TextField>
 
-            <TextField
+            <FormattedNumberTextField
               label="Snitt-tid per vårdhändelse"
-              type="number"
               value={props.visitTime.averageMinutes}
               onChange={handleAverageMinutesChange}
               size="small"
@@ -152,9 +152,8 @@ export function ProductionAssumptionsSection(
           <AssumptionSubSectionHeader title="Beräkning 2: DRG-snitt" />
 
           <Box sx={subSectionGridSx}>
-            <TextField
+            <FormattedNumberTextField
               label="DRG-snitt SLL"
-              type="number"
               value={props.drgAverage.sll}
               onChange={handleSllChange}
               size="small"
@@ -167,9 +166,8 @@ export function ProductionAssumptionsSection(
               }}
             />
 
-            <TextField
+            <FormattedNumberTextField
               label="DRG-snitt UULP"
-              type="number"
               value={props.drgAverage.uulp}
               onChange={handleUulpChange}
               size="small"

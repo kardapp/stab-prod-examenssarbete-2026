@@ -7,10 +7,10 @@ import {
   AccordionDetails,
   AccordionSummary,
   Box,
-  TextField,
   Typography,
 } from "@mui/material";
 import { FormSection } from "@/shared/components/form-section";
+import { FormattedNumberTextField } from "@/shared/components/formatted-number-text-field";
 import { SectionCard } from "@/shared/components/section-card";
 import {
   formatOneDecimal,
@@ -174,9 +174,8 @@ export function ProductionTimeByRoleSection(
                     description="Stödvolym fylls i som vårdhändelser per vecka. Snitt-tiden fylls i som timmar per besök."
                   >
                     <Box sx={inputGridSx}>
-                      <TextField
+                      <FormattedNumberTextField
                         label="Stödvolym för andra roller/vecka"
-                        type="number"
                         size="small"
                         helperText="Extra besök per vecka som den här rollen lägger tid på."
                         value={row.supportVisitsForOtherRoles}
@@ -189,9 +188,8 @@ export function ProductionTimeByRoleSection(
                         }
                         slotProps={{ htmlInput: { min: 0, step: 0.1 } }}
                       />
-                      <TextField
+                      <FormattedNumberTextField
                         label="Snitt-tid per besök (timmar)"
-                        type="number"
                         size="small"
                         helperText={`Timmar per besök. Från plan: ${formatTwoDecimals(
                           row.sourceAverageMinutesPerVisit / 60
@@ -218,10 +216,9 @@ export function ProductionTimeByRoleSection(
                 >
                   <Box sx={weekdayGridSx}>
                     {weekdayFields.map((weekday) => (
-                      <TextField
+                      <FormattedNumberTextField
                         key={weekday.field}
                         label={weekday.shortLabel}
-                        type="number"
                         size="small"
                         value={formatInputValue(row[weekday.field])}
                         onChange={(event) =>

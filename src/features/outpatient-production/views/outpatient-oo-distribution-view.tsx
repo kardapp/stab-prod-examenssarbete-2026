@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 import type { OutpatientProductionRow } from "@/shared/types/production";
 import { FormSection } from "@/shared/components/form-section";
+import { FormattedNumberTextField } from "@/shared/components/formatted-number-text-field";
 import { PageHeader } from "@/shared/components/page-header";
 import { SectionCard } from "@/shared/components/section-card";
 import { appRoutes, withSearchParams } from "@/shared/routes";
@@ -388,8 +389,7 @@ function DistributionRow(props: {
           </TextField>
         </InputValue>
         <InputValue label="Andel" hideLabelOnDesktop>
-          <TextField
-            type="number"
+          <FormattedNumberTextField
             size="small"
             value={props.row.percentage}
             onChange={(event) => handlePercentageChange(event.target.value)}
@@ -403,8 +403,7 @@ function DistributionRow(props: {
           />
         </InputValue>
         <InputValue label="Vårdhändelser" hideLabelOnDesktop>
-          <TextField
-            type="number"
+          <FormattedNumberTextField
             size="small"
             value={props.row.visits}
             onChange={(event) => handleVisitsChange(event.target.value)}

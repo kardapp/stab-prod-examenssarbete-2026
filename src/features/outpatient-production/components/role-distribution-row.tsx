@@ -9,6 +9,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { FormattedNumberTextField } from "@/shared/components/formatted-number-text-field";
 import { formatOneDecimal } from "@/shared/utils/format-number";
 import { roleCategoryOptions } from "../constants/outpatient-production-options";
 import type { RoleDistribution } from "../types/outpatient-production.types";
@@ -79,9 +80,8 @@ export function RoleDistributionRow(props: RoleDistributionRowProps) {
         ))}
       </TextField>
 
-      <TextField
+      <FormattedNumberTextField
         label="Andel"
-        type="number"
         value={props.role.percentage}
         onChange={handlePercentageChange}
         size="small"

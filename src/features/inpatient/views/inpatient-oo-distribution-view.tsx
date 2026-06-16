@@ -11,6 +11,7 @@ import {
   TextField,
 } from "@mui/material";
 import { FormSection } from "@/shared/components/form-section";
+import { FormattedNumberTextField } from "@/shared/components/formatted-number-text-field";
 import { PageHeader } from "@/shared/components/page-header";
 import { PlanningMetricCard } from "@/shared/components/planning-metric-card";
 import { SectionCard } from "@/shared/components/section-card";
@@ -247,9 +248,8 @@ function LoadedInpatientOoDistributionView() {
                           </MenuItem>
                         ))}
                       </TextField>
-                      <TextField
+                      <FormattedNumberTextField
                         label="Andel"
-                        type="number"
                         size="small"
                         value={formatInputNumber(row.percentage)}
                         onChange={(event) =>
@@ -258,9 +258,8 @@ function LoadedInpatientOoDistributionView() {
                         fullWidth
                         slotProps={{ htmlInput: { min: 0, max: 100, step: 0.1 } }}
                       />
-                      <TextField
+                      <FormattedNumberTextField
                         label="Vårddygn"
-                        type="number"
                         size="small"
                         value={formatInputNumber(row.distributedCareDays)}
                         onChange={(event) =>

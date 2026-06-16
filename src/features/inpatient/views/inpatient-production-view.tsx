@@ -12,6 +12,7 @@ import {
   Typography,
 } from "@mui/material";
 import { FormSection } from "@/shared/components/form-section";
+import { FormattedNumberTextField } from "@/shared/components/formatted-number-text-field";
 import { PageHeader } from "@/shared/components/page-header";
 import { PlanningMetricCard } from "@/shared/components/planning-metric-card";
 import { SectionCard } from "@/shared/components/section-card";
@@ -188,9 +189,8 @@ export function InpatientProductionView() {
                   title="Produktionsunderlag"
                 />
                 <Box sx={inputGridSx}>
-                  <TextField
+                  <FormattedNumberTextField
                     label="Antal vårdtillfällen"
-                    type="number"
                     size="small"
                     value={formState.careEvents}
                     onChange={(event) =>
@@ -265,10 +265,9 @@ export function InpatientProductionView() {
                 />
                 <Stack spacing={2}>
                   <Box sx={inputGridSx}>
-                    <TextField
+                    <FormattedNumberTextField
                       label="Medelvårdtid (dygn)"
                       helperText="Genomsnittligt antal vårddygn per vårdtillfälle. Används för att beräkna vårddygn och vårdplatser."
-                      type="number"
                       size="small"
                       value={formState.averageLengthOfStay}
                       onChange={(event) =>
@@ -280,10 +279,9 @@ export function InpatientProductionView() {
                       fullWidth
                       slotProps={{ htmlInput: { min: 0, step: 0.1 } }}
                     />
-                    <TextField
+                    <FormattedNumberTextField
                       label="DRG-snitt SLL"
                       helperText="Genomsnittlig DRG-vikt för SLL-finansierade vårdtillfällen."
-                      type="number"
                       size="small"
                       value={formState.sllDrgAverage}
                       onChange={(event) =>
@@ -292,10 +290,9 @@ export function InpatientProductionView() {
                       fullWidth
                       slotProps={{ htmlInput: { min: 0, step: 0.1 } }}
                     />
-                    <TextField
+                    <FormattedNumberTextField
                       label="DRG-snitt UULP"
                       helperText="Genomsnittlig DRG-vikt för UULP-finansierade vårdtillfällen."
-                      type="number"
                       size="small"
                       value={formState.uulpDrgAverage}
                       onChange={(event) =>
@@ -406,9 +403,8 @@ function PercentageGroup(props: {
         {props.rows.map((row) => (
           <Box key={row.label} sx={percentageRowSx}>
             <Typography sx={{ fontWeight: 600 }}>{row.label}</Typography>
-            <TextField
+            <FormattedNumberTextField
               label="Andel"
-              type="number"
               size="small"
               value={row.value}
               onChange={(event) => row.onChange(event.target.value)}

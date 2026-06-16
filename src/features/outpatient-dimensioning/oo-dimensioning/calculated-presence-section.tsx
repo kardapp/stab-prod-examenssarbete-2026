@@ -1,5 +1,6 @@
-import { Box, TextField } from "@mui/material";
+import { Box } from "@mui/material";
 import { FormSection } from "@/shared/components/form-section";
+import { FormattedNumberTextField } from "@/shared/components/formatted-number-text-field";
 import { SectionCard } from "@/shared/components/section-card";
 import {
   formatOneDecimal,
@@ -26,9 +27,8 @@ export function CalculatedPresenceSection(
       />
 
       <Box sx={settingsGridSx}>
-        <TextField
+        <FormattedNumberTextField
           label="Veckoarbetstid"
-          type="number"
           size="small"
           value={props.settings.weeklyWorkingHours}
           onChange={(event) =>

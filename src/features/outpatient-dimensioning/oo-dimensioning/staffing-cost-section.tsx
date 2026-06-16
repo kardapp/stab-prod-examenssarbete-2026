@@ -1,5 +1,6 @@
-import { Box, TextField } from "@mui/material";
+import { Box } from "@mui/material";
 import { FormSection } from "@/shared/components/form-section";
+import { FormattedNumberTextField } from "@/shared/components/formatted-number-text-field";
 import { SectionCard } from "@/shared/components/section-card";
 import {
   formatTwoDecimals,
@@ -24,9 +25,8 @@ export function StaffingCostSection(props: StaffingCostSectionProps) {
       />
 
       <Box sx={costGridSx}>
-        <TextField
+        <FormattedNumberTextField
           label="Lönekostnad per historisk närvaro"
-          type="number"
           size="small"
           helperText="Används som: historisk lönekostnad/närvaro × beräknad total närvaro."
           value={props.settings.salaryCostPerPresence}

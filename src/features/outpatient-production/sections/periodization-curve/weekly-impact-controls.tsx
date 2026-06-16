@@ -1,4 +1,5 @@
 import { Alert, Box, Button, MenuItem, TextField, Typography } from "@mui/material";
+import { FormattedNumberTextField } from "@/shared/components/formatted-number-text-field";
 import {
   formatImpactWeekdays,
   formatSignedPercentage,
@@ -67,9 +68,8 @@ export function WeeklyImpactControls(props: WeeklyImpactControlsProps) {
             </MenuItem>
           ))}
         </TextField>
-        <TextField
+        <FormattedNumberTextField
           label="Från vecka"
-          type="number"
           size="small"
           value={props.draft.startWeek}
           onChange={(event) =>
@@ -78,9 +78,8 @@ export function WeeklyImpactControls(props: WeeklyImpactControlsProps) {
           slotProps={{ htmlInput: { min: 1, max: 52, step: 1 } }}
           sx={fieldSx}
         />
-        <TextField
+        <FormattedNumberTextField
           label="Till vecka"
-          type="number"
           size="small"
           value={props.draft.endWeek}
           onChange={(event) =>
@@ -98,9 +97,8 @@ export function WeeklyImpactControls(props: WeeklyImpactControlsProps) {
           }
           sx={fieldSx}
         />
-        <TextField
+        <FormattedNumberTextField
           label="Ändring produktionstakt (%)"
-          type="number"
           size="small"
           value={props.draft.percentage}
           onChange={(event) =>

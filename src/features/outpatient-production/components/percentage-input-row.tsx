@@ -1,7 +1,8 @@
 "use client";
 
 import type { ChangeEvent } from "react";
-import { Box, InputAdornment, TextField, Typography } from "@mui/material";
+import { Box, InputAdornment, Typography } from "@mui/material";
+import { FormattedNumberTextField } from "@/shared/components/formatted-number-text-field";
 import { formatOneDecimal } from "@/shared/utils/format-number";
 
 type PercentageInputRowProps = {
@@ -29,9 +30,8 @@ export function PercentageInputRow(props: PercentageInputRowProps) {
       }}
     >
       <Typography sx={{ fontWeight: 600 }}>{props.label}</Typography>
-      <TextField
+      <FormattedNumberTextField
         label="Andel"
-        type="number"
         value={props.percentage}
         onChange={handleChange}
         size="small"

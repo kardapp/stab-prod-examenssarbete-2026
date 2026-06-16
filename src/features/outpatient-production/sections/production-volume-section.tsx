@@ -1,8 +1,9 @@
 "use client";
 
 import type { ChangeEvent } from "react";
-import { Stack, TextField } from "@mui/material";
+import { Stack } from "@mui/material";
 import { FormSection } from "@/shared/components/form-section";
+import { FormattedNumberTextField } from "@/shared/components/formatted-number-text-field";
 import { SectionCard } from "@/shared/components/section-card";
 import { ValidationMessage } from "../components/validation-message";
 
@@ -27,9 +28,8 @@ export function ProductionVolumeSection(props: ProductionVolumeSectionProps) {
       />
 
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-        <TextField
+        <FormattedNumberTextField
           label="Antal vårdhändelser per år"
-          type="number"
           value={props.careEvents}
           onChange={handleCareEventsChange}
           size="small"

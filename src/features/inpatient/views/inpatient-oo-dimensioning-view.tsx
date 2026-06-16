@@ -12,9 +12,9 @@ import {
   TableCell,
   TableHead,
   TableRow,
-  TextField,
 } from "@mui/material";
 import { FormSection } from "@/shared/components/form-section";
+import { FormattedNumberTextField } from "@/shared/components/formatted-number-text-field";
 import { PageHeader } from "@/shared/components/page-header";
 import { PlanningMetricCard } from "@/shared/components/planning-metric-card";
 import { SectionCard } from "@/shared/components/section-card";
@@ -483,8 +483,7 @@ function EditableNumberCell(props: {
 }) {
   return (
     <TableCell align="right">
-      <TextField
-        type="number"
+      <FormattedNumberTextField
         size="small"
         value={props.value}
         onChange={(event) => props.onChange(event.target.value)}
@@ -501,9 +500,8 @@ function SettingsField(props: {
   value: number;
 }) {
   return (
-    <TextField
+    <FormattedNumberTextField
       label={props.label}
-      type="number"
       size="small"
       value={props.value}
       onChange={(event) => props.onChange(event.target.value)}

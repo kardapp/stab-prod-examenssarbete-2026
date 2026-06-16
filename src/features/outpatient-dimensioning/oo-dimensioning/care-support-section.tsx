@@ -1,5 +1,6 @@
 import { Box, Button, TextField, Typography } from "@mui/material";
 import { FormSection } from "@/shared/components/form-section";
+import { FormattedNumberTextField } from "@/shared/components/formatted-number-text-field";
 import { SectionCard } from "@/shared/components/section-card";
 import type { OoCareSupportRow } from "./types";
 
@@ -41,9 +42,8 @@ export function CareSupportSection(props: CareSupportSectionProps) {
                   )
                 }
               />
-              <TextField
+              <FormattedNumberTextField
                 label="Timmar per vecka"
-                type="number"
                 size="small"
                 value={row.careSupportHoursPerWeek}
                 onChange={(event) =>
