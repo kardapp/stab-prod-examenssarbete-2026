@@ -97,6 +97,7 @@ export function InpatientProductionResultsView() {
             </Alert>
           ) : (
             <>
+              <Box sx={productionResultGridSx}>
               <SectionCard>
                 <FormSection
                   overline="1"
@@ -215,6 +216,7 @@ export function InpatientProductionResultsView() {
                   />
                 </Box>
               </SectionCard>
+              </Box>
 
               <SectionCard>
                 <FormSection
@@ -313,7 +315,16 @@ const metricGridSx = {
   gridTemplateColumns: {
     xs: "1fr",
     md: "repeat(2, minmax(0, 1fr))",
-    xl: "repeat(4, minmax(0, 1fr))",
+  },
+};
+
+const productionResultGridSx = {
+  alignItems: "stretch",
+  display: "grid",
+  gap: 1.5,
+  gridTemplateColumns: {
+    xs: "1fr",
+    lg: "repeat(2, minmax(0, 1fr))",
   },
 };
 

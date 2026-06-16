@@ -2,10 +2,10 @@
 
 import type { ChangeEvent } from "react";
 import {
+  Box,
   Button,
   InputAdornment,
   MenuItem,
-  Stack,
   TextField,
   Typography,
 } from "@mui/material";
@@ -40,22 +40,14 @@ export function RoleDistributionRow(props: RoleDistributionRowProps) {
   }
 
   return (
-    <Stack
-      direction={{ xs: "column", md: "row" }}
-      spacing={1.5}
-      sx={{
-        alignItems: { xs: "stretch", md: "center" },
-        borderBottom: "1px solid var(--color-border)",
-        pb: 1.5,
-      }}
-    >
+    <Box sx={roleRowSx}>
       <TextField
         select
         label="Primär yrkeskategori"
         value={props.role.primaryRole}
         onChange={handlePrimaryRoleChange}
         size="small"
-        sx={{ flex: 1 }}
+        fullWidth
       >
         {roleCategoryOptions.map((option) => (
           <MenuItem key={option} value={option}>
@@ -70,7 +62,7 @@ export function RoleDistributionRow(props: RoleDistributionRowProps) {
         value={props.role.secondaryRole ?? ""}
         onChange={handleSecondaryRoleChange}
         size="small"
-        sx={{ flex: 1 }}
+        fullWidth
       >
         <MenuItem value="">Ingen</MenuItem>
         {roleCategoryOptions.map((option) => (
@@ -85,7 +77,7 @@ export function RoleDistributionRow(props: RoleDistributionRowProps) {
         value={props.role.percentage}
         onChange={handlePercentageChange}
         size="small"
-        sx={{ width: { xs: "100%", md: 132 } }}
+        sx={{ width: "100%" }}
         slotProps={{
           input: {
             endAdornment: <InputAdornment position="end">%</InputAdornment>,
@@ -100,7 +92,7 @@ export function RoleDistributionRow(props: RoleDistributionRowProps) {
 
       <Typography
         variant="body2"
-        sx={{ minWidth: 128, textAlign: { xs: "left", md: "right" } }}
+        sx={calculatedCareEventsSx}
       >
         {formatOneDecimal(props.calculatedCareEvents)} vårdhändelser
       </Typography>
@@ -111,10 +103,36 @@ export function RoleDistributionRow(props: RoleDistributionRowProps) {
         color="error"
         disabled={!props.canRemove}
         onClick={() => props.onRemove(props.role.id)}
-        sx={{ alignSelf: { xs: "stretch", md: "center" } }}
+        sx={removeButtonSx}
       >
         Ta bort
       </Button>
-    </Stack>
+    </Box>
   );
 }
+
+const roleRowSx = {
+  alignItems: "center",
+  borderBottom: "1px solid var(--color-border)",
+  display: "grid",
+  gap: 1.5,
+  gridTemplateColumns: {
+    xs: "1fr",
+    md: "repeat(2, minmax(0, 1fr))",
+    lg: "minmax(0, 1fr) minmax(0, 1fr) minmax(112px, 132px) minmax(128px, auto) auto",
+  },
+  pb: 1.5,
+};
+
+const calculatedCareEventsSx = {
+  color: "primary.main",
+  fontWeight: 700,
+  minWidth: 0,
+  overflowWrap: "anywhere",
+  textAlign: { xs: "left", lg: "right" },
+};
+
+const removeButtonSx = {
+  justifySelf: { xs: "stretch", lg: "end" },
+  width: { xs: "100%", lg: "auto" },
+};

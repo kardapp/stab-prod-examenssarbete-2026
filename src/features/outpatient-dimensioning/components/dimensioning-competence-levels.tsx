@@ -17,10 +17,7 @@ import {
   formatTwoDecimals,
   formatWholeNumber,
 } from "@/shared/utils/format-number";
-import {
-  dayCareMethodOptions,
-  periodizationTypeOptions,
-} from "../constants/outpatient-dimensioning-options";
+import { dayCareMethodOptions } from "../constants/outpatient-dimensioning-options";
 import type {
   CareType,
   CompetenceLevel,
@@ -258,7 +255,6 @@ export function DimensioningCompetenceLevels(
             <HeaderCell align="right">Total närvaro</HeaderCell>
             <HeaderCell align="right">Lönekostnad per närvaro (kr)</HeaderCell>
             <HeaderCell align="right">Bemanningskostnad</HeaderCell>
-            <HeaderCell>Periodisering</HeaderCell>
             <HeaderCell>Kommentar (valfri)</HeaderCell>
           </Box>
 
@@ -329,27 +325,6 @@ export function DimensioningCompetenceLevels(
                   align="right"
                   calculated
                 />
-                <InputValue label="Periodisering">
-                  <TextField
-                    select
-                    size="small"
-                    value={row.periodizationType}
-                    onChange={(event) =>
-                      props.onRowChange(
-                        row.competenceLevel,
-                        "periodizationType",
-                        event.target.value
-                      )
-                    }
-                    sx={compactFieldSx}
-                  >
-                    {periodizationTypeOptions.map((option) => (
-                      <MenuItem key={option.value} value={option.value}>
-                        {option.label}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                </InputValue>
                 <InputValue label="Kommentar (valfri)">
                   <TextField
                     size="small"
@@ -545,7 +520,7 @@ const costRowSx = {
   display: "grid",
   gridTemplateColumns: {
     xs: "1fr",
-    lg: "minmax(78px, 0.8fr) minmax(90px, 0.9fr) minmax(90px, 0.9fr) minmax(96px, 0.95fr) minmax(116px, 1.1fr) minmax(118px, 1.1fr) minmax(112px, 1fr) minmax(130px, 1.2fr)",
+    lg: "minmax(78px, 0.8fr) minmax(90px, 0.9fr) minmax(90px, 0.9fr) minmax(96px, 0.95fr) minmax(116px, 1.1fr) minmax(118px, 1.1fr) minmax(160px, 1.4fr)",
   },
   gap: 1,
   alignItems: "center",

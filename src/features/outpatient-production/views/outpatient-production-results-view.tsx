@@ -126,7 +126,7 @@ function VisitCountSection(props: { rows: ProductionPlanningResultRow[] }) {
         />
       </Box>
 
-      <Stack spacing={2}>
+      <Box sx={resultSubSectionGridSx}>
         <ResultSubSection title="Per ekonomisk kombika och vårdande enhet">
           <ResultTable
             emptyText="Det finns inga vårdhändelser per ekonomisk kombika och vårdande enhet."
@@ -172,7 +172,7 @@ function VisitCountSection(props: { rows: ProductionPlanningResultRow[] }) {
             }))}
           />
         </ResultSubSection>
-      </Stack>
+      </Box>
     </SectionCard>
   );
 }
@@ -211,7 +211,7 @@ function VisitTimeSection(props: { rows: ProductionPlanningResultRow[] }) {
         />
       </Box>
 
-      <Stack spacing={2}>
+      <Box sx={resultSubSectionGridSx}>
         <ResultSubSection title="Per ekonomisk kombika och vårdande enhet">
           <ResultTable
             emptyText="Det finns ingen besökstid per ekonomisk kombika och vårdande enhet."
@@ -260,7 +260,7 @@ function VisitTimeSection(props: { rows: ProductionPlanningResultRow[] }) {
             }))}
           />
         </ResultSubSection>
-      </Stack>
+      </Box>
     </SectionCard>
   );
 }
@@ -285,7 +285,7 @@ function DrgSection(props: { rows: ProductionPlanningResultRow[] }) {
         <MetricValue label="DRG per dag" value={formatOneDecimal(dailyDrg)} />
       </Box>
 
-      <Stack spacing={2}>
+      <Box sx={resultSubSectionGridSx}>
         <ResultSubSection title="Per ekonomisk enhet (kombika)">
           <ResultTable
             emptyText="Det finns inga DRG-värden per ekonomisk enhet."
@@ -318,7 +318,7 @@ function DrgSection(props: { rows: ProductionPlanningResultRow[] }) {
             }))}
           />
         </ResultSubSection>
-      </Stack>
+      </Box>
     </SectionCard>
   );
 }
@@ -496,7 +496,7 @@ function ResultCell(props: {
       <Typography
         variant="caption"
         color="text.secondary"
-        sx={{ display: { xs: "block", xl: "none" }, mb: 0.25 }}
+        sx={{ display: { xs: "block", lg: "none" }, mb: 0.25 }}
       >
         {props.label}
       </Typography>
@@ -573,7 +573,7 @@ function ResultTable(props: {
       <Table
         size="small"
         sx={{
-          minWidth: props.columns.length > 4 ? 920 : 760,
+          minWidth: props.columns.length > 4 ? 780 : 640,
           tableLayout: "fixed",
         }}
       >
@@ -894,10 +894,21 @@ const resultSummaryGridSx = {
   gridTemplateColumns: {
     xs: "1fr",
     md: "repeat(2, minmax(0, 1fr))",
-    xl: "repeat(3, minmax(0, 1fr))",
+    lg: "repeat(3, minmax(0, 1fr))",
   },
   gap: 1.5,
   mb: 2,
+};
+
+const resultSubSectionGridSx = {
+  alignItems: "start",
+  display: "grid",
+  gap: 1.5,
+  gridTemplateColumns: {
+    xs: "1fr",
+    lg: "repeat(2, minmax(0, 1fr))",
+    xl: "repeat(3, minmax(0, 1fr))",
+  },
 };
 
 const subSectionSx = {
@@ -948,6 +959,10 @@ const tableSpacerCellSx = {
 const commentListSx = {
   display: "grid",
   gap: 1,
+  gridTemplateColumns: {
+    xs: "1fr",
+    lg: "repeat(2, minmax(0, 1fr))",
+  },
 };
 
 const commentItemSx = {
@@ -971,7 +986,7 @@ const comparisonGridSx = {
   ...baseResultRowSx,
   gridTemplateColumns: {
     xs: "1fr",
-    xl: "minmax(180px, 1.4fr) minmax(72px, 0.5fr) repeat(4, minmax(112px, 0.75fr)) minmax(150px, 1fr)",
+    lg: "minmax(180px, 1.4fr) minmax(72px, 0.5fr) repeat(4, minmax(112px, 0.75fr)) minmax(150px, 1fr)",
   },
 };
 
@@ -984,7 +999,7 @@ const metricSx = {
 
 const headerCellSx = {
   color: "#005883",
-  display: { xs: "none", xl: "block" },
+  display: { xs: "none", lg: "block" },
   fontWeight: 700,
   minWidth: 0,
 };

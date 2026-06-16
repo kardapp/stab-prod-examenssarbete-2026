@@ -13,7 +13,7 @@ export function SummaryValueCard(props: SummaryValueCardProps) {
         <Typography variant="body2" color="text.secondary">
           {props.label}
         </Typography>
-        <Typography variant="h6" component="div" sx={{ fontWeight: 700 }}>
+        <Typography variant="h6" component="div" sx={valueSx}>
           {props.value}
         </Typography>
         {props.helperText ? (
@@ -30,6 +30,13 @@ const summaryValueSx = {
   bgcolor: "var(--section-background)",
   border: "1px solid var(--color-border)",
   borderRadius: 1,
-  p: 1.5,
   minHeight: 88,
+  minWidth: 0,
+  p: 1.5,
+};
+
+const valueSx = {
+  fontWeight: 700,
+  lineHeight: 1.25,
+  overflowWrap: "anywhere",
 };

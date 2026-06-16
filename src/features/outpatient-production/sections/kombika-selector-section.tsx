@@ -36,7 +36,7 @@ export function KombikaSelectorSection(props: KombikaSelectorSectionProps) {
           value={props.selectedKombikaId}
           onChange={handleChange}
           size="small"
-          sx={{ maxWidth: 420 }}
+          sx={{ maxWidth: 420, width: "100%" }}
         >
           <MenuItem value="">Välj kombika</MenuItem>
           {kombikaOptions.map((option) => (

@@ -19,17 +19,27 @@ export function ProductionActionsSection(props: ProductionActionsSectionProps) {
           <Alert severity={props.saveSeverity}>{props.saveMessage}</Alert>
         ) : null}
 
-        <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
-          <Button type="button" variant="contained" onClick={props.onSave}>
+        <Box sx={actionRowSx}>
+          <Button
+            type="button"
+            variant="contained"
+            onClick={props.onSave}
+            sx={actionButtonSx}
+          >
             Spara produktionsplan
           </Button>
           <Button
             variant="outlined"
             href={appRoutes.outpatientOoDistribution}
+            sx={actionButtonSx}
           >
             Fördela till OO
           </Button>
-          <Button variant="outlined" href={props.dimensioningHref}>
+          <Button
+            variant="outlined"
+            href={props.dimensioningHref}
+            sx={actionButtonSx}
+          >
             Gå till dimensionering
           </Button>
         </Box>
@@ -37,3 +47,13 @@ export function ProductionActionsSection(props: ProductionActionsSectionProps) {
     </SectionCard>
   );
 }
+
+const actionRowSx = {
+  display: "flex",
+  flexWrap: "wrap",
+  gap: 1.5,
+};
+
+const actionButtonSx = {
+  width: { xs: "100%", sm: "auto" },
+};

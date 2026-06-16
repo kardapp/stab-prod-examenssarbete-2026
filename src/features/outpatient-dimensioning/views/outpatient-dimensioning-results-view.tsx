@@ -431,7 +431,7 @@ function ResultCell(props: { label: string; value: string; strong?: boolean }) {
       <Typography
         variant="caption"
         color="text.secondary"
-        sx={{ display: { xs: "block", xl: "none" }, mb: 0.25 }}
+        sx={{ display: { xs: "block", lg: "none" }, mb: 0.25 }}
       >
         {props.label}
       </Typography>
@@ -499,7 +499,7 @@ const summaryGridSx = {
   gridTemplateColumns: {
     xs: "1fr",
     md: "repeat(2, minmax(0, 1fr))",
-    xl: "repeat(4, minmax(0, 1fr))",
+    lg: "repeat(4, minmax(0, 1fr))",
   },
   gap: 1.5,
 };
@@ -523,7 +523,7 @@ const presenceGridSx = {
   ...baseResultRowSx,
   gridTemplateColumns: {
     xs: "1fr",
-    xl: "minmax(70px, 0.6fr) minmax(100px, 0.8fr) minmax(86px, 0.7fr) minmax(160px, 1.2fr) repeat(4, minmax(92px, 0.8fr))",
+    lg: "minmax(70px, 0.6fr) minmax(100px, 0.8fr) minmax(86px, 0.7fr) minmax(160px, 1.2fr) repeat(4, minmax(92px, 0.8fr))",
   },
 };
 
@@ -531,7 +531,7 @@ const presenceGridWithoutCompetenceSx = {
   ...baseResultRowSx,
   gridTemplateColumns: {
     xs: "1fr",
-    xl: "minmax(70px, 0.6fr) minmax(100px, 0.8fr) minmax(160px, 1.2fr) repeat(4, minmax(92px, 0.8fr))",
+    lg: "minmax(70px, 0.6fr) minmax(100px, 0.8fr) minmax(160px, 1.2fr) repeat(4, minmax(92px, 0.8fr))",
   },
 };
 
@@ -539,7 +539,7 @@ const staffingGridSx = {
   ...baseResultRowSx,
   gridTemplateColumns: {
     xs: "1fr",
-    xl: "minmax(70px, 0.6fr) minmax(100px, 0.8fr) minmax(86px, 0.7fr) minmax(160px, 1.2fr) repeat(3, minmax(110px, 0.9fr))",
+    lg: "minmax(70px, 0.6fr) minmax(100px, 0.8fr) minmax(86px, 0.7fr) minmax(160px, 1.2fr) repeat(3, minmax(110px, 0.9fr))",
   },
 };
 
@@ -547,7 +547,7 @@ const staffingGridWithoutCompetenceSx = {
   ...baseResultRowSx,
   gridTemplateColumns: {
     xs: "1fr",
-    xl: "minmax(70px, 0.6fr) minmax(100px, 0.8fr) minmax(160px, 1.2fr) repeat(3, minmax(110px, 0.9fr))",
+    lg: "minmax(70px, 0.6fr) minmax(100px, 0.8fr) minmax(160px, 1.2fr) repeat(3, minmax(110px, 0.9fr))",
   },
 };
 
@@ -555,7 +555,7 @@ const productionCostGridSx = {
   ...baseResultRowSx,
   gridTemplateColumns: {
     xs: "1fr",
-    xl: "minmax(70px, 0.6fr) minmax(100px, 0.8fr) minmax(86px, 0.7fr) minmax(150px, 1.1fr) repeat(5, minmax(96px, 0.8fr))",
+    lg: "minmax(70px, 0.6fr) minmax(100px, 0.8fr) minmax(86px, 0.7fr) minmax(150px, 1.1fr) repeat(5, minmax(96px, 0.8fr))",
   },
 };
 
@@ -563,13 +563,13 @@ const productionCostGridWithoutCompetenceSx = {
   ...baseResultRowSx,
   gridTemplateColumns: {
     xs: "1fr",
-    xl: "minmax(70px, 0.6fr) minmax(100px, 0.8fr) minmax(150px, 1.1fr) repeat(5, minmax(96px, 0.8fr))",
+    lg: "minmax(70px, 0.6fr) minmax(100px, 0.8fr) minmax(150px, 1.1fr) repeat(5, minmax(96px, 0.8fr))",
   },
 };
 
 const headerCellSx = {
   color: "#005883",
-  display: { xs: "none", xl: "block" },
+  display: { xs: "none", lg: "block" },
   fontWeight: 700,
   minWidth: 0,
 };

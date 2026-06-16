@@ -552,7 +552,7 @@ function CostPerProductionSection(props: {
         />
       </Box>
 
-      <Stack spacing={2.5}>
+      <Box sx={compactSubSectionGridSx}>
         <ResultSubSection title="Per yrkeskategori">
           <ProductionCostTable
             rows={categoryRows}
@@ -589,7 +589,7 @@ function CostPerProductionSection(props: {
             rowIdPrefix="production-cost-month"
           />
         </ResultSubSection>
-      </Stack>
+      </Box>
     </SectionCard>
   );
 }
@@ -823,7 +823,7 @@ const metricGridSx = {
   gridTemplateColumns: {
     xs: "1fr",
     md: "repeat(2, minmax(0, 1fr))",
-    xl: "repeat(3, minmax(0, 1fr))",
+    lg: "repeat(3, minmax(0, 1fr))",
   },
   mb: 2,
 };
@@ -834,7 +834,7 @@ const compactSubSectionGridSx = {
   gap: 1.5,
   gridTemplateColumns: {
     xs: "1fr",
-    lg: "repeat(2, minmax(280px, 1fr))",
+    md: "repeat(2, minmax(260px, 1fr))",
     xl: "repeat(3, minmax(260px, 1fr))",
   },
 };
@@ -846,7 +846,7 @@ const subSectionSx = {
 
 const fullSubSectionSx = {
   gridColumn: {
-    lg: "1 / -1",
+    md: "1 / -1",
   },
 };
 

@@ -215,9 +215,9 @@ const assumptionPairGridSx = {
   display: "grid",
   gridTemplateColumns: {
     xs: "1fr",
-    md: "repeat(2, minmax(0, 1fr))",
+    lg: "repeat(2, minmax(0, 1fr))",
   },
-  gap: { xs: 2, md: 2.5 },
+  gap: { xs: 2, lg: 2.5 },
   width: "100%",
 };
 
@@ -229,6 +229,7 @@ const assumptionSubSectionSx = {
   borderBottomColor: "divider",
   borderLeft: "4px solid",
   borderRadius: 1,
+  minWidth: 0,
   pl: 2,
   pr: 2,
   py: 1.5,
