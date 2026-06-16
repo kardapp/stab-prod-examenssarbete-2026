@@ -50,7 +50,7 @@ export function ProductionTimeByRoleSection(
   return (
     <SectionCard>
       <FormSection
-        overline="1. Inmatning tidsåtgång per yrkeskategori OO"
+        overline="Steg 1"
         title="Produktion och tid per yrkeskategori"
       />
 

@@ -80,9 +80,9 @@ export function OutpatientOoDimensioningView() {
 
               <PeriodizationCurveSection
                 rows={dimensioning.periodizationRows}
-                overline="6. Periodisering över året"
-                title="Personalbehov per vecka"
-                description="Dimensioneringen periodiseras med samma veckokurva som produktionsresultatet och kan justeras med planerade händelser."
+                overline="Steg 6"
+                title="Produktionstakt per vecka"
+                description="OO-dimensioneringen periodiseras över 52 veckor. Klicka på en vecka för att justera produktionstakten för en vald period."
                 emptyText="Periodiseringskurvan visas när det finns OO-dimensionering att räkna på."
                 showDrg={false}
               />

@@ -88,7 +88,7 @@ export function InpatientProductionResultsView() {
             <>
               <SectionCard>
                 <FormSection
-                  overline="1. Antal vårdtillfällen"
+                  overline="1"
                   title="Antal vårdtillfällen"
                   description="Visar planerade vårdtillfällen per dag och uppdelat på akut/elektivt samt SLL/UULP."
                 />
@@ -126,7 +126,7 @@ export function InpatientProductionResultsView() {
 
               <SectionCard>
                 <FormSection
-                  overline="2. Antal vårddygn"
+                  overline="2"
                   title="Antal vårddygn"
                   description="Medelvårdtid × vårdtillfällen = vårddygn."
                 />
@@ -153,7 +153,7 @@ export function InpatientProductionResultsView() {
 
               <SectionCard>
                 <FormSection
-                  overline="3. Antal DRG-poäng"
+                  overline="3"
                   title="Antal DRG-poäng"
                   description="DRG-snitt SLL/UULP × vårdtillfällen per betalare = DRG-poäng."
                 />
@@ -190,7 +190,7 @@ export function InpatientProductionResultsView() {
 
               <SectionCard>
                 <FormSection
-                  overline="4. Snitt antal vårdplatser"
+                  overline="4"
                   title="Snitt antal vårdplatser"
                   description="Vårddygn / 365 = snitt antal vårdplatser."
                 />
@@ -207,7 +207,7 @@ export function InpatientProductionResultsView() {
 
               <SectionCard>
                 <FormSection
-                  overline="5. OO-fördelning"
+                  overline="5"
                   title="Vårddygn per vårdande enhet"
                 />
                 {distributions.length === 0 ? (

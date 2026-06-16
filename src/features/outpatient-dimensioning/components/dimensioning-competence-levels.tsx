@@ -55,7 +55,7 @@ export function DimensioningCompetenceLevels(
           sx={{ justifyContent: "space-between", gap: 1.5 }}
         >
           <FormSection
-            overline="Hämtat, ifyllt och beräknat"
+            overline="Steg 2"
             title="Produktionsdrivet behov"
           />
           <Box sx={shareSumSx(hasInvalidShare)}>
@@ -243,7 +243,7 @@ export function DimensioningCompetenceLevels(
 
       <SectionCard>
         <FormSection
-          overline="Fylls i i dimensioneringen"
+          overline="Steg 3"
           title="Justeringar och kostnader"
         />
 

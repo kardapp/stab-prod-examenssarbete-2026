@@ -188,7 +188,7 @@ function LoadedInpatientMeDimensioningView() {
 
               <SectionCard>
                 <FormSection
-                  overline="1. Kompetensnivåer"
+                  overline="Steg 1"
                   title="Läkarnärvaro per kompetensnivå"
                   description="Fyll i historisk lönekostnad per närvaro. Kostnaden beräknas som värdet multiplicerat med beräknad total närvaro per kompetensnivå."
                 />
@@ -280,8 +280,9 @@ function LoadedInpatientMeDimensioningView() {
 
               <PeriodizationCurveSection
                 rows={periodizationRows}
-                overline="Periodisering över året"
-                title="Personalbehov per vecka"
+                overline="Steg 2"
+                title="Produktionstakt per vecka"
+                description="ME-dimensioneringen för slutenvård periodiseras över 52 veckor. Klicka på en vecka för att justera produktionstakten för en vald period."
                 emptyText="Ingen ME-dimensionering att periodisera."
                 volumeLabel="Vårdtillfällen"
                 volumeLabelLower="vårdtillfällen"

@@ -227,7 +227,7 @@ function LoadedInpatientOoDimensioningView() {
 
               <SectionCard>
                 <FormSection
-                  overline="1. Produktion per yrkeskategori"
+                  overline="Steg 1"
                   title="Timmar per vårdplats och dygn"
                   description="Fyll i historisk lönekostnad per närvaro. Kostnaden beräknas som värdet multiplicerat med beräknad närvaro per yrkeskategori."
                 />
@@ -296,7 +296,7 @@ function LoadedInpatientOoDimensioningView() {
 
               <SectionCard>
                 <FormSection
-                  overline="2. Vårdnära stöd och övrig tid"
+                  overline="Steg 2"
                   title="Timmar per vecka"
                 />
                 <Box sx={inputGridSx}>
@@ -360,9 +360,9 @@ function LoadedInpatientOoDimensioningView() {
 
               <PeriodizationCurveSection
                 rows={periodizationRows}
-                overline="Periodisering över året"
-                title="Personalbehov per vecka"
-                description="OO-dimensioneringen för slutenvård periodiseras över 52 veckor. Klicka på en vecka för att se detaljer och lägga till påverkan."
+                overline="Steg 3"
+                title="Produktionstakt per vecka"
+                description="OO-dimensioneringen för slutenvård periodiseras över 52 veckor. Klicka på en vecka för att justera produktionstakten för en vald period."
                 emptyText="Periodiseringskurvan visas när det finns OO-dimensionering att räkna på."
                 volumeLabel="Vårdtillfällen"
                 volumeLabelLower="vårdtillfällen"

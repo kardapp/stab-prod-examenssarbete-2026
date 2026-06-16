@@ -18,7 +18,7 @@ export function StaffingCostSection(props: StaffingCostSectionProps) {
   return (
     <SectionCard>
       <FormSection
-        overline="5. Kostnader"
+        overline="Steg 5"
         title="Bemanningskostnad"
         description="Kostnaden beräknas som historisk lönekostnad per närvaro multiplicerat med beräknad total närvaro."
       />

@@ -35,7 +35,7 @@ export function DimensioningBasisSelection(
   return (
     <SectionCard>
       <FormSection
-        overline="Val av underlag"
+        overline="Steg 1"
         title="Dimensionering ME öppenvård"
       />
 

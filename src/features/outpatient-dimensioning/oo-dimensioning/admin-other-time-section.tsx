@@ -12,7 +12,7 @@ export function AdminOtherTimeSection(props: AdminOtherTimeSectionProps) {
   return (
     <SectionCard>
       <FormSection
-        overline="3. Admin och övrig tid"
+        overline="Steg 3"
         title="Tid utanför direkt produktion"
         description="Admin, inskolning, kompetensutveckling och annan övrig tid läggs till som timmar per vecka."
       />

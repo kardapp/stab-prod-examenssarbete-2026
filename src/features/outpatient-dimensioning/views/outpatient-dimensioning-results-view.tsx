@@ -216,7 +216,7 @@ function PresenceSection(props: { rows: DimensioningResultRow[] }) {
 
   return (
     <ResultSection
-      overline="1. Närvaro"
+      overline="1"
       title="Närvaro"
       emptyText="Inga närvarorader matchar valt filter."
       headerSx={
@@ -269,7 +269,7 @@ function StaffingCostSection(props: { rows: DimensioningResultRow[] }) {
 
   return (
     <ResultSection
-      overline="2. Bemanningskostnader"
+      overline="2"
       title="Bemanningskostnader"
       emptyText="Inga kostnadsrader matchar valt filter."
       headerSx={
@@ -319,7 +319,7 @@ function CostPerProductionSection(props: { rows: DimensioningResultRow[] }) {
 
   return (
     <ResultSection
-      overline="3. Bemanningskostnader per DRG/vårdhändelse"
+      overline="3"
       title="Bemanningskostnader per DRG/vårdhändelse"
       emptyText="Inga nyckeltalsrader matchar valt filter."
       headerSx={

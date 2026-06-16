@@ -146,8 +146,8 @@ export function PeriodizationCurveSection(props: {
   return (
     <SectionCard>
       <FormSection
-        overline={props.overline ?? "2. Periodiseringskurva"}
-        title={props.title ?? "Personalbehov per vecka"}
+        overline={props.overline ?? "Produktionstakt över året"}
+        title={props.title ?? "Produktionstakt per vecka"}
         description={props.description}
       />
 

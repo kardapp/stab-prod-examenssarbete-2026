@@ -208,7 +208,7 @@ function LoadedInpatientOoDistributionView() {
 
               <SectionCard>
                 <FormSection
-                  overline="OO-fördelning"
+                  overline="Steg 1"
                   title="Fördela vårddygn"
                 />
                 <Box sx={metricGridSx}>

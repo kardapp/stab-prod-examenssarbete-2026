@@ -20,7 +20,7 @@ export function CalculatedPresenceSection(
   return (
     <SectionCard>
       <FormSection
-        overline="4. Beräknat resultat"
+        overline="Steg 4"
         title="Timmar och närvaro"
         description="Total tid divideras med veckoarbetstid för att beräkna närvarobehov."
       />

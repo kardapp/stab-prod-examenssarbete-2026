@@ -107,7 +107,7 @@ function VisitCountSection(props: { rows: ProductionPlanningResultRow[] }) {
   return (
     <SectionCard>
       <FormSection
-        overline="1. Antal vårdhändelser"
+        overline="1"
         title="Antal vårdhändelser"
       />
 
@@ -192,7 +192,7 @@ function VisitTimeSection(props: { rows: ProductionPlanningResultRow[] }) {
   return (
     <SectionCard>
       <FormSection
-        overline="2. Besökstid"
+        overline="2"
         title="Besökstid"
       />
 
@@ -276,7 +276,7 @@ function DrgSection(props: { rows: ProductionPlanningResultRow[] }) {
   return (
     <SectionCard>
       <FormSection
-        overline="3. Antal DRG"
+        overline="3"
         title="Antal DRG"
       />
 
@@ -377,7 +377,7 @@ function ComparisonSection(props: { rows: ProductionPlanningComparisonRow[] }) {
   return (
     <SectionCard>
       <FormSection
-        overline="4. Jämförelse"
+        overline="4"
         title="Aktuell plan jämfört med samma period föregående år"
       />
 

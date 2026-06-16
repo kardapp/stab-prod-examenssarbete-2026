@@ -127,7 +127,7 @@ function OoIntroSection() {
   return (
     <SectionCard>
       <FormSection
-        overline="Steg 2"
+        overline="Översikt"
         title="Årets vårdhändelser fördelas till vårdande enhet"
       />
       <Box sx={introGridSx}>
@@ -244,7 +244,7 @@ function DistributionEditorSection(props: {
   return (
     <SectionCard>
       <FormSection
-        overline="OO-fördelning"
+        overline="Steg 1"
         title="Fördela till vårdande enhet"
       />
 

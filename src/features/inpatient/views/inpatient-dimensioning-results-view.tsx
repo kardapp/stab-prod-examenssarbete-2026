@@ -294,7 +294,7 @@ function PresenceSection(props: {
   return (
     <SectionCard>
       <FormSection
-        overline="1. Närvaro"
+        overline="1"
         title="Närvaro"
       />
       <Box sx={metricGridSx}>
@@ -407,7 +407,7 @@ function StaffingCostSection(props: {
   return (
     <SectionCard>
       <FormSection
-        overline="2. Bemanningskostnader"
+        overline="2"
         title="Bemanningskostnader"
       />
       <Box sx={metricGridSx}>
@@ -519,7 +519,7 @@ function CostPerProductionSection(props: {
   return (
     <SectionCard>
       <FormSection
-        overline="3. Bemanningskostnader per DRG/vårddygn/vårdplats"
+        overline="3"
         title="Bemanningskostnader per DRG/vårddygn/vårdplats"
       />
       <Box sx={metricGridSx}>

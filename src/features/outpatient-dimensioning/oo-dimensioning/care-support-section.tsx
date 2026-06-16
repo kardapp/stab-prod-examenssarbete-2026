@@ -18,7 +18,7 @@ export function CareSupportSection(props: CareSupportSectionProps) {
   return (
     <SectionCard>
       <FormSection
-        overline="2. Vårdnära stöd"
+        overline="Steg 2"
         title="Inmatning för vårdnära stöd"
       />
 
