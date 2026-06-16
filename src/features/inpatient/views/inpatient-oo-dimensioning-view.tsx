@@ -228,8 +228,8 @@ function LoadedInpatientOoDimensioningView() {
               <SectionCard>
                 <FormSection
                   overline="Steg 1"
-                  title="Timmar per vårdplats och dygn"
-                  description="Fyll i historisk lönekostnad per närvaro. Kostnaden beräknas som värdet multiplicerat med beräknad närvaro per yrkeskategori."
+                  title="Bemanningstid per vårdplats"
+                  description="Fyll i hur många arbetstimmar varje yrkeskategori behöver per genomsnittlig vårdplats och dygn. Timmar/vecka räknas som snitt vårdplatser × timmar × 7."
                 />
                 <Box sx={{ overflowX: "auto" }}>
                   <Table size="small">
@@ -240,7 +240,7 @@ function LoadedInpatientOoDimensioningView() {
                           Vårddygn från produktionsplan
                         </TableCell>
                         <TableCell sx={headerCellSx} align="right">
-                          Tim/vårdplats/dygn
+                          Arbetstimmar per vårdplats och dygn
                         </TableCell>
                         <TableCell sx={headerCellSx} align="right">
                           Veckoarbetstid
@@ -539,7 +539,8 @@ const inputGridSx = {
 const headerCellSx = {
   color: "#005883",
   fontWeight: 700,
-  whiteSpace: "nowrap",
+  lineHeight: 1.25,
+  whiteSpace: "normal",
 };
 
 const actionRowSx = {
