@@ -12,7 +12,6 @@ import {
   formatImpactWeekdays,
   formatMetricImpactSummary,
   formatSignedPercentage,
-  getImpactTargetLabel,
 } from "./periodization-curve-model";
 
 type SelectedWeekPanelProps = {
@@ -44,15 +43,9 @@ export function SelectedWeekPanel(props: SelectedWeekPanelProps) {
         <Typography
           variant="caption"
           sx={impactBadgeSx}
-          title={formatMetricImpactSummary(
-            props.selectedPoint.impactPercentages,
-            props.volumeLabel
-          )}
+          title={formatMetricImpactSummary(props.selectedPoint.impactPercentages)}
         >
-          {formatMetricImpactSummary(
-            props.selectedPoint.impactPercentages,
-            props.volumeLabel
-          )}
+          {formatMetricImpactSummary(props.selectedPoint.impactPercentages)}
         </Typography>
       </Box>
 
@@ -102,7 +95,6 @@ export function SelectedWeekPanel(props: SelectedWeekPanelProps) {
               heightPercentage={
                 (day.adjustedStaffingNeed / maxDayPresence) * 100
               }
-              volumeLabel={props.volumeLabel}
             />
           ))}
         </Box>
@@ -114,7 +106,7 @@ export function SelectedWeekPanel(props: SelectedWeekPanelProps) {
             <Box key={impact.id} sx={impactRowSx}>
               <Typography sx={impactNameSx}>{impact.name}</Typography>
               <Typography variant="body2" color="text.secondary">
-                {getImpactTargetLabel(impact.target, props.volumeLabel)} ·{" "}
+                Produktionstakt ·{" "}
                 {formatSignedPercentage(impact.percentage)} ·{" "}
                 {formatImpactWeekdays(impact)}
               </Typography>
@@ -122,7 +114,7 @@ export function SelectedWeekPanel(props: SelectedWeekPanelProps) {
           ))
         ) : (
           <Typography variant="body2" color="text.secondary">
-            Ingen extra påverkan.
+            Ingen ändrad produktionstakt.
           </Typography>
         )}
       </Stack>
@@ -152,18 +144,14 @@ function SummaryValue(props: {
   );
 }
 
-function DayBar(props: {
-  day: WeeklyCurveDay;
-  heightPercentage: number;
-  volumeLabel?: string;
-}) {
+function DayBar(props: { day: WeeklyCurveDay; heightPercentage: number }) {
   const isImpacted = props.day.impacts.length > 0;
 
   return (
     <Box sx={dayColumnSx}>
       <Box sx={dayBarAreaSx}>
         <Box
-          title={formatDayTitle(props.day, props.volumeLabel)}
+          title={formatDayTitle(props.day)}
           sx={{
             ...dayBarSx,
             bgcolor: getDayBarColor(props.day),
@@ -198,14 +186,14 @@ function getDayBarColor(day: WeeklyCurveDay): string {
   return "#005883";
 }
 
-function formatDayTitle(day: WeeklyCurveDay, volumeLabel?: string): string {
+function formatDayTitle(day: WeeklyCurveDay): string {
   const impactNames =
     day.impacts.map((impact) => impact.name).join(", ") || "Ingen påverkan";
 
   return [
     day.label,
     `Personalbehov ${formatTwoDecimals(day.adjustedStaffingNeed)} heltid`,
-    `Påverkan ${formatMetricImpactSummary(day.impactPercentages, volumeLabel)}`,
+    `Påverkan ${formatMetricImpactSummary(day.impactPercentages)}`,
     impactNames,
   ].join(" · ");
 }
@@ -215,27 +203,17 @@ function formatMetricImpactText(percentage: number): string | undefined {
     return undefined;
   }
 
-  return `Påverkan ${formatSignedPercentage(percentage)}`;
+  return `Produktionstakt ${formatSignedPercentage(percentage)}`;
 }
 
 function formatDayImpactLabel(day: WeeklyCurveDay): string {
-  const changedTargetCount = Object.values(day.impactPercentages).filter(
-    (percentage) => Math.abs(percentage) >= 0.05
-  ).length;
+  const productionRateImpact = day.impactPercentages.staffingNeed;
 
-  if (changedTargetCount === 0) {
+  if (Math.abs(productionRateImpact) < 0.05) {
     return "0.0%";
   }
 
-  if (changedTargetCount === 1) {
-    const percentage = Object.values(day.impactPercentages).find(
-      (value) => Math.abs(value) >= 0.05
-    );
-
-    return formatSignedPercentage(percentage ?? 0);
-  }
-
-  return `${changedTargetCount} mått`;
+  return formatSignedPercentage(productionRateImpact);
 }
 
 const selectedWeekSx = {

@@ -5,7 +5,8 @@ import {
 import { WEEKLY_WORKING_MINUTES } from "../../utils/outpatient-production-calculations";
 
 export type WeeklyImpactType = "semester" | "red-day" | "capacity" | "other";
-export type WeeklyImpactTarget =
+export type WeeklyImpactTarget = "productionRate";
+type WeeklyMetricKey =
   | "visits"
   | "visitMinutes"
   | "drgPoints"
@@ -101,12 +102,12 @@ export type AnnualCurveSummary = {
   staffingNeed: number;
 };
 
-export type WeeklyMetricImpactPercentages = Record<WeeklyImpactTarget, number>;
-type WeeklyMetricFactors = Record<WeeklyImpactTarget, number>;
+export type WeeklyMetricImpactPercentages = Record<WeeklyMetricKey, number>;
+type WeeklyMetricFactors = Record<WeeklyMetricKey, number>;
 
 export const WEEK_COUNT = 52;
 const DAYS_PER_WEEK = 7;
-const impactTargetKeys: WeeklyImpactTarget[] = [
+const impactMetricKeys: WeeklyMetricKey[] = [
   "visits",
   "visitMinutes",
   "drgPoints",
@@ -159,19 +160,9 @@ export const impactTypeOptions: Array<{
   },
 ];
 
-export const impactTargetOptions: Array<{
-  value: WeeklyImpactTarget;
-  label: string;
-}> = [
-  { value: "visits", label: "Vårdhändelser" },
-  { value: "visitMinutes", label: "Tid" },
-  { value: "drgPoints", label: "DRG" },
-  { value: "staffingNeed", label: "Personalbehov" },
-];
-
 export const initialImpactDraft: WeeklyImpactDraft = {
   type: "semester",
-  target: "staffingNeed",
+  target: "productionRate",
   name: "Semesterperiod",
   startWeek: "28",
   endWeek: "31",
@@ -279,26 +270,6 @@ export function parseImpactType(value: string): WeeklyImpactType {
     : "other";
 }
 
-export function parseImpactTarget(value: string): WeeklyImpactTarget {
-  return impactTargetOptions.some((option) => option.value === value)
-    ? (value as WeeklyImpactTarget)
-    : "staffingNeed";
-}
-
-export function getImpactTargetLabel(
-  target: WeeklyImpactTarget,
-  volumeLabel = "Vårdhändelser"
-): string {
-  if (target === "visits") {
-    return volumeLabel;
-  }
-
-  return (
-    impactTargetOptions.find((option) => option.value === target)?.label ??
-    "Personalbehov"
-  );
-}
-
 export function getImpactWeekdays(impact: {
   weekdays?: WeekdayKey[];
 }): WeekdayKey[] {
@@ -344,31 +315,24 @@ export function formatSignedPercentage(value: number): string {
 }
 
 export function formatMetricImpactSummary(
-  percentages: WeeklyMetricImpactPercentages,
-  volumeLabel = "Vårdhändelser"
+  percentages: WeeklyMetricImpactPercentages
 ): string {
-  const changedImpacts = impactTargetKeys
-    .filter((target) => Math.abs(percentages[target]) >= 0.05)
-    .map(
-      (target) =>
-        `${getImpactTargetLabel(target, volumeLabel)} ${formatSignedPercentage(
-          percentages[target]
-        )}`
-    );
+  const productionRateImpact = percentages.staffingNeed;
 
-  return changedImpacts.length > 0 ? changedImpacts.join(" · ") : "0.0%";
+  return Math.abs(productionRateImpact) >= 0.05
+    ? `Produktionstakt ${formatSignedPercentage(productionRateImpact)}`
+    : "0.0%";
 }
 
 export function formatWeekTitle(
   point: WeeklyCurvePoint,
-  volumeLabelLower = "vårdhändelser",
-  volumeLabel = "Vårdhändelser"
+  volumeLabelLower = "vårdhändelser"
 ): string {
   return [
     `Vecka ${point.week}`,
     `Personalbehov ${formatTwoDecimals(point.adjustedStaffingNeed)} heltid`,
     `${formatOneDecimal(point.adjustedVisits)} ${volumeLabelLower}`,
-    `Påverkan ${formatMetricImpactSummary(point.impactPercentages, volumeLabel)}`,
+    `Påverkan ${formatMetricImpactSummary(point.impactPercentages)}`,
   ].join(" · ");
 }
 
@@ -416,7 +380,7 @@ function calculateAverageImpactPercentages(
     return createEmptyMetricImpactPercentages();
   }
 
-  return impactTargetKeys.reduce(
+  return impactMetricKeys.reduce(
     (current, target) => ({
       ...current,
       [target]:
@@ -436,20 +400,23 @@ function calculateAverageImpactPercentages(
 function calculateTargetImpactPercentages(
   impacts: WeeklyImpact[]
 ): WeeklyMetricImpactPercentages {
-  return impacts.reduce((current, impact) => {
-    const target = impact.target;
-
-    return {
-      ...current,
-      [target]: current[target] + impact.percentage,
-    };
-  }, createEmptyMetricImpactPercentages());
+  return impacts.reduce(
+    (current, impact) =>
+      impactMetricKeys.reduce(
+        (next, target) => ({
+          ...next,
+          [target]: next[target] + impact.percentage,
+        }),
+        current
+      ),
+    createEmptyMetricImpactPercentages()
+  );
 }
 
 function calculateImpactFactors(
   percentages: WeeklyMetricImpactPercentages
 ): WeeklyMetricFactors {
-  return impactTargetKeys.reduce(
+  return impactMetricKeys.reduce(
     (current, target) => ({
       ...current,
       [target]: Math.max(0, 1 + percentages[target] / 100),

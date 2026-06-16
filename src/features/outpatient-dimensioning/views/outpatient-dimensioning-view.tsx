@@ -70,9 +70,9 @@ export function OutpatientDimensioningView() {
 
               <PeriodizationCurveSection
                 rows={periodizationRows}
-                overline="Periodisering över året"
-                title="Personalbehov per vecka"
-                description="ME-dimensioneringen periodiseras över 52 veckor. Klicka på en vecka för att se detaljer och lägga till påverkan."
+                overline="Produktionstakt över året"
+                title="Produktionstakt per vecka"
+                description="ME-dimensioneringen periodiseras över 52 veckor. Klicka på en vecka för att justera produktionstakten för en vald period."
                 emptyText="Periodiseringskurvan visas när det finns produktionsdrivet ME-underlag att räkna på."
               />
 

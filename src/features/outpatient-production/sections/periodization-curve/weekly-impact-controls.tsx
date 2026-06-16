@@ -2,8 +2,6 @@ import { Alert, Box, Button, MenuItem, TextField, Typography } from "@mui/materi
 import {
   formatImpactWeekdays,
   formatSignedPercentage,
-  getImpactTargetLabel,
-  impactTargetOptions,
   impactTypeOptions,
   weekdayOptions,
   type WeekdayKey,
@@ -15,8 +13,6 @@ type WeeklyImpactControlsProps = {
   draft: WeeklyImpactDraft;
   impacts: WeeklyImpact[];
   selectedWeek: number;
-  showDrg?: boolean;
-  volumeLabel?: string;
   validationMessage: string;
   onAddImpact: () => void;
   onDraftChange: (
@@ -25,16 +21,12 @@ type WeeklyImpactControlsProps = {
   ) => void;
   onDraftWeekdaysChange: (weekdays: WeekdayKey[]) => void;
   onRemoveImpact: (impactId: string) => void;
-  onTargetChange: (value: string) => void;
   onTypeChange: (value: string) => void;
 };
 
 export function WeeklyImpactControls(props: WeeklyImpactControlsProps) {
   const allWeekdays = weekdayOptions.map((option) => option.value);
   const allWeekdaysSelected = props.draft.weekdays.length === allWeekdays.length;
-  const visibleImpactTargetOptions = impactTargetOptions.filter(
-    (option) => props.showDrg !== false || option.value !== "drgPoints"
-  );
 
   function toggleWeekday(weekday: WeekdayKey) {
     const nextWeekdays = props.draft.weekdays.includes(weekday)
@@ -49,10 +41,10 @@ export function WeeklyImpactControls(props: WeeklyImpactControlsProps) {
       <Box sx={impactHeaderSx}>
         <Box sx={{ minWidth: 0 }}>
           <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-            Lägg till påverkan för vecka {props.selectedWeek}
+            Lägg till produktionstakt
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            Gäller vald vecka
+            Produktionstakt för vald period
           </Typography>
         </Box>
         <Typography variant="caption" sx={selectedDaysBadgeSx}>
@@ -76,19 +68,27 @@ export function WeeklyImpactControls(props: WeeklyImpactControlsProps) {
           ))}
         </TextField>
         <TextField
-          select
-          label="Påverkar"
+          label="Från vecka"
+          type="number"
           size="small"
-          value={props.draft.target}
-          onChange={(event) => props.onTargetChange(event.target.value)}
+          value={props.draft.startWeek}
+          onChange={(event) =>
+            props.onDraftChange("startWeek", event.target.value)
+          }
+          slotProps={{ htmlInput: { min: 1, max: 52, step: 1 } }}
           sx={fieldSx}
-        >
-          {visibleImpactTargetOptions.map((option) => (
-            <MenuItem key={option.value} value={option.value}>
-              {getImpactTargetLabel(option.value, props.volumeLabel)}
-            </MenuItem>
-          ))}
-        </TextField>
+        />
+        <TextField
+          label="Till vecka"
+          type="number"
+          size="small"
+          value={props.draft.endWeek}
+          onChange={(event) =>
+            props.onDraftChange("endWeek", event.target.value)
+          }
+          slotProps={{ htmlInput: { min: 1, max: 52, step: 1 } }}
+          sx={fieldSx}
+        />
         <TextField
           label="Namn"
           size="small"
@@ -99,7 +99,7 @@ export function WeeklyImpactControls(props: WeeklyImpactControlsProps) {
           sx={fieldSx}
         />
         <TextField
-          label="Påverkan (%)"
+          label="Ändring produktionstakt (%)"
           type="number"
           size="small"
           value={props.draft.percentage}
@@ -157,7 +157,7 @@ export function WeeklyImpactControls(props: WeeklyImpactControlsProps) {
           onClick={props.onAddImpact}
           sx={addButtonSx}
         >
-          Lägg till påverkan
+          Lägg till produktionstakt
         </Button>
       </Box>
 
@@ -170,7 +170,7 @@ export function WeeklyImpactControls(props: WeeklyImpactControlsProps) {
       {props.impacts.length > 0 ? (
         <Box sx={impactListSx}>
           <Typography variant="subtitle2" sx={impactListTitleSx}>
-            Påverkan i vecka {props.selectedWeek}
+            Produktionstakt i vecka {props.selectedWeek}
           </Typography>
           {props.impacts.map((impact) => (
             <Box key={impact.id} sx={impactRowSx}>
@@ -178,7 +178,7 @@ export function WeeklyImpactControls(props: WeeklyImpactControlsProps) {
                 <Typography sx={{ fontWeight: 700 }}>{impact.name}</Typography>
                 <Typography variant="body2" color="text.secondary">
                   v. {impact.startWeek}-{impact.endWeek} ·{" "}
-                  {getImpactTargetLabel(impact.target, props.volumeLabel)} ·{" "}
+                  Produktionstakt ·{" "}
                   {formatImpactWeekdays(impact)} ·{" "}
                   {formatSignedPercentage(impact.percentage)}
                 </Typography>

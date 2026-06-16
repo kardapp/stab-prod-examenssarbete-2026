@@ -10,7 +10,6 @@ import {
   impactTypeOptions,
   initialImpactDraft,
   parseImpactType,
-  parseImpactTarget,
   type WeekdayKey,
   type WeeklyCurvePoint,
   type WeeklyCurveSourceRow,
@@ -93,16 +92,11 @@ export function PeriodizationCurveSection(props: {
     }));
   }
 
-  function handleTargetChange(value: string) {
-    setValidationMessage("");
-    setDraft((current) => ({
-      ...current,
-      target: parseImpactTarget(value),
-    }));
-  }
-
   function addImpact() {
-    const activeWeek = selectedWeek ?? clampWeek(Number(draft.startWeek));
+    const startWeek = clampWeek(Number(draft.startWeek));
+    const endWeek = clampWeek(Number(draft.endWeek));
+    const rangeStartWeek = Math.min(startWeek, endWeek);
+    const rangeEndWeek = Math.max(startWeek, endWeek);
     const percentage = Number(draft.percentage);
     const name = draft.name.trim();
 
@@ -112,7 +106,7 @@ export function PeriodizationCurveSection(props: {
     }
 
     if (!Number.isFinite(percentage)) {
-      setValidationMessage("Ange påverkan i procent.");
+      setValidationMessage("Ange ändring av produktionstakt i procent.");
       return;
     }
 
@@ -124,16 +118,22 @@ export function PeriodizationCurveSection(props: {
     const nextImpact: WeeklyImpact = {
       id: `impact-${Date.now()}`,
       type: draft.type,
-      target: draft.target,
+      target: "productionRate",
       name,
-      startWeek: activeWeek,
-      endWeek: activeWeek,
+      startWeek: rangeStartWeek,
+      endWeek: rangeEndWeek,
       percentage,
       weekdays: draft.weekdays,
     };
 
     setImpacts((current) => [...current, nextImpact]);
-    setSelectedWeek(activeWeek);
+    setSelectedWeek((currentWeek) =>
+      currentWeek &&
+      currentWeek >= rangeStartWeek &&
+      currentWeek <= rangeEndWeek
+        ? currentWeek
+        : rangeStartWeek
+    );
     setValidationMessage("");
   }
 
@@ -161,7 +161,6 @@ export function PeriodizationCurveSection(props: {
             curvePoints={curvePoints}
             maxPresence={maxPresence}
             selectedWeek={selectedWeek}
-            volumeLabel={props.volumeLabel}
             volumeLabelLower={props.volumeLabelLower}
             onSelectWeek={handleSelectWeek}
           />
@@ -180,7 +179,6 @@ export function PeriodizationCurveSection(props: {
                 onDraftChange={handleDraftChange}
                 onDraftWeekdaysChange={handleDraftWeekdaysChange}
                 onRemoveImpact={removeImpact}
-                onTargetChange={handleTargetChange}
                 onTypeChange={handleTypeChange}
               />
             ) : null}
@@ -206,7 +204,6 @@ function FocusedWeekAccordion(props: {
   ) => void;
   onDraftWeekdaysChange: (weekdays: WeekdayKey[]) => void;
   onRemoveImpact: (impactId: string) => void;
-  onTargetChange: (value: string) => void;
   onTypeChange: (value: string) => void;
 }) {
   return (
@@ -236,14 +233,11 @@ function FocusedWeekAccordion(props: {
           draft={props.draft}
           impacts={props.impacts}
           selectedWeek={props.selectedPoint.week}
-          showDrg={props.showDrg}
-          volumeLabel={props.volumeLabel}
           validationMessage={props.validationMessage}
           onAddImpact={props.onAddImpact}
           onDraftChange={props.onDraftChange}
           onDraftWeekdaysChange={props.onDraftWeekdaysChange}
           onRemoveImpact={props.onRemoveImpact}
-          onTargetChange={props.onTargetChange}
           onTypeChange={props.onTypeChange}
         />
       </Box>
