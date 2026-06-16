@@ -57,6 +57,7 @@ export function DimensioningCompetenceLevels(
           <FormSection
             overline="Steg 2"
             title="Produktionsdrivet behov"
+            description="Fyll i andel av årsproduktionen per kompetensnivå och veckoarbetstid i timmar. Manuell närvaro är valfri och ersätter den beräknade närvaron när den fylls i."
           />
           <Box sx={shareSumSx(hasInvalidShare)}>
             <Typography variant="caption" color="text.secondary">
@@ -85,12 +86,12 @@ export function DimensioningCompetenceLevels(
           <Box sx={needHeaderRowSx}>
             <HeaderCell>Kompetensnivå</HeaderCell>
             <HeaderCell>Vårdtyp</HeaderCell>
-            <HeaderCell align="right">Andel %</HeaderCell>
+            <HeaderCell align="right">Andel av produktion (%)</HeaderCell>
             <HeaderCell align="right">Vårdhändelser från plan</HeaderCell>
-            <HeaderCell align="right">Snitt-tid</HeaderCell>
-            <HeaderCell align="right">Veckoarbetstid</HeaderCell>
+            <HeaderCell align="right">Snitt-tid från plan</HeaderCell>
+            <HeaderCell align="right">Veckoarbetstid (h)</HeaderCell>
             <HeaderCell align="right">Beräknad närvaro</HeaderCell>
-            <HeaderCell align="right">Manuell närvaro</HeaderCell>
+            <HeaderCell align="right">Manuell närvaro (valfri)</HeaderCell>
             <HeaderCell align="right">Produktionsnärvaro</HeaderCell>
           </Box>
 
@@ -108,7 +109,7 @@ export function DimensioningCompetenceLevels(
                   label="Vårdtyp"
                   value={props.careType === "dagvard" ? "Dagvård" : "Mottagning"}
                 />
-                <InputValue label="Andel %" align="right">
+                <InputValue label="Andel av produktion (%)" align="right">
                   <NumberField
                     value={row.productionSharePercentage}
                     onChange={(value) =>
@@ -127,14 +128,14 @@ export function DimensioningCompetenceLevels(
                   muted
                 />
                 <ReadOnlyValue
-                  label="Snitt-tid"
+                  label="Snitt-tid från plan"
                   value={`${formatTwoDecimals(
                     calculation.averageMinutesPerVisit
                   )} min`}
                   align="right"
                   muted
                 />
-                <InputValue label="Veckoarbetstid" align="right">
+                <InputValue label="Veckoarbetstid (h)" align="right">
                   <NumberField
                     value={row.weeklyWorkHours}
                     onChange={(value) =>
@@ -152,7 +153,7 @@ export function DimensioningCompetenceLevels(
                   align="right"
                   calculated
                 />
-                <InputValue label="Manuell närvaro" align="right">
+                <InputValue label="Manuell närvaro (valfri)" align="right">
                   <NumberField
                     value={row.manualPresence}
                     onChange={(value) =>
@@ -245,18 +246,19 @@ export function DimensioningCompetenceLevels(
         <FormSection
           overline="Steg 3"
           title="Justeringar och kostnader"
+          description="Fyll i extra närvaro för admin/övrigt, ST/LEG som inte bidrar, lönekostnad per närvaro och eventuell kommentar. Total närvaro och bemanningskostnad beräknas automatiskt."
         />
 
         <Box sx={costTableSx}>
           <Box sx={costHeaderRowSx}>
             <HeaderCell>Kompetensnivå</HeaderCell>
-            <HeaderCell align="right">Admin/övrigt</HeaderCell>
-            <HeaderCell align="right">ST ej bidrar</HeaderCell>
+            <HeaderCell align="right">Admin/övrigt (närvaro)</HeaderCell>
+            <HeaderCell align="right">ST/LEG ej bidrar</HeaderCell>
             <HeaderCell align="right">Total närvaro</HeaderCell>
-            <HeaderCell align="right">Lönekostnad/närvaro</HeaderCell>
+            <HeaderCell align="right">Lönekostnad per närvaro (kr)</HeaderCell>
             <HeaderCell align="right">Bemanningskostnad</HeaderCell>
-            <HeaderCell>År</HeaderCell>
-            <HeaderCell>Kommentar</HeaderCell>
+            <HeaderCell>Periodisering</HeaderCell>
+            <HeaderCell>Kommentar (valfri)</HeaderCell>
           </Box>
 
           {props.calculations.map((calculation) => {
@@ -269,7 +271,7 @@ export function DimensioningCompetenceLevels(
                   value={row.competenceLevel}
                   strong
                 />
-                <InputValue label="Admin/övrigt" align="right">
+                <InputValue label="Admin/övrigt (närvaro)" align="right">
                   <NumberField
                     value={row.adminOtherPresence}
                     onChange={(value) =>
@@ -282,7 +284,7 @@ export function DimensioningCompetenceLevels(
                   />
                 </InputValue>
                 {canEditNonContributingSt(row.competenceLevel) ? (
-                  <InputValue label="ST ej bidrar" align="right">
+                  <InputValue label="ST/LEG ej bidrar" align="right">
                     <NumberField
                       value={row.nonContributingStPresence}
                       onChange={(value) =>
@@ -296,7 +298,7 @@ export function DimensioningCompetenceLevels(
                   </InputValue>
                 ) : (
                   <ReadOnlyValue
-                    label="ST ej bidrar"
+                    label="ST/LEG ej bidrar"
                     value="-"
                     align="right"
                     muted
@@ -308,7 +310,7 @@ export function DimensioningCompetenceLevels(
                   align="right"
                   calculated
                 />
-                <InputValue label="Lönekostnad/närvaro" align="right">
+                <InputValue label="Lönekostnad per närvaro (kr)" align="right">
                   <NumberField
                     value={row.salaryCostPerPresence}
                     onChange={(value) =>
@@ -326,7 +328,7 @@ export function DimensioningCompetenceLevels(
                   align="right"
                   calculated
                 />
-                <InputValue label="År">
+                <InputValue label="Periodisering">
                   <TextField
                     select
                     size="small"
@@ -347,7 +349,7 @@ export function DimensioningCompetenceLevels(
                     ))}
                   </TextField>
                 </InputValue>
-                <InputValue label="Kommentar">
+                <InputValue label="Kommentar (valfri)">
                   <TextField
                     size="small"
                     value={row.comment}

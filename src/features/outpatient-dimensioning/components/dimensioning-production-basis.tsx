@@ -31,6 +31,19 @@ export function DimensioningProductionBasis(
 ) {
   const visitTimeComments = getUniqueVisitTimeComments(props.rows);
   const hasVisitTimeComments = visitTimeComments.length > 0;
+  const previousYearPlanMissing = isMissingComparisonValue(
+    props.productionBasis.previousYearPlan
+  );
+  const previousYearOutcomeMissing = isMissingComparisonValue(
+    props.productionBasis.previousYearOutcome
+  );
+  const previousDimensioningMissing = isMissingComparisonValue(
+    props.productionBasis.previousDimensioningPresence
+  );
+  const hasMissingComparisonValues =
+    previousYearPlanMissing ||
+    previousYearOutcomeMissing ||
+    previousDimensioningMissing;
 
   return (
     <SectionCard>
@@ -87,19 +100,30 @@ export function DimensioningProductionBasis(
       <Box sx={comparisonGridSx}>
         <SupportValue
           label="Föregående års plan"
-          value={formatWholeNumber(props.productionBasis.previousYearPlan)}
+          value={formatOptionalWholeNumber(props.productionBasis.previousYearPlan)}
+          muted={previousYearPlanMissing}
         />
         <SupportValue
           label="Föregående års utfall"
-          value={formatWholeNumber(props.productionBasis.previousYearOutcome)}
+          value={formatOptionalWholeNumber(
+            props.productionBasis.previousYearOutcome
+          )}
+          muted={previousYearOutcomeMissing}
         />
         <SupportValue
           label="Dimensionering föregående år"
-          value={formatTwoDecimals(
+          value={formatOptionalTwoDecimals(
             props.productionBasis.previousDimensioningPresence
           )}
+          muted={previousDimensioningMissing}
         />
       </Box>
+      {hasMissingComparisonValues ? (
+        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75 }}>
+          Saknas betyder att värdet inte finns sparat på de valda
+          produktionsraderna.
+        </Typography>
+      ) : null}
 
       {props.rows.length === 0 ? (
         <Alert severity="info" sx={{ mt: 2 }}>
@@ -169,7 +193,19 @@ function getUniqueVisitTimeComments(rows: OutpatientProductionRow[]): string[] {
   );
 }
 
-function SupportValue(props: { label: string; value: string }) {
+function isMissingComparisonValue(value: number): boolean {
+  return value <= 0;
+}
+
+function formatOptionalWholeNumber(value: number): string {
+  return isMissingComparisonValue(value) ? "Saknas" : formatWholeNumber(value);
+}
+
+function formatOptionalTwoDecimals(value: number): string {
+  return isMissingComparisonValue(value) ? "Saknas" : formatTwoDecimals(value);
+}
+
+function SupportValue(props: { label: string; value: string; muted?: boolean }) {
   return (
     <Stack spacing={0.25}>
       <Typography variant="caption" color="text.secondary">
@@ -177,7 +213,7 @@ function SupportValue(props: { label: string; value: string }) {
       </Typography>
       <Typography
         sx={{
-          color: "#005883",
+          color: props.muted ? "text.secondary" : "#005883",
           fontWeight: 700,
           overflowWrap: "anywhere",
         }}

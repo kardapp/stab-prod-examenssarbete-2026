@@ -163,4 +163,5 @@ INSERT INTO outpatient_comparison_values (
 VALUES
   (1, 'PF-001', 'year', '2027', 5000, 5100, 0.20, 1.50, 980000, 5050, 1.70, 'Mockdata föregående år'),
   (1, 'PF-002', 'year', '2027', 3700, 3800, 0.10, 0.95, 920000, 3750, 1.05, 'Mockdata föregående år'),
-  (1, 'PF-003', 'year', '2027', 2500, 2550, 0.15, 0.90, 960000, 2480, 1.10, 'Mockdata föregående år');
+  (1, 'PF-003', 'year', '2027', 2500, 2550, 0.15, 0.90, 960000, 2480, 1.10, 'Mockdata föregående år'),
+  (1, 'PF-004', 'year', '2027', 3000, 3100, 0.12, 1.05, 940000, 2950, 1.20, 'Mockdata föregående år');

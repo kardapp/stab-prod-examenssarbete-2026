@@ -3,6 +3,9 @@ import type { PoolClient } from "pg";
 import { calculateAnnualVolumeFromVisits } from "@/features/outpatient-production/utils/outpatient-production-calculations";
 import { db } from "@/lib/db/client";
 
+const WEEKLY_WORKING_MINUTES = 40 * 60;
+const WORKING_WEEKS_PER_YEAR = 52;
+
 type CreateOutpatientProductionRowPayload = {
   id?: number;
   production_plan_id?: number;
@@ -174,6 +177,28 @@ async function ensureOutpatientProductionRowSchema() {
       ADD COLUMN IF NOT EXISTS r12_presence_production NUMERIC(8,2),
       ADD COLUMN IF NOT EXISTS r12_salary_cost_per_presence NUMERIC(12,2)
   `);
+
+  await db.query(`
+    DELETE FROM outpatient_comparison_values AS duplicate
+    USING outpatient_comparison_values AS original
+    WHERE duplicate.id > original.id
+      AND duplicate.production_plan_id IS NOT DISTINCT FROM original.production_plan_id
+      AND duplicate.kombika_pf_id IS NOT DISTINCT FROM original.kombika_pf_id
+      AND duplicate.period_type IS NOT DISTINCT FROM original.period_type
+      AND duplicate.period_value IS NOT DISTINCT FROM original.period_value
+  `);
+
+  await db.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS outpatient_comparison_values_unique_period
+      ON outpatient_comparison_values (
+        production_plan_id,
+        kombika_pf_id,
+        period_type,
+        period_value
+      )
+  `);
+
+  await backfillMissingMockComparisonValues();
 }
 
 async function getProductionPlanYear(
@@ -355,6 +380,15 @@ export async function POST(request: Request) {
       ]
     );
 
+    await upsertMockComparisonValues({
+      productionPlanId,
+      kombikaId: body.kombika_pf_id,
+      periodType,
+      periodValue,
+      visits,
+      averageMinutesPerVisit,
+    });
+
     return NextResponse.json(result.rows[0], { status: 201 });
   } catch (error) {
     console.error("Failed to create outpatient production row:", error);
@@ -446,7 +480,7 @@ export async function PATCH(request: Request) {
           drg_average_uulp = $25,
           updated_at = CURRENT_TIMESTAMP
         WHERE id = $26
-        RETURNING id
+        RETURNING id, production_plan_id
       `,
       [
         body.kombika_pf_id,
@@ -484,6 +518,15 @@ export async function PATCH(request: Request) {
         { status: 404 }
       );
     }
+
+    await upsertMockComparisonValues({
+      productionPlanId: result.rows[0].production_plan_id,
+      kombikaId: body.kombika_pf_id,
+      periodType,
+      periodValue,
+      visits,
+      averageMinutesPerVisit,
+    });
 
     return NextResponse.json(result.rows[0]);
   } catch (error) {
@@ -617,4 +660,140 @@ async function tableExists(
   );
 
   return Boolean(result.rows[0]?.table_name);
+}
+
+type MockComparisonParams = {
+  productionPlanId: number;
+  kombikaId: string;
+  periodType: string;
+  periodValue: string;
+  visits: number;
+  averageMinutesPerVisit: number;
+};
+
+async function upsertMockComparisonValues(params: MockComparisonParams) {
+  const annualVisits = calculateAnnualVolumeFromVisits(
+    params.visits,
+    params.periodType
+  );
+  const previousYearPlan = Math.max(1, Math.round(annualVisits * 0.96));
+  const r12Outcome = Math.max(1, Math.round(annualVisits * 0.98));
+  const previousYearOutcome = Math.max(1, Math.round(annualVisits * 0.97));
+  const r12PresenceProduction = calculatePresenceFromVisits(
+    r12Outcome,
+    params.averageMinutesPerVisit
+  );
+  const previousDimensioningPresence = calculatePresenceFromVisits(
+    previousYearOutcome,
+    params.averageMinutesPerVisit
+  );
+  const r12PresenceFouu = roundToTwoDecimals(r12PresenceProduction * 0.1);
+  const r12SalaryCostPerPresence =
+    calculateMockSalaryCostPerPresence(params.kombikaId);
+
+  await db.query(
+    `
+      INSERT INTO outpatient_comparison_values (
+        production_plan_id,
+        kombika_pf_id,
+        period_type,
+        period_value,
+        previous_year_plan,
+        r12_outcome,
+        r12_presence_fouu,
+        r12_presence_production,
+        r12_salary_cost_per_presence,
+        previous_year_outcome,
+        previous_dimensioning_presence,
+        source
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      ON CONFLICT (production_plan_id, kombika_pf_id, period_type, period_value)
+      DO UPDATE SET
+        previous_year_plan = EXCLUDED.previous_year_plan,
+        r12_outcome = EXCLUDED.r12_outcome,
+        r12_presence_fouu = EXCLUDED.r12_presence_fouu,
+        r12_presence_production = EXCLUDED.r12_presence_production,
+        r12_salary_cost_per_presence = EXCLUDED.r12_salary_cost_per_presence,
+        previous_year_outcome = EXCLUDED.previous_year_outcome,
+        previous_dimensioning_presence = EXCLUDED.previous_dimensioning_presence,
+        source = EXCLUDED.source
+    `,
+    [
+      params.productionPlanId,
+      params.kombikaId,
+      params.periodType,
+      params.periodValue,
+      previousYearPlan,
+      r12Outcome,
+      r12PresenceFouu,
+      r12PresenceProduction,
+      r12SalaryCostPerPresence,
+      previousYearOutcome,
+      previousDimensioningPresence,
+      "Automatisk mockdata föregående år",
+    ]
+  );
+}
+
+async function backfillMissingMockComparisonValues() {
+  const result = await db.query(`
+    SELECT
+      rows.production_plan_id,
+      rows.kombika_pf_id,
+      COALESCE(rows.period_type, 'year') AS period_type,
+      COALESCE(NULLIF(rows.period_value, ''), plans.year::text) AS period_value,
+      rows.visits,
+      rows.average_minutes_per_visit
+    FROM outpatient_production_rows AS rows
+    LEFT JOIN production_plans AS plans
+      ON rows.production_plan_id = plans.id
+    LEFT JOIN outpatient_comparison_values AS comparison
+      ON rows.production_plan_id = comparison.production_plan_id
+      AND rows.kombika_pf_id = comparison.kombika_pf_id
+      AND COALESCE(rows.period_type, 'year') = comparison.period_type
+      AND COALESCE(NULLIF(rows.period_value, ''), plans.year::text) =
+        comparison.period_value
+    WHERE comparison.id IS NULL
+      AND rows.production_plan_id IS NOT NULL
+      AND rows.kombika_pf_id IS NOT NULL
+      AND COALESCE(NULLIF(rows.period_value, ''), plans.year::text) IS NOT NULL
+  `);
+
+  await Promise.all(
+    result.rows.map((row) =>
+      upsertMockComparisonValues({
+        productionPlanId: Number(row.production_plan_id),
+        kombikaId: row.kombika_pf_id,
+        periodType: row.period_type,
+        periodValue: row.period_value,
+        visits: Number(row.visits ?? 0),
+        averageMinutesPerVisit: Number(row.average_minutes_per_visit ?? 0),
+      })
+    )
+  );
+}
+
+function calculatePresenceFromVisits(
+  visits: number,
+  averageMinutesPerVisit: number
+): number {
+  const annualMinutes = visits * averageMinutesPerVisit;
+
+  return roundToTwoDecimals(
+    annualMinutes / (WEEKLY_WORKING_MINUTES * WORKING_WEEKS_PER_YEAR)
+  );
+}
+
+function calculateMockSalaryCostPerPresence(kombikaId: string): number {
+  const charSum = Array.from(kombikaId).reduce(
+    (sum, character) => sum + character.charCodeAt(0),
+    0
+  );
+
+  return 900000 + (charSum % 8) * 25000;
+}
+
+function roundToTwoDecimals(value: number): number {
+  return Math.round(value * 100) / 100;
 }

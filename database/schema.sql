@@ -131,5 +131,6 @@ CREATE TABLE outpatient_comparison_values (
   previous_year_outcome INTEGER,
   previous_dimensioning_presence NUMERIC(8,2),
   source TEXT DEFAULT 'Mockdata',
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (production_plan_id, kombika_pf_id, period_type, period_value)
 );

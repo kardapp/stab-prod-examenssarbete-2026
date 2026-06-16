@@ -20,6 +20,7 @@ import {
 import {
   calculateProductionHours,
   calculateWeeklyVisits,
+  WEEKS_PER_YEAR,
   weekdayFields,
 } from "./calculations";
 import { OoDimensioningMetric } from "./oo-dimensioning-metric";
@@ -88,6 +89,8 @@ export function ProductionTimeByRoleSection(
       <Box sx={{ display: "grid", gap: 1 }}>
         {props.rows.map((row) => {
           const isExpanded = Boolean(expandedRows[row.id]);
+          const weeklyVisits = calculateWeeklyVisits(row);
+          const adjustedAnnualVisits = weeklyVisits * WEEKS_PER_YEAR;
 
           return (
             <Accordion
@@ -114,19 +117,22 @@ export function ProductionTimeByRoleSection(
                     </Typography>
                   </Box>
                   <OoDimensioningMetric
-                    label="Årets vårdhändelser"
+                    label="Årets vårdhändelser från plan"
                     value={formatWholeNumber(row.visitsFromProductionPlan)}
                   />
                   <OoDimensioningMetric
                     label="Vårdhändelser/vecka"
-                    value={formatOneDecimal(calculateWeeklyVisits(row))}
+                    value={formatOneDecimal(weeklyVisits)}
+                  />
+                  <OoDimensioningMetric
+                    label="Justerade vårdhändelser/år"
+                    value={formatWholeNumber(adjustedAnnualVisits)}
                   />
                   <OoDimensioningMetric
                     label="Tid/vecka"
                     value={`${formatTwoDecimals(
                       calculateProductionHours(
-                        calculateWeeklyVisits(row) +
-                        row.supportVisitsForOtherRoles,
+                        weeklyVisits + row.supportVisitsForOtherRoles,
                         row.averageMinutesPerVisit
                       )
                     )} h`}
@@ -164,8 +170,8 @@ export function ProductionTimeByRoleSection(
                   </Box>
 
                   <OptionalInputGroup
-                    title="Justera volym och snitt-tid"
-                    description=""
+                    title="Justera volym och tid i timmar"
+                    description="Stödvolym fylls i som vårdhändelser per vecka. Snitt-tiden fylls i som timmar per besök."
                   >
                     <Box sx={inputGridSx}>
                       <TextField
@@ -184,21 +190,23 @@ export function ProductionTimeByRoleSection(
                         slotProps={{ htmlInput: { min: 0, step: 0.1 } }}
                       />
                       <TextField
-                        label="Snitt-tid per besök"
+                        label="Snitt-tid per besök (timmar)"
                         type="number"
                         size="small"
-                        helperText={`Minuter per besök. Från plan: ${formatOneDecimal(
-                          row.sourceAverageMinutesPerVisit
-                        )} min`}
-                        value={row.averageMinutesPerVisit}
+                        helperText={`Timmar per besök. Från plan: ${formatTwoDecimals(
+                          row.sourceAverageMinutesPerVisit / 60
+                        )} h`}
+                        value={formatHourInputValue(
+                          row.averageMinutesPerVisit / 60
+                        )}
                         onChange={(event) =>
                           props.onRowChange(
                             row.id,
                             "averageMinutesPerVisit",
-                            Number(event.target.value)
+                            Number(event.target.value) * 60
                           )
                         }
-                        slotProps={{ htmlInput: { min: 0, step: 1 } }}
+                        slotProps={{ htmlInput: { min: 0, step: 0.1 } }}
                       />
                     </Box>
                   </OptionalInputGroup>
@@ -206,7 +214,7 @@ export function ProductionTimeByRoleSection(
 
                 <OptionalInputGroup
                   title="Veckofördelning"
-                  description="Fördela veckans vårdhändelser över dagarna. Summan blir vårdhändelser per vecka."
+                  description="Fördela eller justera veckans vårdhändelser över dagarna. Summan blir vårdhändelser per vecka och justerade vårdhändelser/år beräknas som veckosumman × 52."
                 >
                   <Box sx={weekdayGridSx}>
                     {weekdayFields.map((weekday) => (
@@ -261,6 +269,10 @@ function formatInputValue(value: number) {
   return Number.isInteger(value) ? String(value) : value.toFixed(1);
 }
 
+function formatHourInputValue(value: number) {
+  return Number.isInteger(value) ? String(value) : value.toFixed(2);
+}
+
 const subheadingSx = {
   color: "#005883",
   fontWeight: 700,
@@ -311,7 +323,7 @@ const rowHeaderGridSx = {
   display: "grid",
   gridTemplateColumns: {
     xs: "1fr",
-    md: "minmax(220px, 1.35fr) repeat(3, minmax(118px, 0.75fr)) 96px",
+    md: "minmax(220px, 1.35fr) repeat(4, minmax(112px, 0.72fr)) 96px",
   },
   gap: 1,
   alignItems: "stretch",

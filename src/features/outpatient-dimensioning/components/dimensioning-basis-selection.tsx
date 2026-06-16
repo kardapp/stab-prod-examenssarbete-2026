@@ -37,6 +37,7 @@ export function DimensioningBasisSelection(
       <FormSection
         overline="Steg 1"
         title="Dimensionering ME öppenvård"
+        description="Välj år, produktionsplan, ekonomisk kombika och vårdtyp som dimensioneringen ska bygga på."
       />
 
       <TextField
