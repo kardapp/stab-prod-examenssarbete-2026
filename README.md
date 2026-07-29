@@ -9,6 +9,7 @@ Målet är att göra det enklare att planera vårdproduktion, bryta ner planerad
 - [Syfte](#syfte)
 - [Teknik](#teknik)
 - [Snabbstart](#snabbstart)
+- [Snabbstart Docker](#snabbstart-docker)
 - [Databas](#databas)
 - [Projektstruktur](#projektstruktur)
 - [Viktiga routes](#viktiga-routes)
@@ -91,6 +92,41 @@ npm run dev
 ```
 
 Öppna [http://localhost:3000](http://localhost:3000).
+
+## Snabbstart Docker
+
+För att enkelt dra igång både PostgreSQL-databasen (med schema och testdata automatisk inladdat) samt React/Next.js-klienten i containrar kan du använda Docker Compose.
+
+### Förutsättningar
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) installerat och igång.
+
+### Starta allt med ett kommando
+
+```bash
+docker compose up --build
+```
+
+Detta gör följande automatiskt:
+1. Startar en PostgreSQL-databas.
+2. Skapar upp alla tabeller från `database/schema.sql`.
+3. Lägger in testdata från `database/seed.sql`.
+4. Startar React/Next.js-webbappen så fort databasen markerats som redo (`healthy`).
+
+Appen finns därefter tillgänglig på [http://localhost:3000](http://localhost:3000).
+
+### Uppdatera enbart webb-containern vid ändringar
+
+```bash
+docker compose up -d --build web
+```
+
+### Återställa databasen (tömma och initiera om på nytt)
+
+```bash
+docker compose down -v
+docker compose up --build
+```
 
 ## Databas
 
