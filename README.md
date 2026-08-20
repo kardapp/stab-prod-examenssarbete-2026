@@ -1,3 +1,13 @@
+> [!IMPORTANT]
+> ## ⚠️ ARKIVERAT REPOSITORY — INGEN AKTIV UTVECKLING ⚠️
+>
+> **Det här repot är arkiverat och underhålls inte längre.**
+>
+> Utvecklingen har flyttats till ett internt repository. Ändringar, issues och pull requests
+> hanteras inte här. Koden ligger kvar enbart som referens och historik för examensarbetet.
+>
+> Kontakta projektägaren för åtkomst till det interna repot.
+
 # Planeringsverktyg för produktionsplanering och dimensionering
 
 Det här projektet är ett examensarbete och en prototyp
