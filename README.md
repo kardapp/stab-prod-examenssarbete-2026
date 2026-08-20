@@ -23,7 +23,6 @@ Målet är att göra det enklare att planera vårdproduktion, bryta ner planerad
 - [Projektstruktur](#projektstruktur)
 - [Viktiga routes](#viktiga-routes)
 - [Produktionsplanering öppenvård](#produktionsplanering-öppenvård)
-- [Deployment](#deployment)
 - [Vanliga kommandon](#vanliga-kommandon)
 
 ## Syfte
@@ -139,15 +138,7 @@ src/shared    Återanvändbara komponenter, typer, tema, routes och helpers
 src/lib       Teknisk infrastruktur, till exempel databasklient
 database      SQL-schema och seed-data
 public        Statiska filer
-scripts       Fristående nodescript, till exempel databasmigrering
-charts        Helm-baschart för OpenShift (kar-app-stab-prod)
-deploy        Miljöspecifika Helm-värden som ArgoCD läser
-.github       GitHub Actions-workflows för bygg, chart och deploy
-Container     Dockerfile för applikationsbilden
 ```
-
-Repot är ett monorepo: applikationen, containerbygget, Helm-chartet och
-deploy-konfigurationen ligger tillsammans. Se [Deployment](#deployment).
 
 ### `src/app`
 
@@ -324,82 +315,6 @@ Dropdown-val och grunddata ligger i:
 
 ```text
 src/features/outpatient-production/constants/outpatient-production-options.ts
-```
-
-## Deployment
-
-Appen körs på KIM:s OpenShift-kluster **anakin** (testklustret) i namespace
-`kar-app-stab-prod-dev`.
-
-| Miljö | Kluster | Namespace               | URL                                                              |
-|-------|---------|-------------------------|------------------------------------------------------------------|
-| dev   | anakin  | `kar-app-stab-prod-dev` | <https://planeringsprocess-prototyp.apps.test.kim.karolinska.se> |
-
-### Vad som körs i klustret
-
-- **App**: en pod med Next.js standalone-servern från `Container`.
-- **Databas**: en Postgres-instans som hanteras av EDB-operatorn
-  (`kind: Cluster`). Operatorn skapar hemligheten
-  `stab-prod-edb-cluster-app`, och chartet mappar dess nycklar till
-  `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER` och `PGPASSWORD`. Lokalt går det
-  lika bra att sätta `DATABASE_URL` i stället.
-- **Route**: en OpenShift Route med edge-TLS. Certifikatet är routerns
-  wildcard-certifikat för `*.apps.test.kim.karolinska.se`, så inget eget
-  certifikat behövs.
-- **Migrering**: ett jobb som kör `scripts/migrate.mjs` efter varje sync.
-  Jobbet gör ingenting om schemat redan finns, så data som testare matat in
-  ligger kvar.
-
-### Kedjan från commit till körande app
-
-```text
-Commit till main
-   ↓  main.yml     lint + build, sätter en versionstagg
-Tagg (x.y.z)
-   ↓  tag.yml      bygger och pushar containerbilden till Artifactory
-                   skapar ett GitHub-release
-Release publicerad
-   ↓  release.yml  build-commit bumpar charts/ och package.json
-                   → main.yml publicerar Helm-chartet till Artifactory
-                   → deploy-commit pekar deploy/dev/Chart.yaml på nya versionen
-                   → verifierar /api/health
-Commit i deploy/dev
-   ↓  ArgoCD       synkar och applicerar chartet i klustret
-```
-
-ArgoCD-applikationen definieras i repot
-[kardapp/openshift-apps](https://github.com/kardapp/openshift-apps) under
-`ArgoCD/app-of-apps/anakin/karolinska_universitetssjukhuset/stab-produktion/`.
-Den pekar på `deploy/dev` i det här repot. Det finns inga manuella
-`helm install`-kommandon.
-
-Detaljer om miljökonfigurationen finns i [deploy/README.md](deploy/README.md).
-
-### Köra hela stacken lokalt i containrar
-
-`docker-compose.yml` startar Postgres, kör migreringen och startar samma
-containerbild som deployas:
-
-```bash
-docker compose up --build
-```
-
-Appen svarar sedan på [http://localhost:8080](http://localhost:8080).
-
-Vill du bara ha databasen och köra appen med `npm run dev`:
-
-```bash
-docker compose up postgres
-```
-
-### Rendera chartet lokalt
-
-För att se exakt vad ArgoCD kommer att applicera:
-
-```bash
-cd deploy/dev
-helm dependency build
-helm template . -f values-dev.yaml
 ```
 
 ## Vanliga kommandon
